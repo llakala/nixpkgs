@@ -518,6 +518,7 @@ let
 
           extraPoliciesFiles=(${toString extraPoliciesFiles})
           for extraPoliciesFile in "''${extraPoliciesFiles[@]}"; do
+            echo "Merging the contents of $extraPoliciesFile and $POL_PATH"
             jq -s '.[0] * .[1]' $extraPoliciesFile "$POL_PATH" > .tmp.json
             mv .tmp.json "$POL_PATH"
           done
