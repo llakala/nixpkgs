@@ -134,7 +134,7 @@ _nixos-rebuild() {
     --builders)
       _nixos-rebuild_pretend-nix
       ;;
-    --flake)
+    --flake|-F)
       _nixos-rebuild_pretend-nix
       ;;
     --override-input)
