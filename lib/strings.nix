@@ -1402,7 +1402,20 @@ rec {
 
     :::
   */
-  escapeRegex = escape (stringToCharacters "\\[{()^$?*+|.");
+  escapeRegex = escape [
+    "\\"
+    "["
+    "{"
+    "("
+    ")"
+    "^"
+    "$"
+    "?"
+    "*"
+    "+"
+    "|"
+    "."
+  ];
 
   /**
     Quotes a string `s` if it can't be used as an identifier directly.
