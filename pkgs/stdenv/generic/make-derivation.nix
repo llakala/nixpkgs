@@ -420,7 +420,7 @@ let
 
       concretizeFlagImplications =
         flag: impliesFlags: list:
-        if builtins.elem flag list then (list ++ impliesFlags) else list;
+        if elem flag list then (list ++ impliesFlags) else list;
 
       hardeningDisable' = unique (
         pipe hardeningDisable [
@@ -433,7 +433,7 @@ let
         ]
       );
       enabledHardeningOptions =
-        if builtins.elem "all" hardeningDisable' then
+        if elem "all" hardeningDisable' then
           [ ]
         else
           subtractLists hardeningDisable' (defaultHardeningFlags ++ hardeningEnable);
@@ -447,7 +447,7 @@ let
         positions: name: deps:
         imap1 (
           index: dep:
-          if dep == null || isDerivation dep || builtins.isString dep || builtins.isPath dep then
+          if dep == null || isDerivation dep || isString dep || builtins.isPath dep then
             dep
           else if isList dep then
             checkDependencyList' ([ index ] ++ positions) name dep
@@ -635,9 +635,9 @@ let
               else
                 null
             } =
-              lib.warnIf ((builtins.elem "pie" hardeningEnable) || (builtins.elem "pie" hardeningDisable))
+              lib.warnIf ((elem "pie" hardeningEnable) || (elem "pie" hardeningDisable))
                 "The 'pie' hardening flag has been removed in favor of enabling PIE by default in compilers and should no longer be used. PIE can be disabled with the -no-pie compiler flag, but this is usually not necessary as most build systems pass this if needed. Usage of the 'pie' hardening flag will become an error in future."
-                (builtins.concatStringsSep " " enabledHardeningOptions);
+                (concatStringsSep " " enabledHardeningOptions);
 
             # TODO: remove platform condition
             # Enabling this check could be a breaking change as it requires to edit nix.conf
@@ -723,7 +723,7 @@ let
                     inherit name;
                     value =
                       let
-                        raw = zipAttrsWith (_: builtins.concatLists) [
+                        raw = zipAttrsWith (_: concatLists) [
                           attrsOutputChecksFiltered
                           (makeOutputChecks attrs.outputChecks.${name} or { })
                         ];
