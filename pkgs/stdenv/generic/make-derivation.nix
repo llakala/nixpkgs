@@ -134,7 +134,7 @@ let
 
                 (To silence this warning, set `__intentionallyOverridingVersion = true` in your `overrideAttrs` call.)
               ''
-              (prev // (removeAttrs thisOverlay [ "__intentionallyOverridingVersion" ]))
+              (prev // removeAttrs thisOverlay [ "__intentionallyOverridingVersion" ])
           )
             (lib.toExtension f0)
             rattrs
@@ -280,13 +280,13 @@ let
     # having to wait while nix builds a derivation that might not be used.
     # See also https://github.com/NixOS/nix/issues/4629
     {
-      ${if (attrs ? disallowedReferences) then "disallowedReferences" else null} =
+      ${if attrs ? disallowedReferences then "disallowedReferences" else null} =
         map unsafeDerivationToUntrackedOutpath attrs.disallowedReferences;
-      ${if (attrs ? disallowedRequisites) then "disallowedRequisites" else null} =
+      ${if attrs ? disallowedRequisites then "disallowedRequisites" else null} =
         map unsafeDerivationToUntrackedOutpath attrs.disallowedRequisites;
-      ${if (attrs ? allowedReferences) then "allowedReferences" else null} =
+      ${if attrs ? allowedReferences then "allowedReferences" else null} =
         mapNullable unsafeDerivationToUntrackedOutpath attrs.allowedReferences;
-      ${if (attrs ? allowedRequisites) then "allowedRequisites" else null} =
+      ${if attrs ? allowedRequisites then "allowedRequisites" else null} =
         mapNullable unsafeDerivationToUntrackedOutpath attrs.allowedRequisites;
     };
 
@@ -380,7 +380,7 @@ let
       attrs ? outputHash
       -> (
         let
-          algo = attrs.outputHashAlgo or (head (splitString "-" attrs.outputHash));
+          algo = attrs.outputHashAlgo or head (splitString "-" attrs.outputHash);
         in
         if algo == "md5" then throw "Rejected insecure ${algo} hash '${attrs.outputHash}'" else true
       );
@@ -427,7 +427,7 @@ let
 
       concretizeFlagImplications =
         flag: impliesFlags: list:
-        if elem flag list then (list ++ impliesFlags) else list;
+        if elem flag list then list ++ impliesFlags else list;
 
       hardeningDisable' = unique (
         pipe hardeningDisable [
@@ -541,7 +541,7 @@ let
         ];
 
         derivationArg = removeAttrs attrs removedOrReplacedAttrNames // {
-          ${if (attrs ? name || (attrs ? pname && attrs ? version)) then "name" else null} =
+          ${if attrs ? name || attrs ? pname && attrs ? version then "name" else null} =
             let
               # Indicate the host platform of the derivation if cross compiling.
               # Fixed-output derivations like source tarballs shouldn't get a host
@@ -635,7 +635,7 @@ let
             attrs.enableParallelInstalling or true;
 
           ${
-            if (hardeningDisable != [ ] || hardeningEnable != [ ] || isMusl) then
+            if hardeningDisable != [ ] || hardeningEnable != [ ] || isMusl then
               "NIX_HARDENING_ENABLE"
             else
               null
@@ -817,7 +817,7 @@ let
       attrs ? outputHash
       -> (
         let
-          algo = attrs.outputHashAlgo or (head (splitString "-" attrs.outputHash));
+          algo = attrs.outputHashAlgo or head (splitString "-" attrs.outputHash);
         in
         if algo == "md5" then throw "Rejected insecure ${algo} hash '${attrs.outputHash}'" else true
       );
