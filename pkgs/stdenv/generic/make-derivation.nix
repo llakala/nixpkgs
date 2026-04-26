@@ -644,6 +644,12 @@ let
             # NixOS module already sets gccarch, unsure of nix installers and other distributions
             ${if requiredSystemFeaturesShouldBeSet then "requiredSystemFeatures" else null} =
               attrs.requiredSystemFeatures or [ ] ++ gccArchFeature;
+
+            ${if isWindows || isCygwin then "allowedImpureDLLs" else null} =
+              allowedImpureDLLs
+              ++ optionals isCygwin [
+                "KERNEL32.dll"
+              ];
           }
           // optionalAttrs buildIsDarwin (
             let
@@ -703,13 +709,6 @@ let
               __propagatedImpureHostDeps = computedPropagatedImpureHostDeps ++ __propagatedImpureHostDeps;
             }
           )
-          // optionalAttrs (isWindows || isCygwin) {
-            allowedImpureDLLs =
-              allowedImpureDLLs
-              ++ optionals isCygwin [
-                "KERNEL32.dll"
-              ];
-          }
           // (
             let
               attrsOutputChecks = makeOutputChecks attrs;
@@ -818,10 +817,10 @@ let
           "pos"
           "env"
         ]
-        // optionalAttrs __structuredAttrs { env = checkedEnv; }
         // {
           cmakeFlags = makeCMakeFlags attrs;
           mesonFlags = makeMesonFlags attrs;
+          ${if __structuredAttrs then "env" else null} = checkedEnv;
         }
       );
 
