@@ -700,14 +700,14 @@ in
       let
         withName = cfgToUnit: cfg: lib.nameValuePair cfg.name (cfgToUnit cfg);
       in
-      mapAttrs' (_: withName pathToUnit) cfg.paths
-      // mapAttrs' (_: withName serviceToUnit) cfg.services
-      // mapAttrs' (_: withName sliceToUnit) cfg.slices
-      // mapAttrs' (_: withName socketToUnit) cfg.sockets
-      // mapAttrs' (_: withName targetToUnit) cfg.targets
-      // mapAttrs' (_: withName timerToUnit) cfg.timers
-      // listToAttrs (map (withName mountToUnit) cfg.mounts)
-      // listToAttrs (map (withName automountToUnit) cfg.automounts);
+      genAttrs' (attrValues cfg.paths) (withName pathToUnit)
+      // genAttrs' (attrValues cfg.services) (withName serviceToUnit)
+      // genAttrs' (attrValues cfg.slices) (withName sliceToUnit)
+      // genAttrs' (attrValues cfg.sockets) (withName sliceToUnit)
+      // genAttrs' (attrValues cfg.targets) (withName sliceToUnit)
+      // genAttrs' (attrValues cfg.timers) (withName sliceToUnit)
+      // genAttrs' cfg.mounts (withName mountToUnit)
+      // genAttrs' cfg.automounts (withName automountToUnit);
 
     # Environment of PID 1
     systemd.managerEnvironment = {

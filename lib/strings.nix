@@ -15,6 +15,7 @@ in
 rec {
 
   inherit (builtins)
+    attrNames
     compareVersions
     elem
     elemAt
@@ -1165,11 +1166,9 @@ rec {
         "."
         "~"
       ];
-      toEscape = removeAttrs asciiTable unreserved;
+      toEscape = attrNames (removeAttrs asciiTable unreserved);
     in
-    replaceStrings (builtins.attrNames toEscape) (
-      lib.mapAttrsToList (_: c: "%${fixedWidthString 2 "0" (lib.toHexString c)}") toEscape
-    );
+    replaceStrings toEscape (map (c: "%${fixedWidthString 2 "0" (lib.toHexString c)}") toEscape);
 
   /**
     Quote `string` to be used safely within the Bourne shell if it has any

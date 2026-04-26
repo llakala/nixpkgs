@@ -21,6 +21,7 @@ let
     flatten
     flip
     foldr
+    genAttrs'
     generators
     getAttr
     hasAttr
@@ -987,8 +988,7 @@ in
       # Install all the user shells
       environment.systemPackages = systemShells;
 
-      environment.etc = mapAttrs' (
-        _:
+      environment.etc = genAttrs' (
         { packages, name, ... }:
         {
           name = "profiles/per-user/${name}";
@@ -999,7 +999,7 @@ in
             inherit (config.system.path) ignoreCollisions postBuild;
           };
         }
-      ) (filterAttrs (_: u: u.packages != [ ]) cfg.users);
+      ) (filter (u: u.packages != [ ]) (attrNames cfg.users));
 
       environment.profiles = [
         "$HOME/.nix-profile"

@@ -374,7 +374,7 @@ rec {
   # a superior CPU has all the features of an inferior and is able to build and test code for it
   inferiors =
     let
-      withInferiors = archs: lib.unique (archs ++ lib.flatten (lib.attrVals archs inferiors));
+      withInferiors = archs: lib.unique (archs ++ builtins.concatLists (lib.attrVals archs inferiors));
     in
     {
       # x86_64 Generic
