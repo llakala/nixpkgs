@@ -902,7 +902,7 @@ let
           removeAttrs derivationArg attrsToRemove
           // {
             # Add a name in case the original drv didn't have one
-            name = "inputDerivation" + lib.optionalString (derivationArg ? name) "-${derivationArg.name}";
+            name = "inputDerivation" + optionalString (derivationArg ? name) "-${derivationArg.name}";
             # This always only has one output
             outputs = [ "out" ];
             # This doesn’t require any system features even if the original
