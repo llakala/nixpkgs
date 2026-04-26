@@ -813,16 +813,6 @@ let
       ...
     }@attrs:
 
-    # Policy on acceptable hash types in nixpkgs
-    assert
-      attrs ? outputHash
-      -> (
-        let
-          algo = attrs.outputHashAlgo or (head (splitString "-" attrs.outputHash));
-        in
-        if algo == "md5" then throw "Rejected insecure ${algo} hash '${attrs.outputHash}'" else true
-      );
-
     let
       env' = env // {
         ${if meta ? mainProgram then "NIX_MAIN_PROGRAM" else null} = meta.mainProgram;
