@@ -1,0 +1,8 @@
+OUTPUT
+iteration 100 | commit 1a633dd3fb8bf664230a1db78f757c29dc9dbdc0 | time 6218976
+iteration 200 | commit 98e0d606964db03287803a0f51a988ea97d1e03e | time 6309976
+iteration 300 | commit cc3c8d8160d87969aedd3db21353bbcfb3faaedc | time 6312160
+iteration 400 | commit e6091b0a4ce4f2f4b8067fd4c1ad5ecaedf6eb47 | time 6218512
+iteration 500 | commit 9d829d6ed3e42b0dc752217836c233283360b3d9 | time 6419200
+iteration 600 | commit 7b49c2e635846dd4b710617617081a693971c74d | time 6295056
+iteration 700 | commit c94eba44fe7ff4feb8d55c3fe915538090b51dca | time 6293656
