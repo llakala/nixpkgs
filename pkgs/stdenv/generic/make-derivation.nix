@@ -702,7 +702,7 @@ let
           // optionalAttrs (isWindows || isCygwin) {
             allowedImpureDLLs =
               allowedImpureDLLs
-              ++ lib.optionals isCygwin [
+              ++ optionals isCygwin [
                 "KERNEL32.dll"
               ];
           }
@@ -805,7 +805,7 @@ let
 
     let
       mainProgram = meta.mainProgram or null;
-      env' = env // lib.optionalAttrs (mainProgram != null) { NIX_MAIN_PROGRAM = mainProgram; };
+      env' = env // optionalAttrs (mainProgram != null) { NIX_MAIN_PROGRAM = mainProgram; };
 
       derivationArg = makeDerivationArgument (
         removeAttrs attrs [
@@ -814,7 +814,7 @@ let
           "pos"
           "env"
         ]
-        // lib.optionalAttrs __structuredAttrs { env = checkedEnv; }
+        // optionalAttrs __structuredAttrs { env = checkedEnv; }
         // {
           cmakeFlags = makeCMakeFlags attrs;
           mesonFlags = makeMesonFlags attrs;
@@ -885,7 +885,7 @@ let
           removeAttrs derivationArg attrsToRemove
           // {
             # Add a name in case the original drv didn't have one
-            name = "inputDerivation" + lib.optionalString (derivationArg ? name) "-${derivationArg.name}";
+            name = "inputDerivation" + optionalString (derivationArg ? name) "-${derivationArg.name}";
             # This always only has one output
             outputs = [ "out" ];
             # This doesn’t require any system features even if the original
