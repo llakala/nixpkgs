@@ -809,7 +809,7 @@ let
 
     let
       env' = env // {
-        ${if meta ? mainProgram then "NIX_MAIN_PROGRAM" else null} = meta.mainProgram;
+        ${if (meta.mainProgram or null) != null then "NIX_MAIN_PROGRAM" else null} = meta.mainProgram;
       };
 
       derivationArg = makeDerivationArgument (
