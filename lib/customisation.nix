@@ -108,7 +108,7 @@ rec {
       }
       // (drv.passthru or { })
       // optionalAttrs (drv ? __spliced) {
-        __spliced = { } // (mapAttrs (_: sDrv: overrideDerivation sDrv f) drv.__spliced);
+        ${if drv ? __spliced then "__spliced" else null} = mapAttrs (_: sDrv: overrideDerivation sDrv f) drv.__spliced;
       }
     );
 
