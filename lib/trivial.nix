@@ -1169,12 +1169,7 @@ in
 
     :::
   */
-  mirrorFunctionArgs =
-    f:
-    let
-      fArgs = functionArgs f;
-    in
-    g: setFunctionArgs g fArgs;
+  mirrorFunctionArgs = f: g: setFunctionArgs g (functionArgs f);
 
   /**
     Turns any non-callable values into constant functions.
