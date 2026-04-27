@@ -41,12 +41,7 @@ let
     Note that this does not canonicalize the systems, so you'll want to make sure
     both arguments have been `elaborate`-d.
   */
-  equals =
-    let
-      # System attrs are never __functor-style attrsets, so builtins.isFunction suffices.
-      removeFunctions = a: removeAttrs a (filter (n: builtins.isFunction a.${n}) (attrNames a));
-    in
-    a: b: removeFunctions a == removeFunctions b;
+  equals = a: b: a._withoutFunctions == b._withoutFunctions;
 
   /**
     List of all Nix system doubles the nixpkgs flake will expose the package set
@@ -633,7 +628,12 @@ let
     assert foldl (pass: { assertion, message }: if assertion final then pass else throw message) true (
       final.parsed.abi.assertions or [ ]
     );
-    final;
+    final
+    // {
+      _withoutFunctions = removeAttrs final (
+        filter (n: builtins.isFunction final.${n}) (attrNames final)
+      );
+    };
 
 in
 
