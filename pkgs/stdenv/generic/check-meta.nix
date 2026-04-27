@@ -122,7 +122,13 @@ let
 
   isMarkedBroken = attrs: attrs.meta.broken or false;
 
-  hasUnsupportedPlatform = pkg: !(availableOn hostPlatform pkg);
+  hasUnsupportedPlatform =
+    let
+      # of course this saves a function call, but availableOn is smart and sets
+      # up some logic when only the platform is passed
+      availableOnHost = availableOn hostPlatform;
+    in
+    pkg: !(availableOnHost pkg);
 
   isMarkedInsecure = attrs: (attrs.meta.knownVulnerabilities or [ ]) != [ ];
 
