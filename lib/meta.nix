@@ -366,9 +366,16 @@ rec {
     :::
   */
   availableOn =
-    platform: pkg:
-    ((!pkg ? meta.platforms) || any (platformMatch platform) pkg.meta.platforms)
-    && all (elem: !platformMatch platform elem) (pkg.meta.badPlatforms or [ ]);
+    platform:
+    let
+      # By using `!(any condition list)` instead of `all (x: !condition x) list`
+      # for bad platforms, we can inline `any` here, and save a function call
+      # for every bad platform
+      matchesAnyPlatform = any (platformMatch platform);
+    in
+    pkg:
+    ((!pkg ? meta.platforms) || matchesAnyPlatform pkg.meta.platforms)
+    && ((!pkg ? meta.badPlatforms) || !(matchesAnyPlatform pkg.meta.badPlatforms));
 
   /**
     Mapping of SPDX ID to the attributes in lib.licenses.
