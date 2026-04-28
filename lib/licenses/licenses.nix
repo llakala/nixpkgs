@@ -22,16 +22,10 @@ let
         redistributable
         ;
       licenseType = "simple";
-    }
-    // optionalAttrs (attrs ? spdxId) {
-      inherit spdxId;
-      url = "https://spdx.org/licenses/${spdxId}.html";
-    }
-    // optionalAttrs (attrs ? url) {
-      inherit url;
-    }
-    // optionalAttrs (attrs ? fullName) {
-      inherit fullName;
+      ${if attrs ? url || attrs ? spdxId then "url" else null} =
+        if attrs ? spdxId then "https://spdx.org/licenses/${spdxId}.html" else url;
+      ${if attrs ? fullName then "fullName" else null} = url;
+      ${if attrs ? spdxId then "spdxId" else null} = spdxId;
     };
 
 in
