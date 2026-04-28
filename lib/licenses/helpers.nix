@@ -48,6 +48,54 @@ rec {
       throw "Unknown license type or legacy license";
 
   /**
+    Evaluate a license expression for a given property name. The property must
+    be defined as a boolean attribute of all licenses passed.
+
+    # Example
+
+    ```nix
+    evaluateNamedProperty "deprecated" true (with lib.licenses; AND [ ncsa (WITH asl20 llvm-exception) ])
+    ```
+    # Type
+
+    ```
+    evaluateProperty :: String -> Bool -> AttrSet -> Bool
+    ```
+
+    # Arguments
+
+    - [name] name of the attribute to check
+    - [permissive] whether to apply checks permissive or reciprocal
+    - [license] license expression to check
+  */
+  evaluateNamedProperty =
+    name: permissive:
+    let
+      OR = if permissive then lib.any else lib.all;
+      AND = if permissive then lib.all else lib.any;
+      evaluateSubProperty = evaluateNamedProperty name permissive;
+    in
+    license:
+    if license.licenseType == "simple" then
+      license.${name}
+    else if license.licenseType == "compound" then
+      if license.operator == "OR" then
+        OR evaluateSubProperty license.licenses
+      else if license.operator == "AND" then
+        AND evaluateSubProperty license.licenses
+      else
+        throw "Unknown license operator"
+    else if license.licenseType == "exception" then
+      AND evaluateSubProperty [
+        license.license
+        license.exception
+      ]
+    else if license.licenseType == "plus" then
+      evaluateSubProperty license.license
+    else
+      throw "Unknown license type or legacy license";
+
+  /**
     Check whether a license expression is free.
 
     # Example
@@ -67,7 +115,7 @@ rec {
 
     - [license] License expression to check if free
   */
-  isFree = evaluateProperty (x: x.free) true;
+  isFree = evaluateNamedProperty "free" true;
 
   /**
     Check whether a license expression is redistributable.
@@ -89,7 +137,7 @@ rec {
 
     - [license] License expression to check if redistributable
   */
-  isRedistributable = evaluateProperty (x: x.redistributable) true;
+  isRedistributable = evaluateNamedProperty "redistributable" true;
 
   /**
     Check whether any of the given licenses is required in the license expression.
