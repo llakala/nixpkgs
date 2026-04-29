@@ -112,7 +112,7 @@ if minbootSupported then
       xz-static
     ];
     disallowedInFinalStdenv = lib.attrsets.catAttrs "out" (
-      builtins.filter (drv: lib.attrsets.isDerivation drv) (builtins.attrValues minimal-bootstrap)
+      builtins.filter lib.attrsets.isDerivation (builtins.attrValues minimal-bootstrap)
     );
   }
 else
