@@ -424,20 +424,17 @@ let
         hardeningEnable ++ remove "all" hardeningDisable
       );
 
-      checkDependencyList = checkDependencyList' [ ];
-      checkDependencyList' =
-        positions: name: deps:
+      checkDependencyList =
+        name:
         imap1 (
           index: dep:
           if dep == null || isDerivation dep || isString dep || builtins.isPath dep then
             dep
-          else if isList dep then
-            checkDependencyList' ([ index ] ++ positions) name dep
           else
             throw "Dependency is not of a valid type: ${
-              concatMapStrings (ix: "element ${toString ix} of ") ([ index ] ++ positions)
+              concatMapStrings (ix: "element ${toString ix} of ") index
             }${name} for ${attrs.name or attrs.pname}"
-        ) deps;
+        );
     in
     if erroneousHardeningFlags != [ ] then
       abort (
