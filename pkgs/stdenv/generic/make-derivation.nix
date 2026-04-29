@@ -13,6 +13,7 @@ stdenv:
 let
   # Lib attributes are inherited to the lexical scope for performance reasons.
   inherit (lib)
+    all
     assertMsg
     attrNames
     concatLists
@@ -31,6 +32,7 @@ let
     isDerivation
     isInt
     isList
+    isPath
     isString
     mapAttrs
     mapNullable
@@ -427,17 +429,22 @@ let
       checkDependencyList = checkDependencyList' [ ];
       checkDependencyList' =
         positions: name: deps:
-        imap1 (
-          index: dep:
-          if dep == null || isDerivation dep || isString dep || builtins.isPath dep then
-            dep
-          else if isList dep then
-            checkDependencyList' ([ index ] ++ positions) name dep
-          else
-            throw "Dependency is not of a valid type: ${
-              concatMapStrings (ix: "element ${toString ix} of ") ([ index ] ++ positions)
-            }${name} for ${attrs.name or attrs.pname}"
-        ) deps;
+        if all (dep: dep == null || isDerivation dep || isString dep || isPath dep) deps then
+          deps
+        else
+          # iterate again with the index if an invalid type was passed, or we
+          # need to recurse into a sublist. making sublists take longer is
+          # worth it, since nobody uses them and handling them makes normal
+          # dependencies slower
+          imap1 (
+            index: dep:
+            if isList dep then
+              checkDependencyList' ([ index ] ++ positions) name dep
+            else
+              throw "Dependency is not of a valid type: ${
+                concatMapStrings (ix: "element ${toString ix} of ") ([ index ] ++ positions)
+              }${name} for ${attrs.name or attrs.pname}"
+          ) deps;
     in
     if erroneousHardeningFlags != [ ] then
       abort (
