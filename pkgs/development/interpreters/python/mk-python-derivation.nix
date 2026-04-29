@@ -52,9 +52,6 @@ let
     stringLength
     ;
 
-  getOptionalAttrs =
-    names: attrs: lib.getAttrs (lib.intersectLists names (lib.attrNames attrs)) attrs;
-
   leftPadName =
     name: against:
     let
@@ -436,25 +433,25 @@ lib.extendMkDerivation {
         isBuildPythonPackage = python.meta.platforms;
       }
       // meta;
-    }
-    // optionalAttrs (attrs ? checkPhase) {
+
       # If given use the specified checkPhase, otherwise use the setup hook.
       # Longer-term we should get rid of `checkPhase` and use `installCheckPhase`.
-      installCheckPhase = attrs.checkPhase;
-    }
-    // (
-      let
-        deprecatedFlagNotEmpty =
-          attrs ? pytestFlagsArray && attrs.pytestFlagsArray != null && attrs.pytestFlagsArray != [ ];
-        pos = builtins.unsafeGetAttrPos "pytestFlagsArray" attrs;
-      in
-      {
-        ${if deprecatedFlagNotEmpty then "pytestFlagsArray" else null} = throw ''
+      ${if attrs ? checkPhase then "installCheckPhase" else null} = attrs.checkPhase;
+
+      ${
+        if attrs ? pytestFlagsArray && attrs.pytestFlagsArray != null && attrs.pytestFlagsArray != [ ] then
+          "pytestFlagsArray"
+        else
+          null
+      } =
+        let
+          pos = builtins.unsafeGetAttrPos "pytestFlagsArray" attrs;
+        in
+        throw ''
           buildPythonPackage: Deprecated flag pytestFlagsArray found at ${pos.file}:${toString pos.line}
             Use pytestFlags or (enabled|disabled)(TestPaths|Tests|TestMarks) instead.
         '';
-      }
-    )
+    }
     //
       lib.mapAttrs
         (
@@ -463,13 +460,11 @@ lib.extendMkDerivation {
             attrs.${name} == [ ]
           ) "${lib.getName finalAttrs}: ${name} must be unspecified, null or a non-empty list." attrs.${name}
         )
-        (
-          getOptionalAttrs [
-            "enabledTestMarks"
-            "enabledTestPaths"
-            "enabledTests"
-          ] attrs
-        );
+        {
+          ${if attrs ? enabledTestMarks then "enabledTestMarks" else null} = attrs.enabledTestMarks;
+          ${if attrs ? enabledTestPaths then "enabledTestPaths" else null} = attrs.enabledTestPaths;
+          ${if attrs ? enabledTests then "enabledTests" else null} = attrs.enabledTests;
+        };
 
   # This derivation transformation function must be independent to `attrs`
   # for fixed-point arguments support in the future.
