@@ -16,9 +16,6 @@
 }:
 
 let
-  getOptionalAttrs =
-    names: attrs: lib.getAttrs (lib.intersectLists names (lib.attrNames attrs)) attrs;
-
   interpolateString =
     s:
     if lib.isList s then
@@ -111,20 +108,18 @@ lib.extendMkDerivation {
           throw "cargoHash, cargoVendorDir, cargoDeps, or cargoLock must be set"
         else
           fetchCargoVendor (
-            getOptionalAttrs [
-              "name"
-              "pname"
-              "version"
-              "src"
-              "srcs"
-              "sourceRoot"
-              "cargoRoot"
-              "preUnpack"
-              "unpackPhase"
-              "postUnpack"
-            ] finalAttrs
-            // {
-              ${if cargoDepsName != null then "name" else null} = cargoDepsName;
+            {
+              ${if finalAttrs ? name || cargoDepsName != null then "name" else null} =
+                if cargoDepsName != null then cargoDepsName else finalAttrs.name;
+              ${if finalAttrs ? pname then "pname" else null} = finalAttrs.pname;
+              ${if finalAttrs ? version then "version" else null} = finalAttrs.version;
+              ${if finalAttrs ? src then "src" else null} = finalAttrs.src;
+              ${if finalAttrs ? srcs then "srcs" else null} = finalAttrs.srcs;
+              ${if finalAttrs ? sourceRoot then "sourceRoot" else null} = finalAttrs.sourceRoot;
+              ${if finalAttrs ? cargoRoot then "cargoRoot" else null} = finalAttrs.cargoRoot;
+              ${if finalAttrs ? preUnpack then "preUnpack" else null} = finalAttrs.preUnpack;
+              ${if finalAttrs ? unpackPhase then "unpackPhase" else null} = finalAttrs.unpackPhase;
+              ${if finalAttrs ? postUnpack then "postUnpack" else null} = finalAttrs.postUnpack;
               patches = cargoPatches;
               hash = args.cargoHash;
             }
