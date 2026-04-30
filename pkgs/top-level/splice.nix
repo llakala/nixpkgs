@@ -116,11 +116,13 @@ in
 
   # We use `callPackage' to be able to omit function arguments that can be
   # obtained from `pkgs` or `buildPackages`.
-  # Use `newScope' for sets of packages in `pkgs' (see e.g. `gnome' below).
-  callPackage = pkgs.newScope { };
+  callPackage = lib.callPackageWith pkgsForCall;
+
+  callByNameFile = lib.customisation.callByNameFile pkgsForCall;
 
   callPackages = lib.callPackagesWith pkgsForCall;
 
+  # Use `newScope' for sets of packages in `pkgs' (see e.g. `gnome' below).
   newScope = extra: lib.callPackageWith (pkgsForCall // extra);
 
   pkgs = if actuallySplice then splicedPackages // { recurseForDerivations = false; } else pkgs;

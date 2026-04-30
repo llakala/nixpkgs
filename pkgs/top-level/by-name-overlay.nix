@@ -42,13 +42,22 @@ let
   packageFiles = mergeAttrsList (mapAttrsToList namesForShard (readDir baseDirectory));
 in
 self: super:
-{
-  # This attribute is necessary to allow CI to ensure that all packages defined in `pkgs/by-name`
-  # don't have an overriding definition in `all-packages.nix` with an empty (`{ }`) second `callPackage` argument.
-  # It achieves that with an overlay that modifies both `callPackage` and this attribute to signal whether `callPackage` is used
-  # and whether it's defined by this file here or `all-packages.nix`.
-  # TODO: This can be removed once `pkgs/by-name` can handle custom `callPackage` arguments without `all-packages.nix` (or any other way of achieving the same result).
-  # Because at that point the code in ./stage.nix can be changed to not allow definitions in `all-packages.nix` to override ones from `pkgs/by-name` anymore and throw an error if that happens instead.
-  _internalCallByNamePackageFile = file: self.callPackage file { };
-}
+(
+  if super ? callByNameFile then
+    {
+      # This attribute is necessary to allow CI to ensure that all packages defined in `pkgs/by-name`
+      # don't have an overriding definition in `all-packages.nix` with an empty (`{ }`) second `callPackage` argument.
+      # It achieves that with an overlay that modifies both `callPackage` and this attribute to signal whether `callPackage` is used
+      # and whether it's defined by this file here or `all-packages.nix`.
+      # TODO: This can be removed once `pkgs/by-name` can handle custom `callPackage` arguments without `all-packages.nix` (or any other way of achieving the same result).
+      # Because at that point the code in ./stage.nix can be changed to not allow definitions in `all-packages.nix` to override ones from `pkgs/by-name` anymore and throw an error if that happens instead.
+      _internalCallByNamePackageFile = self.callByNameFile;
+    }
+  else
+  builtins.trace super
+    {
+      # For package sets that only provide callPackage
+      _internalCallByNamePackageFile = file: self.callPackage file { };
+    }
+)
 // mapAttrs (name: self._internalCallByNamePackageFile) packageFiles

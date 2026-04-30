@@ -34,6 +34,40 @@ let
     ;
   inherit (lib.strings) levenshtein levenshteinAtMost;
 
+  filterTrueAttrs = set: removeAttrs set (filter (name: set.${name}) (attrNames set));
+  makeErrorMessage =
+    functionName: autoArgs: fn: args: fargs: arg:
+    let
+      # Get a list of suggested argument names for a given missing one
+      getSuggestions =
+        arg:
+        pipe (autoArgs // args) [
+          attrNames
+          # Only use ones that are at most 2 edits away. While mork would work,
+          # levenshteinAtMost is only fast for 2 or less.
+          (filter (levenshteinAtMost 2 arg))
+          # Put strings with shorter distance first
+          (sortOn (levenshtein arg))
+          # Only take the first couple results
+          (take 3)
+          # Quote all entries
+          (map (x: "\"" + x + "\""))
+        ];
+
+      prettySuggestions =
+        suggestions:
+        if suggestions == [ ] then
+          ""
+        else if length suggestions == 1 then
+          ", did you mean ${elemAt suggestions 0}?"
+        else
+          ", did you mean ${concatStringsSep ", " (lib.init suggestions)} or ${lib.last suggestions}?";
+
+      loc = unsafeGetAttrPos arg fargs;
+      loc' = if loc != null then loc.file + ":" + toString loc.line else "<unknown location>";
+    in
+    "${functionName}: Function called without required argument \"${arg}\" at ${loc'}${prettySuggestions (getSuggestions arg)}";
+
 in
 rec {
 
@@ -267,41 +301,6 @@ rec {
     ```
   */
   callPackageWith =
-    let
-      filterTrueAttrs = set: removeAttrs set (filter (name: set.${name}) (attrNames set));
-      makeErrorMessage =
-        autoArgs: fn: args: fargs: arg:
-        let
-          # Get a list of suggested argument names for a given missing one
-          getSuggestions =
-            arg:
-            pipe (autoArgs // args) [
-              attrNames
-              # Only use ones that are at most 2 edits away. While mork would work,
-              # levenshteinAtMost is only fast for 2 or less.
-              (filter (levenshteinAtMost 2 arg))
-              # Put strings with shorter distance first
-              (sortOn (levenshtein arg))
-              # Only take the first couple results
-              (take 3)
-              # Quote all entries
-              (map (x: "\"" + x + "\""))
-            ];
-
-          prettySuggestions =
-            suggestions:
-            if suggestions == [ ] then
-              ""
-            else if length suggestions == 1 then
-              ", did you mean ${elemAt suggestions 0}?"
-            else
-              ", did you mean ${concatStringsSep ", " (lib.init suggestions)} or ${lib.last suggestions}?";
-
-          loc = unsafeGetAttrPos arg fargs;
-          loc' = if loc != null then loc.file + ":" + toString loc.line else "<unknown location>";
-        in
-        "lib.customisation.callPackageWith: Function called without required argument \"${arg}\" at ${loc'}${prettySuggestions (getSuggestions arg)}";
-    in
     autoArgs: fn: args:
     let
       f = if isFunction fn then fn else import fn;
@@ -323,12 +322,44 @@ rec {
     if missingArgs == { } then
       makeOverridable f allArgs
     else
-      # Only show the error for the first missing argument
       # This needs to be an abort so it can't be caught with `builtins.tryEval`,
       # which is used by nix-env and ofborg to filter out packages that don't evaluate.
       # This way we're forced to fix such errors in Nixpkgs,
       # which is especially relevant with allowAliases = false
-      abort (makeErrorMessage autoArgs fn args fargs (head (attrNames missingArgs)));
+      abort (
+        # Only show the error for the first missing argument
+        makeErrorMessage "lib.customisation.callPackageWith" autoArgs fn args fargs (
+          head (attrNames missingArgs)
+        )
+      );
+
+  callByNameFile =
+    autoArgs: file:
+    let
+      fn = import file;
+      fargs = functionArgs fn;
+
+      # All arguments that will be passed to the function
+      allArgs = intersectAttrs fargs autoArgs;
+
+      # a list of argument names that the function requires, but
+      # wouldn't be passed to it
+      missingArgs =
+        # Filter out arguments that have a default value
+        filterTrueAttrs
+          # Filter out arguments that would be passed
+          (removeAttrs fargs (attrNames allArgs));
+
+    in
+    if missingArgs == { } then
+      makeOverridable fn allArgs
+    else
+      abort (
+        # Only show the error for the first missing argument
+        makeErrorMessage "lib.customisation.callByNameFile" autoArgs fn {} fargs (
+          head (attrNames missingArgs)
+        )
+      );
 
   /**
     Like `callPackage`, but for a function that returns an attribute

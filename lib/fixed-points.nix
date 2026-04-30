@@ -449,7 +449,7 @@ rec {
   */
   makeExtensibleWithCustomName =
     extenderName: rattrs:
-    fix' (
+    fix (
       self:
       (rattrs self)
       // {
