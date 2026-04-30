@@ -19,7 +19,6 @@ let
     sortOn
     take
     length
-    filterAttrs
     flip
     head
     pipe
@@ -269,6 +268,7 @@ rec {
   */
   callPackageWith =
     let
+      filterTrueAttrs = set: removeAttrs set (filter (name: set.${name}) (attrNames set));
       makeErrorMessage =
         autoArgs: fn: args: fargs: arg:
         let
@@ -315,7 +315,7 @@ rec {
       # wouldn't be passed to it
       missingArgs =
         # Filter out arguments that have a default value
-        filterAttrs (name: value: !value)
+        filterTrueAttrs
           # Filter out arguments that would be passed
           (removeAttrs fargs (attrNames allArgs));
 
