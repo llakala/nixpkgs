@@ -17,20 +17,19 @@ let
   # thanks to Nix's import-value cache.
   autoCalledPackages = import ./by-name-overlay.nix ../by-name;
 in
-
+## Misc parameters kept the same for all stages
+##
 {
-  ## Misc parameters kept the same for all stages
-  ##
-
   # Utility functions, could just import but passing in for efficiency
   lib,
 
   # Use to reevaluate Nixpkgs
   nixpkgsFun,
+}:
 
-  ## Other parameters
-  ##
-
+## Other parameters
+##
+{
   # Either null or an object in the form:
   #
   #   {
