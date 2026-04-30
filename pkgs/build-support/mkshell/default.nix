@@ -25,7 +25,7 @@ lib.extendMkDerivation {
     let
       mergeInputs =
         name:
-        (attrs.${name} or [ ])
+        attrs.${name} or [ ]
         ++
           # 1. get all `{build,nativeBuild,...}Inputs` from the elements of `inputsFrom`
           # 2. since that is a list of lists, `flatten` that into a regular list
@@ -36,14 +36,18 @@ lib.extendMkDerivation {
     {
       inherit name;
 
-      buildInputs = mergeInputs "buildInputs";
-      nativeBuildInputs = packages ++ (mergeInputs "nativeBuildInputs");
-      propagatedBuildInputs = mergeInputs "propagatedBuildInputs";
-      propagatedNativeBuildInputs = mergeInputs "propagatedNativeBuildInputs";
-
-      shellHook = lib.concatStringsSep "\n" (
-        lib.catAttrs "shellHook" (lib.reverseList inputsFrom ++ [ attrs ])
+      buildInputs = lib.optionals (inputsFrom == [ ]) (mergeInputs "buildInputs");
+      nativeBuildInputs = packages ++ lib.optionals (inputsFrom == [ ]) (mergeInputs "nativeBuildInputs");
+      propagatedBuildInputs = lib.optionals (inputsFrom == [ ]) (mergeInputs "propagatedBuildInputs");
+      propagatedNativeBuildInputs = lib.optionals (inputsFrom == [ ]) (
+        mergeInputs "propagatedNativeBuildInputs"
       );
+
+      shellHook =
+        if inputsFrom == [ ] then
+          attrs.shellHook or ""
+        else
+          lib.concatStringsSep "\n" (lib.catAttrs "shellHook" (lib.reverseList inputsFrom ++ [ attrs ]));
 
       phases = attrs.phases or [ "buildPhase" ];
 
