@@ -428,7 +428,7 @@ rec {
 
     :::
   */
-  replicate = n: s: concatStrings (lib.lists.replicate n s);
+  replicate = n: s: if n <= 0 then s else s + replicate (n - 1) (s+s);
 
   /**
     Remove leading and trailing whitespace from a string `s`.
