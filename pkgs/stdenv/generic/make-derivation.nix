@@ -13,7 +13,6 @@ stdenv:
 let
   # Lib attributes are inherited to the lexical scope for performance reasons.
   inherit (lib)
-    assertMsg
     attrNames
     concatLists
     concatMap
@@ -538,9 +537,8 @@ let
                 attrs.name + hostSuffix
               else
                 # we cannot coerce null to a string below
-                assert assertMsg (
-                  attrs ? version && attrs.version != null
-                ) "The `version` attribute cannot be null.";
+                assert
+                  (attrs ? version && attrs.version != null) || throw "The `version` attribute cannot be null.";
                 "${attrs.pname}${staticMarker}${hostSuffix}-${attrs.version}"
             );
 
