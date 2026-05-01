@@ -21,7 +21,7 @@ let
     elem
     extendDerivation
     filter
-    filterAttrs
+    attrValues
     getDev
     head
     imap1
@@ -714,7 +714,9 @@ let
           ${if __structuredAttrs then "outputChecks" else null} =
             let
               attrsOutputChecks = makeOutputChecks attrs;
-              attrsOutputChecksFiltered = filterAttrs (_: v: v != null) attrsOutputChecks;
+              attrsOutputChecksFiltered = removeAttrs attrsOutputChecks (
+                filter (x: x == null) (attrValues attrsOutputChecks)
+              );
             in
             builtins.listToAttrs (
               map (name: {
