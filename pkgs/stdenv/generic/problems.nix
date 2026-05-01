@@ -390,13 +390,17 @@ rec {
           parted = partition (m: isNull m.${ident}) list;
           # We only use the unspecific ones to compute the fallback
           fallback = nextLevel parted.right;
-          specific = pipe parted.wrong [
-            (groupBy (m: m.${ident}))
-            # For ident-specific handlers, the unspecific ones also apply
-            (mapAttrs (package: handlers: nextLevel (handlers ++ parted.right)))
-            # Memory optimisation: Don't need a specific handler if it would end up the same as the fallback
-            (filterAttrs (name: res: res != fallback))
-          ];
+          specific =
+            if parted.wrong == [ ] then
+              { }
+            else
+              pipe parted.wrong [
+                (groupBy (m: m.${ident}))
+                # For ident-specific handlers, the unspecific ones also apply
+                (mapAttrs (package: handlers: nextLevel (handlers ++ parted.right)))
+                # Memory optimisation: Don't need a specific handler if it would end up the same as the fallback
+                (filterAttrs (name: res: res != fallback))
+              ];
         in
         # Optimisation in case it's always the same handler,
         # can propagate up for the entire switch to just be a string

@@ -718,7 +718,7 @@ let
             let
               attrsOutputChecks = makeOutputChecks attrs;
               attrsOutputChecksFiltered = removeAttrs attrsOutputChecks (
-                filter (x: x == null) (attrValues attrsOutputChecks)
+                filter (v: v == null) (attrValues attrsOutputChecks)
               );
             in
             builtins.listToAttrs (
