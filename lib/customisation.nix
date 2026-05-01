@@ -406,25 +406,44 @@ rec {
       commonAttrs =
         drv // (listToAttrs outputsList) // { all = map (x: x.value) outputsList; } // passthru;
 
-      outputsList = map (outputName: {
-        name = outputName;
-        value = commonAttrs // {
-          inherit (drv.${outputName}) type outputName;
-          outputSpecified = true;
-          drvPath =
-            assert condition;
-            drv.${outputName}.drvPath;
-          outPath =
-            assert condition;
-            drv.${outputName}.outPath;
-          # TODO: give the derivation control over the outputs.
-          #       `overrideAttrs` may not be the only attribute that needs
-          #       updating when switching outputs.
-          # TODO: also add overrideAttrs when overrideAttrs is not custom, e.g. when not splicing.
-          ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
-            f: (passthru.overrideAttrs f).${outputName};
-        };
-      }) (drv.outputs or [ "out" ]);
+      outputsList =
+        if (!drv ? outputs || drv.outputs == [ "out" ]) then
+          [
+            {
+              name = "out";
+              value = commonAttrs // {
+                inherit (drv.out) type outputName;
+                outputSpecified = true;
+                drvPath =
+                  assert condition;
+                  drv.out.drvPath;
+                outPath =
+                  assert condition;
+                  drv.out.outPath;
+                ${if passthru ? overrideAttrs then "overrideAttrs" else null} = f: (passthru.overrideAttrs f).out;
+              };
+            }
+          ]
+        else
+          map (outputName: {
+            name = outputName;
+            value = commonAttrs // {
+              inherit (drv.${outputName}) type outputName;
+              outputSpecified = true;
+              drvPath =
+                assert condition;
+                drv.${outputName}.drvPath;
+              outPath =
+                assert condition;
+                drv.${outputName}.outPath;
+              # TODO: give the derivation control over the outputs.
+              #       `overrideAttrs` may not be the only attribute that needs
+              #       updating when switching outputs.
+              # TODO: also add overrideAttrs when overrideAttrs is not custom, e.g. when not splicing.
+              ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
+                f: (passthru.overrideAttrs f).${outputName};
+            };
+          }) (drv.outputs);
     in
     commonAttrs
     // {
