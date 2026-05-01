@@ -833,21 +833,29 @@ let
       checkedEnv =
         let
           overlappingNames = attrNames (builtins.intersectAttrs env' derivationArg);
-          errors = lib.concatMapStringsSep "\n" (
-            name:
-            "  - ${name}: in `env`: ${lib.generators.toPretty { } env'.${name}}; in derivation arguments: ${
-                lib.generators.toPretty { } derivationArg.${name}
-              }"
-          ) overlappingNames;
         in
-        assert assertMsg (isAttrs env && !isDerivation env)
-          "`env` must be an attribute set of environment variables. Set `env.env` or pick a more specific name.";
-        assert assertMsg (overlappingNames == [ ])
-          "The `env` attribute set cannot contain any attributes passed to derivation. The following attributes are overlapping:\n${errors}";
+        assert
+          (isAttrs env && !isDerivation env)
+          || throw "`env` must be an attribute set of environment variables. Set `env.env` or pick a more specific name.";
+        assert
+          (overlappingNames == [ ])
+          || throw (
+            let
+              errors = lib.concatMapStringsSep "\n" (
+                name:
+                "  - ${name}: in `env`: ${lib.generators.toPretty { } env'.${name}}; in derivation arguments: ${
+                    lib.generators.toPretty { } derivationArg.${name}
+                  }"
+              ) overlappingNames;
+
+            in
+            "The `env` attribute set cannot contain any attributes passed to derivation. The following attributes are overlapping:\n${errors}"
+          );
         mapAttrs (
           n: v:
-          assert assertMsg (isString v || isBool v || isInt v || isDerivation v)
-            "The `env` attribute set can only contain derivation, string, boolean or integer attributes. The `${n}` attribute is of type ${builtins.typeOf v}.";
+          assert
+            (isString v || isBool v || isInt v || isDerivation v)
+            || throw "The `env` attribute set can only contain derivation, string, boolean or integer attributes. The `${n}` attribute is of type ${builtins.typeOf v}.";
           v
         ) env';
 
