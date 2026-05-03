@@ -18,6 +18,7 @@ let
     let
       majorVersion = lib.versions.major majorMinorVersion;
       atLeast = lib.versionAtLeast majorMinorVersion;
+      targetIsBuild = lib.systems.equals stdenv.targetPlatform stdenv.buildPlatform;
       attrName = "gcc${lib.replaceStrings [ "." ] [ "" ] majorMinorVersion}";
       pkg = lib.lowPrio (
         wrapCC (
@@ -26,16 +27,8 @@ let
             inherit majorMinorVersion;
             reproducibleBuild = true;
             profiledCompiler = false;
-            libcCross =
-              if !lib.systems.equals stdenv.targetPlatform stdenv.buildPlatform then
-                targetPackages.libc or pkgs.libc
-              else
-                null;
-            threadsCross =
-              if !lib.systems.equals stdenv.targetPlatform stdenv.buildPlatform then
-                targetPackages.threads or pkgs.threads
-              else
-                { };
+            libcCross = if !targetIsBuild then (targetPackages.libc or pkgs.libc) else null;
+            threadsCross = if !targetIsBuild then (targetPackages.threads or pkgs.threads) else { };
             isl = if stdenv.hostPlatform.isDarwin then null else isl_0_20;
             # do not allow version skew when cross-building gcc
             #
