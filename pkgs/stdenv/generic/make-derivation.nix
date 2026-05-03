@@ -589,14 +589,14 @@ let
                 && (
                   !(attrs ? outputHash)
                   ||
-                    depsBuildTarget == [ ]
-                    && depsBuildTargetPropagated == [ ]
-                    && depsHostHost == [ ]
-                    && depsHostHostPropagated == [ ]
-                    && buildInputs == [ ]
-                    && propagatedBuildInputs == [ ]
-                    && depsTargetTarget == [ ]
-                    && depsTargetTargetPropagated == [ ]
+                    hostTargetOutputs == [ ]
+                    && propagatedHostTargetOutputs == [ ]
+                    && buildTargetOutputs == [ ]
+                    && propagatedBuildTargetOutputs == [ ]
+                    && hostHostOutputs == [ ]
+                    && propagatedHostHostOutputs == [ ]
+                    && targetTargetOutputs == [ ]
+                    && propagatedTargetTargetOutputs == [ ]
 
                 )
               ) stdenvHostSuffix;
