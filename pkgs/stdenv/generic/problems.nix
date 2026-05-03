@@ -451,19 +451,22 @@ rec {
     in
     if
       # Fast path for when there's no problem that needs to be handled
-      # No automatic problems that needs handling
-      all (
-        problem:
-        problem.condition attrs -> handlerForProblem pname problem.kindName problem.kindName == "ignore"
-      ) automaticProblemsConfigCache
-      && (
-        # No manual problems
-        manualProblems == { }
-        # Or all manual problems are ignored
-        || all (name: handlerForProblem pname name (manualProblems.${name}.kind or name) == "ignore") (
-          attrNames manualProblems
+      # Avoid doing any checks if meta is undefined
+      !attrs ? meta
+      ||
+        # No automatic problems that needs handling
+        all (
+          problem:
+          problem.condition attrs -> handlerForProblem pname problem.kindName problem.kindName == "ignore"
+        ) automaticProblemsConfigCache
+        && (
+          # No manual problems
+          manualProblems == { }
+          # Or all manual problems are ignored
+          || all (name: handlerForProblem pname name (manualProblems.${name}.kind or name) == "ignore") (
+            attrNames manualProblems
+          )
         )
-      )
     then
       null
     else
