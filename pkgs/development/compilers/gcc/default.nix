@@ -425,9 +425,7 @@ pipe
           identifiers
           ;
       };
-    }
-    // optionalAttrs enableMultilib {
-      dontMoveLib64 = true;
+      ${if enableMultilib then "dontMoveLib64" else null} = true;
     }
   ))
   [
