@@ -1,6 +1,6 @@
 {
   lib,
-  stdenv,
+  stdenvNoCC,
   rtpPath,
   toVimPlugin,
 }:
@@ -22,8 +22,8 @@
       meta ? { },
       ...
     }@attrs:
-    let
-      drv = stdenv.mkDerivation (
+    toVimPlugin (
+      stdenvNoCC.mkDerivation (
         attrs
         // {
           name = lib.warnIf (attrs ? vimprefix) "The 'vimprefix' is now hardcoded in toVimPlugin" name;
@@ -53,8 +53,7 @@
           }
           // meta;
         }
-      );
-    in
-    toVimPlugin drv;
+      )
+    );
 
 }

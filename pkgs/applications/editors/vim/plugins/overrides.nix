@@ -332,14 +332,7 @@ assertNoAdditions {
     meta = old.meta // {
       description = "VS Code like winbar for Neovim";
       homepage = "https://github.com/utilyre/barbecue.nvim";
-      license = lib.licenses.mit;
       maintainers = with lib.maintainers; [ lightquantum ];
-    };
-  });
-
-  base16-vim = super.base16-vim.overrideAttrs (old: {
-    meta = old.meta // {
-      license = lib.licenses.mit;
     };
   });
 
@@ -440,12 +433,6 @@ assertNoAdditions {
     # depends on bufferline.lua being loaded first
     nvimSkipModules = [ "bufferline.commands" ];
   };
-
-  bufresize-nvim = super.bufresize-nvim.overrideAttrs (old: {
-    meta = old.meta // {
-      license = lib.licenses.mit;
-    };
-  });
 
   bullets-vim = super.bullets-vim.overrideAttrs (old: {
     meta = old.meta // {
@@ -987,10 +974,6 @@ assertNoAdditions {
         --replace-fail "let node = s:GetCommand('copilot_node_command', ['node'])" \
                        "let node = s:GetCommand('copilot_node_command', ['${nodejs}/bin/node'])"
     '';
-
-    meta = old.meta // {
-      license = lib.licenses.unfree;
-    };
   });
 
   CopilotChat-nvim = super.CopilotChat-nvim.overrideAttrs {
@@ -1148,9 +1131,6 @@ assertNoAdditions {
 
   ddc-source-lsp = super.ddc-source-lsp.overrideAttrs (old: {
     dependencies = [ self.ddc-vim ];
-    meta = old.meta // {
-      license = lib.licenses.mit;
-    };
   });
 
   ddc-ui-native = super.ddc-ui-native.overrideAttrs {
@@ -1183,7 +1163,6 @@ assertNoAdditions {
     ];
     meta = old.meta // {
       description = "Overloaded ; and , keys in Neovim";
-      license = lib.licenses.mit;
       maintainers = with lib.maintainers; [ m3l6h ];
     };
   });
@@ -1230,7 +1209,6 @@ assertNoAdditions {
     meta = old.meta // {
       description = "Address-completion for khard via deoplete";
       homepage = "https://github.com/nicoe/deoplete-khard";
-      license = lib.licenses.mit;
       maintainers = with lib.maintainers; [ jorsn ];
     };
   });
@@ -1264,13 +1242,6 @@ assertNoAdditions {
       pandoc
     ];
   };
-
-  devdocs-vim = super.devdocs-vim.overrideAttrs (old: {
-    meta = old.meta // {
-      # README contains the MIT license text.
-      license = lib.licenses.mit;
-    };
-  });
 
   diagram-nvim = super.diagram-nvim.overrideAttrs {
     dependencies = [ self.image-nvim ];
