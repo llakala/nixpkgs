@@ -521,12 +521,13 @@ in
 
         # TODO(amjoseph): It is not yet entirely clear why this is necessary.
         # Something strange is going on with xgcc and libstdc++ on pkgsMusl.
-        patchelf = super.patchelf.overrideAttrs (
-          previousAttrs:
-          lib.optionalAttrs super.stdenv.hostPlatform.isMusl {
-            NIX_CFLAGS_COMPILE = (previousAttrs.NIX_CFLAGS_COMPILE or "") + " -static-libstdc++";
-          }
-        );
+        patchelf =
+          if super.stdenv.hostPlatform.isMusl then
+            super.patchelf.overrideAttrs (previousAttrs: {
+              NIX_CFLAGS_COMPILE = (previousAttrs.NIX_CFLAGS_COMPILE or "") + " -static-libstdc++";
+            })
+          else
+            super.patchelf;
 
       };
 
