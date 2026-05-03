@@ -20,49 +20,51 @@ let
       atLeast = lib.versionAtLeast majorMinorVersion;
       targetIsBuild = lib.systems.equals stdenv.targetPlatform stdenv.buildPlatform;
       attrName = "gcc${lib.replaceStrings [ "." ] [ "" ] majorMinorVersion}";
-      pkg = lib.lowPrio (
-        wrapCC (
-          callPackage ./default.nix {
-            inherit noSysDirs;
-            inherit majorMinorVersion;
-            reproducibleBuild = true;
-            profiledCompiler = false;
-            libcCross = if !targetIsBuild then (targetPackages.libc or pkgs.libc) else null;
-            threadsCross = if !targetIsBuild then (targetPackages.threads or pkgs.threads) else { };
-            isl = if stdenv.hostPlatform.isDarwin then null else isl_0_20;
-            # do not allow version skew when cross-building gcc
-            #
-            # When `gcc` is cross-built (`build` != `target` && `host` == `target`)
-            # `gcc` assumes that it has a compatible cross-compiler in the environment
-            # that can build target libraries. Version of a cross-compiler has to
-            # match the compiler being cross-built as libraries frequently use fresh
-            # compiler features, like `-std=c++26` or target-specific types like
-            # `_Bfloat16`.
-            # Version mismatch causes build failures like:
-            #     https://github.com/NixOS/nixpkgs/issues/351905
-            #
-            # Similar problems (but on a smaller scale) happen when a `gcc`
-            # cross-compiler is built (`build` == `host` && `host` != `target`) built
-            # by a mismatching version of a native compiler (`build` == `host` &&
-            # `host` == `target`).
-            #
-            # Let's fix both problems by requiring the same compiler version for
-            # cross-case.
-            stdenv =
-              if
-                (
-                  (!lib.systems.equals stdenv.targetPlatform stdenv.buildPlatform)
-                  || (!lib.systems.equals stdenv.hostPlatform stdenv.targetPlatform)
-                )
-                && stdenv.cc.isGNU
-              then
-                overrideCC stdenv buildPackages."gcc${majorVersion}"
-              else
-                stdenv;
-          }
-        )
+      pkg = wrapCC (
+        callPackage ./default.nix {
+          inherit noSysDirs;
+          inherit majorMinorVersion;
+          reproducibleBuild = true;
+          profiledCompiler = false;
+          libcCross = if !targetIsBuild then targetPackages.libc or pkgs.libc else null;
+          threadsCross = if !targetIsBuild then targetPackages.threads or pkgs.threads else { };
+          isl = if stdenv.hostPlatform.isDarwin then null else isl_0_20;
+          # do not allow version skew when cross-building gcc
+          #
+          # When `gcc` is cross-built (`build` != `target` && `host` == `target`)
+          # `gcc` assumes that it has a compatible cross-compiler in the environment
+          # that can build target libraries. Version of a cross-compiler has to
+          # match the compiler being cross-built as libraries frequently use fresh
+          # compiler features, like `-std=c++26` or target-specific types like
+          # `_Bfloat16`.
+          # Version mismatch causes build failures like:
+          #     https://github.com/NixOS/nixpkgs/issues/351905
+          #
+          # Similar problems (but on a smaller scale) happen when a `gcc`
+          # cross-compiler is built (`build` == `host` && `host` != `target`) built
+          # by a mismatching version of a native compiler (`build` == `host` &&
+          # `host` == `target`).
+          #
+          # Let's fix both problems by requiring the same compiler version for
+          # cross-case.
+          stdenv =
+            if
+              ((!targetIsBuild) || (!lib.systems.equals stdenv.hostPlatform stdenv.targetPlatform))
+              && stdenv.cc.isGNU
+            then
+              overrideCC stdenv buildPackages."gcc${majorVersion}"
+            else
+              stdenv;
+        }
       );
     in
-    lib.nameValuePair attrName pkg;
+    lib.nameValuePair attrName (
+      pkg
+      // {
+        meta = pkg.meta // {
+          prio = 10;
+        };
+      }
+    );
 in
 lib.listToAttrs (map gccForMajorMinorVersion versions.allMajorVersions)
