@@ -506,18 +506,24 @@ rec {
     else if length defs == 1 then
       (head defs).value
     else
-      (foldl' (
-        first: def:
-        if def.value != first.value then
-          throw "The option `${showOption loc}' has conflicting definition values:${
-            showDefs [
-              first
-              def
-            ]
-          }\n${prioritySuggestion}"
-        else
-          first
-      ) (head defs) (tail defs)).value;
+      let
+        firstValue = (head defs).value;
+      in
+      if all (def: firstValue == def.value) defs then
+        firstValue
+      else
+        (foldl' (
+          first: def:
+          if def.value != first.value then
+            throw "The option `${showOption loc}' has conflicting definition values:${
+              showDefs [
+                first
+                def
+              ]
+            }\n${prioritySuggestion}"
+          else
+            first
+        ) firstValue defs).value;
 
   /**
     Extracts values of all `value` keys of the given list.
