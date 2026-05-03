@@ -102,13 +102,13 @@ rec {
     }:
     let
       inherit (lib)
-        concatMapStringsSep
+        concatStringsSep
         head
-        tail
+        length
         throwIf
         ;
       inherit (lib.attrsets)
-        attrsToList
+        attrNames
         intersectAttrs
         removeAttrs
         optionalAttrs
@@ -123,18 +123,21 @@ rec {
       let
         # The argument hash, as a {name, value} pair
         h =
-          # All hashes passed in arguments (possibly 0 or >1) as a list of {name, value} pairs
+          # All names of hashes passed in arguments (possibly 0 or >1)
           let
-            hashesAsNVPairs = attrsToList (intersectAttrs hashSet args);
+            hashNames = attrNames (intersectAttrs hashSet args);
           in
-          if hashesAsNVPairs == [ ] then
+          if hashNames == [ ] then
             throwIf required "fetcher called without `hash`" null
-          else if tail hashesAsNVPairs != [ ] then
+          else if length hashNames != 1 then
             throw "fetcher called with mutually-incompatible arguments: ${
-              concatMapStringsSep ", " (a: a.name) hashesAsNVPairs
+              concatStringsSep ", " hashNames
             }"
           else
-            head hashesAsNVPairs;
+            rec {
+              name = head hashNames;
+              value = args.${name};
+            };
       in
       removeAttrs args hashNames
       // (optionalAttrs (h != null) {
