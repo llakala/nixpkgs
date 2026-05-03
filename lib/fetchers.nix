@@ -11,6 +11,8 @@ let
     sha256 = lib.fakeSha256;
     sha512 = lib.fakeSha512;
   };
+  inherit (lib.attrsets) intersectAttrs removeAttrs listToAttrs;
+  inherit (lib.trivial) functionArgs setFunctionArgs;
 in
 rec {
 
@@ -195,8 +197,6 @@ rec {
     }:
     fetcher:
     let
-      inherit (lib.attrsets) intersectAttrs removeAttrs;
-      inherit (lib.trivial) functionArgs setFunctionArgs;
 
       inherit (commonH hashTypes) hashSet;
       fArgs = functionArgs fetcher;
