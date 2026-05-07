@@ -1439,13 +1439,36 @@ let
         def: if def.value._type or "" == "override" then def // { value = def.value.content; } else def;
     in
     defs:
-    let
-      highestPrio = foldl' (prio: def: min (getPrio def) prio) 9999 defs;
-    in
-    {
-      values = concatMap (def: if getPrio def == highestPrio then [ (strip def) ] else [ ]) defs;
-      inherit highestPrio;
-    };
+    if length defs == 1 then
+      {
+        highestPrio = getPrio (head defs);
+        values = map strip defs;
+      }
+    else
+      foldl'
+        (
+          acc: def:
+          let
+            prio = getPrio def;
+          in
+          if prio == acc.highestPrio then
+            acc
+            // {
+              values = acc.values ++ [ (strip def) ];
+            }
+          else if prio < acc.highestPrio then
+            {
+              highestPrio = prio;
+              values = [ (strip def) ];
+            }
+          else
+            acc
+        )
+        {
+          highestPrio = 9999;
+          values = [ ];
+        }
+        defs;
 
   /**
     Sort a list of properties.  The sort priority of a property is
