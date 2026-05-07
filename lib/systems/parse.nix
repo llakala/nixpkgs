@@ -447,42 +447,42 @@ rec {
     b == a
     || any id [
       # x86
-      (b == i386 && isCompatible a i486)
-      (b == i486 && isCompatible a i586)
-      (b == i586 && isCompatible a i686)
+      (b == i386 && a == x86_64)
+      (b == i486 && a == x86_64)
+      (b == i586 && a == x86_64)
 
       # XXX: Not true in some cases. Like in WSL mode.
-      (b == i686 && isCompatible a x86_64)
+      (b == i686 && a == x86_64)
 
       # ARMv4
-      (b == arm && isCompatible a armv5tel)
+      (b == arm && a == armv7l)
 
       # ARMv5
-      (b == armv5tel && isCompatible a armv6l)
+      (b == armv5tel && isCompatible a armv7l)
 
       # ARMv6
-      (b == armv6m && isCompatible a armv6l)
+      (b == armv6m && isCompatible a armv7l)
       (b == armv6l && isCompatible a armv7l)
 
       # ARMv7
-      (b == armv7l && isCompatible a armv7a)
-      (b == armv7l && isCompatible a armv7r)
-      (b == armv7m && isCompatible a armv7a)
-      (b == armv7m && isCompatible a armv7r)
+      (b == armv7l && a == armv7a)
+      (b == armv7l && a == armv7r)
+      (b == armv7m && a == armv7a)
+      (b == armv7m && a == armv7r)
 
       # ARMv8
-      (b == armv8a && isCompatible a aarch64)
+      (b == armv8a && a == aarch64)
 
       # PowerPC
-      (b == powerpc && isCompatible a powerpc64)
-      (b == powerpcle && isCompatible a powerpc64le)
+      (b == powerpc && a == powerpc64)
+      (b == powerpcle && a == powerpc64le)
 
       # MIPS
-      (b == mips && isCompatible a mips64)
-      (b == mipsel && isCompatible a mips64el)
+      (b == mips && a == mips64)
+      (b == mipsel && a == mips64el)
 
       # SPARC
-      (b == sparc && isCompatible a sparc64)
+      (b == sparc && a == sparc64)
     ];
 
   ################################################################################
