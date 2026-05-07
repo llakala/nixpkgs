@@ -272,7 +272,8 @@ let
           // specialArgs
         );
 
-      merged = mergeModules prefix (reverseList (doCollect { }).modules);
+      collected = doCollect { };
+      merged = mergeModules prefix (reverseList collected.modules);
 
       options = merged.matchedOptions;
 
@@ -401,7 +402,7 @@ let
         options = checked options;
         config = checked (removeAttrs config [ "_module" ]);
         _module = checked (config._module);
-        inherit (doCollect { }) graph;
+        inherit (collected) graph;
         inherit extendModules type class;
       };
     in
