@@ -182,6 +182,13 @@ let
     "allowedImpureDLLs"
   ];
 
+  removedArgumentAttrNames = [
+    "meta"
+    "passthru"
+    "pos"
+    "env"
+  ];
+
   inherit (stdenv)
     hostPlatform
     buildPlatform
@@ -811,12 +818,7 @@ let
       };
 
       derivationArg = makeDerivationArgument (
-        removeAttrs attrs [
-          "meta"
-          "passthru"
-          "pos"
-          "env"
-        ]
+        removeAttrs attrs removedArgumentAttrNames
         // {
           ${if __structuredAttrs then "env" else null} = checkedEnv;
           cmakeFlags = makeCMakeFlags attrs;
