@@ -557,20 +557,13 @@ in
     assertions = concatLists (
       mapAttrsToList (
         name: service:
-        map
-          (message: {
+        optional
+          (elem "network-interfaces.target" service.after || elem "network-interfaces.target" service.wants)
+          {
             assertion = false;
-            inherit message;
-          })
-          (concatLists [
-            (optional
-              (
-                (builtins.elem "network-interfaces.target" service.after)
-                || (builtins.elem "network-interfaces.target" service.wants)
-              )
-              "Service '${name}.service' is using the deprecated target network-interfaces.target, which no longer exists. Using network.target is recommended instead."
-            )
-          ])
+            message = "Service '${name}.service' is using the deprecated target network-interfaces.target, which no longer exists. Using network.target is recommended instead.";
+          }
+
       ) cfg.services
     );
 
