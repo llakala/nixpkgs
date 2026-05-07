@@ -1469,7 +1469,6 @@ let
     : 1\. Function argument
   */
   sortProperties =
-    defs:
     let
       strip =
         def:
@@ -1481,10 +1480,9 @@ let
           }
         else
           def;
-      defs' = map strip defs;
       compare = a: b: (a.priority or defaultOrderPriority) < (b.priority or defaultOrderPriority);
     in
-    sort compare defs';
+    defs: sort compare (map strip defs);
 
   # This calls substSubModules, whose entire purpose is only to ensure that
   # option declarations in submodules have accurate position information.
