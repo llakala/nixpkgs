@@ -148,13 +148,19 @@ let
 
   # Fetch and unpack a crate.
   mkCrate =
+  let
+    # We avoid using lib.hasPrefix, since it requires computing the length of
+    # the string, which we know ahead of time
+    hasRegistryPrefix = str: builtins.substring 0 9 str == "registry+";
+    hasSparsePrefix = str: builtins.substring 0 7 str == "sparse+";
+  in
     pkg:
     let
       gitParts = parseGit pkg.source;
-      registryIndexUrl = lib.removePrefix "registry+" pkg.source;
+      registryIndexUrl = builtins.substring 9 (-1) pkg.source;
     in
     if
-      (lib.hasPrefix "registry+" pkg.source || lib.hasPrefix "sparse+" pkg.source)
+      (hasRegistryPrefix pkg.source || hasSparsePrefix pkg.source)
       && builtins.hasAttr registryIndexUrl registries
     then
       let
