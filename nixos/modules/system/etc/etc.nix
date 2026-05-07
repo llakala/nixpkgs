@@ -223,10 +223,7 @@ in
               config = {
                 target = lib.mkDefault name;
                 source = lib.mkIf (config.text != null) (
-                  let
-                    name' = "etc-" + lib.replaceStrings [ "/" ] [ "-" ] name;
-                  in
-                  lib.mkDerivedConfig options.text (pkgs.writeText name')
+                  lib.mkDerivedConfig options.text (pkgs.writeText ("etc-" + lib.replaceStrings [ "/" ] [ "-" ] name))
                 );
               };
 

@@ -526,25 +526,23 @@ in
         mkMountNetOnlineWarns =
           typeStr: defs: lib.concatLists (map (m: mkOneNetOnlineWarn typeStr m.what m) defs);
       in
-      concatLists (
-        mapAttrsToList (
-          name: service:
-          let
-            type = service.serviceConfig.Type or "";
-            restart = service.serviceConfig.Restart or "no";
-            hasDeprecated = builtins.hasAttr "StartLimitInterval" service.serviceConfig;
-          in
-          concatLists [
-            (optional (type == "oneshot" && (restart == "always" || restart == "on-success"))
-              "Service '${name}.service' with 'Type=oneshot' cannot have 'Restart=always' or 'Restart=on-success'"
-            )
-            (optional hasDeprecated "Service '${name}.service' uses the attribute 'StartLimitInterval' in the Service section, which is deprecated. See https://github.com/NixOS/nixpkgs/issues/45786.")
-            (optional (service.reloadIfChanged && service.reloadTriggers != [ ])
-              "Service '${name}.service' has both 'reloadIfChanged' and 'reloadTriggers' set. This is probably not what you want, because 'reloadTriggers' behave the same whay as 'restartTriggers' if 'reloadIfChanged' is set."
-            )
-          ]
-        ) cfg.services
-      )
+      concatMap (
+        name:
+        let
+          service = cfg.services.${name};
+          type = service.serviceConfig.Type or "";
+          restart = service.serviceConfig.Restart or "no";
+          hasDeprecated = builtins.hasAttr "StartLimitInterval" service.serviceConfig;
+        in
+
+        optional (type == "oneshot" && (restart == "always" || restart == "on-success"))
+          "Service '${name}.service' with 'Type=oneshot' cannot have 'Restart=always' or 'Restart=on-success'"
+        ++ optional hasDeprecated "Service '${name}.service' uses the attribute 'StartLimitInterval' in the Service section, which is deprecated. See https://github.com/NixOS/nixpkgs/issues/45786."
+        ++
+          optional (service.reloadIfChanged && service.reloadTriggers != [ ])
+            "Service '${name}.service' has both 'reloadIfChanged' and 'reloadTriggers' set. This is probably not what you want, because 'reloadTriggers' behave the same whay as 'restartTriggers' if 'reloadIfChanged' is set."
+
+      ) (attrNames cfg.services)
       ++ (mkNetOnlineWarns "target" cfg.targets)
       ++ (mkNetOnlineWarns "service" cfg.services)
       ++ (mkNetOnlineWarns "socket" cfg.sockets)
