@@ -634,23 +634,23 @@ let
     file: key: m:
     let
       addMeta =
-        config:
         if m ? meta then
+          config:
           mkMerge [
             config
             { meta = m.meta; }
           ]
         else
-          config;
+          config: config;
       addFreeformType =
-        config:
         if m ? freeformType then
+          config:
           mkMerge [
             config
             { _module.freeformType = m.freeformType; }
           ]
         else
-          config;
+          config: config;
     in
     if m ? config || m ? options then
       let
