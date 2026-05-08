@@ -521,41 +521,34 @@ let
             ];
           }
       */
-      collectStructuredModules =
-        let
-          collectResults = modules: {
-            disabled = concatLists (catAttrs "disabled" modules);
-            inherit modules;
-          };
-        in
-        parentFile: parentKey: initialModules: args:
-        collectResults (
-          imap1 (
-            n: x:
-            let
-              module = checkModule (loadModule args parentFile "${parentKey}:anon-${toString n}" x);
-              collectedImports = collectStructuredModules module._file module.key module.imports args;
-            in
-            {
-              key = module.key;
-              module = module;
-              modules = collectedImports.modules;
-              disabled =
-                (
-                  if module.disabledModules != [ ] then
-                    [
-                      {
-                        file = module._file;
-                        disabled = module.disabledModules;
-                      }
-                    ]
-                  else
-                    [ ]
-                )
-                ++ collectedImports.disabled;
-            }
-          ) initialModules
-        );
+      collectStructuredModules = parentFile: parentKey: initialModules: args: rec {
+        disabled = concatLists (catAttrs "disabled" modules);
+        modules = imap1 (
+          n: x:
+          let
+            module = checkModule (loadModule args parentFile "${parentKey}:anon-${toString n}" x);
+            collectedImports = collectStructuredModules module._file module.key module.imports args;
+          in
+          {
+            key = module.key;
+            module = module;
+            modules = collectedImports.modules;
+            disabled =
+              (
+                if module.disabledModules != [ ] then
+                  [
+                    {
+                      file = module._file;
+                      disabled = module.disabledModules;
+                    }
+                  ]
+                else
+                  [ ]
+              )
+              ++ collectedImports.disabled;
+          }
+        ) initialModules;
+      };
 
       # filterModules :: String -> { disabled, modules } -> [ Module ]
       #
