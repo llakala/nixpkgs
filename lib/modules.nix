@@ -772,16 +772,16 @@ let
     : 2\. Function argument
   */
   mergeModules =
-    prefix: modules:
-    mergeModules' prefix modules (
-      concatMap (
+    let
+      makeConfigs = concatMap (
         m:
         map (config: {
           file = m._file;
           inherit config;
         }) (pushDownProperties m.config)
-      ) modules
-    );
+      );
+    in
+    prefix: modules: mergeModules' prefix modules (makeConfigs modules);
 
   mergeModules' =
     prefix: modules: configs:
