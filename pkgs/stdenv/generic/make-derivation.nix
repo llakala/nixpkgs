@@ -399,7 +399,7 @@ let
           } requires __structuredAttrs if {dis,}allowedRequisites or {dis,}allowedReferences is set"
         else
           actualValue;
-      outputs' = outputs ++ optional separateDebugInfo' "debug";
+      outputs' = if separateDebugInfo' then outputs ++ [ "debug" ] else outputs;
 
       concretizeFlagImplications =
         flag: impliesFlags: list:
