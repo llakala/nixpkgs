@@ -479,7 +479,9 @@ rec {
         lib
         stdenv
         rtpPath
-        toVimPlugin
+        vimGenDocHook
+        vimCommandCheckHook
+        neovimRequireCheckHook
         ;
     })
     buildVimPlugin
@@ -509,6 +511,10 @@ rec {
     }:
     start ++ opt;
 
+  # Before making any changes to this, make sure to apply the same changes to
+  # buildVimPlugin. We keep them synced rather than calling toVimPlugin on
+  # buildVimPlugin, since buildVimPlugin is used everywhere and avoiding an
+  # overrideAttrs on every instance is preferable
   toVimPlugin =
     drv:
     let

@@ -2,7 +2,9 @@
   lib,
   stdenv,
   rtpPath,
-  toVimPlugin,
+  vimGenDocHook,
+  vimCommandCheckHook,
+  neovimRequireCheckHook,
 }:
 
 {
@@ -22,39 +24,61 @@
       meta ? { },
       ...
     }@attrs:
-    let
-      drv = stdenv.mkDerivation (
-        attrs
-        // {
-          name = lib.warnIf (attrs ? vimprefix) "The 'vimprefix' is now hardcoded in toVimPlugin" name;
+    stdenv.mkDerivation (
+      attrs
+      // {
+        name = lib.warnIf (
+          attrs ? vimprefix
+        ) "The 'vimprefix' is now hardcoded in toVimPlugin" "vimplugin-${name}";
 
-          __structuredAttrs = true;
-          inherit
-            unpackPhase
-            configurePhase
-            buildPhase
-            addonInfo
-            preInstall
-            postInstall
-            ;
+        __structuredAttrs = true;
+        inherit
+          unpackPhase
+          configurePhase
+          buildPhase
+          addonInfo
+          preInstall
+          postInstall
+          ;
 
-          installPhase = ''
-            runHook preInstall
+        # dont move the "doc" folder since vim expects it
+        forceShare = [
+          "man"
+          "info"
+        ];
 
-            target=$out/${rtpPath}/${path}
-            mkdir -p $out/${rtpPath}
-            cp -r . $target
+        nativeBuildInputs =
+          attrs.nativeBuildInputs or [ ]
+          ++ lib.optionals (stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+            vimGenDocHook
+          ];
 
-            runHook postInstall
-          '';
+        nativeCheckInputs =
+          attrs.nativeCheckInputs or [ ]
+          ++ lib.optionals (stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+            vimCommandCheckHook
+            # many neovim plugins keep using buildVimPlugin
+            neovimRequireCheckHook
+          ];
 
-          meta = {
-            platforms = lib.platforms.all;
-          }
-          // meta;
+        installPhase = ''
+          runHook preInstall
+
+          target=$out/${rtpPath}/${path}
+          mkdir -p $out/${rtpPath}
+          cp -r . $target
+
+          runHook postInstall
+        '';
+
+        meta = {
+          platforms = lib.platforms.all;
         }
-      );
-    in
-    toVimPlugin drv;
+        // meta;
+        passthru = (attrs.passthru or {}) // {
+          vimPlugin = true;
+        };
+      }
+    );
 
 }
