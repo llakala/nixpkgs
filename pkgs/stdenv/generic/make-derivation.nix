@@ -775,35 +775,47 @@ let
               attrsOutputChecks = makeOutputChecks attrs;
               attrsOutputChecksFiltered = filterAttrs (_: v: v != null) attrsOutputChecks;
             in
-            builtins.listToAttrs (
-              map (name: {
-                inherit name;
-                value =
-                  let
-                    raw =
-                      if attrs ? outputChecks.${name} then
-                        zipAttrsWith (_: concatLists) [
-                          attrsOutputChecksFiltered
-                          (makeOutputChecks attrs.outputChecks.${name})
-                        ]
-                      else
-                        attrsOutputChecksFiltered;
-                  in
-                  # separateDebugInfo = true will put all sorts of files in
-                  # the debug output which could carry references, but
-                  # that's "normal". Notably it symlinks to the source.
-                  # So disable reference checking for the debug output
-                  if separateDebugInfo' && name == "debug" then
-                    removeAttrs raw [
-                      "allowedReferences"
-                      "allowedRequisites"
-                      "disallowedReferences"
-                      "disallowedRequisites"
-                    ]
-                  else
-                    raw;
-              }) outputs
-            );
+            # to avoid the listToAttrs in most common situations, we replicate
+            # what it would produce for most derivations. this can be improved
+            # in the future at the cost of a mass rebuild
+            if
+              !attrs ? outputs
+              && !attrs ? outputChecks
+              && (attrsOutputChecks == { } || attrsOutputChecksFiltered == { })
+            then
+              {
+                out = { };
+              }
+            else
+              builtins.listToAttrs (
+                map (name: {
+                  inherit name;
+                  value =
+                    let
+                      raw =
+                        if attrs ? outputChecks.${name} then
+                          zipAttrsWith (_: concatLists) [
+                            attrsOutputChecksFiltered
+                            (makeOutputChecks attrs.outputChecks.${name})
+                          ]
+                        else
+                          attrsOutputChecksFiltered;
+                    in
+                    # separateDebugInfo = true will put all sorts of files in
+                    # the debug output which could carry references, but
+                    # that's "normal". Notably it symlinks to the source.
+                    # So disable reference checking for the debug output
+                    if separateDebugInfo' && name == "debug" then
+                      removeAttrs raw [
+                        "allowedReferences"
+                        "allowedRequisites"
+                        "disallowedReferences"
+                        "disallowedRequisites"
+                      ]
+                    else
+                      raw;
+                }) outputs
+              );
         };
       in
       derivationArg;
