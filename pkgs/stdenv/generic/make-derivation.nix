@@ -116,8 +116,8 @@ let
           in
           warnIf
             (
-              prev ? src
-              && thisOverlay ? version
+              thisOverlay ? version
+              && prev ? src
               && prev ? version
               # We could check that the version is actually distinct, but that
               # would probably just delay the inevitable, or preserve tech debt.
