@@ -520,7 +520,7 @@ rec {
         first = (head defs).value;
       in
       # Only fold to find the error if any of the values aren't equal
-      if all (def: def.value == first) (tail defs) then
+      if all (def: def.value == first) defs then
         first
       else
         (foldl' (
@@ -534,7 +534,7 @@ rec {
             }\n${prioritySuggestion}"
           else
             first
-        ) (head defs) (tail defs)).value;
+        ) (head defs) defs).value;
 
   /**
     Extracts values of all `value` keys of the given list.
