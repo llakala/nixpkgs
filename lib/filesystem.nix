@@ -9,6 +9,9 @@ let
   inherit (builtins)
     pathExists
     toString
+    readDir
+    concatMap
+    attrNames
     ;
 
   inherit (lib.filesystem)
@@ -240,6 +243,30 @@ in
         ) (builtins.readDir dir));
     in
     dir: lib.flatten (internalFunc dir);
+
+  listFilesRecursiveCond =
+    dir: condition:
+    let
+      internalFunc =
+        folder:
+        let
+          contents = readDir folder;
+        in
+        concatMap (
+          filename:
+          let
+            subpath = folder + "/${filename}";
+            type = contents.${filename};
+          in
+          if type == "regular" && condition filename then
+            [ subpath ]
+          else if type == "directory" then
+            internalFunc subpath
+          else
+            [ ]
+        ) (attrNames contents);
+    in
+    internalFunc dir;
 
   /**
     Transform a directory tree containing package files suitable for
