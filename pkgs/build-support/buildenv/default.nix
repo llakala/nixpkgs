@@ -13,6 +13,7 @@ let
   builder = replaceVars ./builder.pl {
     inherit (builtins) storeDir;
   };
+  inherit (lib) concatMap;
 in
 
 # Backward compatibility for deprecated custom overrider <env-pkg>.override
@@ -127,9 +128,9 @@ lib.makeOverridable (
                 [ drv ]
             )
             # Add any extra outputs specified by the caller of `buildEnv`.
-            ++ lib.filter (p: p != null) (
-              map (outName: drv.${outName} or null) finalAttrs.extraOutputsToInstall
-            );
+            ++ concatMap (
+              outName: if drv ? ${outName} then [ drv.${outName} ] else [ ]
+            ) finalAttrs.extraOutputsToInstall;
           priority = drv.meta.priority or lib.meta.defaultPriority;
           # Silently use the original `paths` if `passthru.paths` is missing.
         }) finalAttrs.passthru.paths or paths;
@@ -137,8 +138,7 @@ lib.makeOverridable (
         extraPathsFrom = lib.optionalString finalAttrs.includeClosures (
           let
             pathsForClosure = lib.pipe finalAttrs.chosenOutputs [
-              (map (p: p.paths))
-              lib.flatten
+              (concatMap (p: p.paths))
               (lib.remove null)
             ];
           in
