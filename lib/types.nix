@@ -4,6 +4,7 @@
 
 let
   inherit (lib)
+    any
     elem
     flip
     isAttrs
@@ -1578,11 +1579,21 @@ rec {
   oneOf =
     ts:
     let
+      checks = map (type: type.check) ts;
+      numTypes = length ts;
+    in
+    let
       head' =
         if ts == [ ] then throw "types.oneOf needs to get at least one type in its argument" else head ts;
       tail' = tail ts;
     in
-    foldl' either head' tail';
+    foldl' either head' tail'
+    // {
+      check = {
+        __functor = _self: x: any (check: check x) checks;
+        isV2MergeCoherent = true;
+      };
+    };
 
   # Either value of type `coercedType` or `finalType`, the former is
   # converted to `finalType` using `coerceFunc`.
