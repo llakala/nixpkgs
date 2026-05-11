@@ -169,12 +169,10 @@ let
   # take all the rest as-is
   config =
     let
-      failedAssertionsString = lib.concatMapStringsSep "\n" (x: "- ${x.message}") (
-        lib.filter (x: !x.assertion) configEval.config.assertions
-      );
+      failedAssertions = lib.filter (x: !x.assertion) configEval.config.assertions;
     in
-    if failedAssertionsString != "" then
-      throw "Failed assertions:\n${failedAssertionsString}"
+    if failedAssertions != [ ] then
+      throw "Failed assertions:\n${lib.concatMapStringsSep "\n" (x: "- ${x.message}") failedAssertions}"
     else
       lib.showWarnings configEval.config.warnings configEval.config;
 
