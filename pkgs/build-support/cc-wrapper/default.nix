@@ -406,13 +406,15 @@ stdenvNoCC.mkDerivation {
 
   preferLocalBuild = true;
 
-  outputs = [
-    "out"
-  ]
-  ++ optionals propagateDoc [
-    "man"
-    "info"
-  ];
+  outputs =
+    if propagateDoc then
+      [
+        "out"
+        "man"
+        "info"
+      ]
+    else
+      [ "out" ];
 
   # Cannot be in "passthru" due to "substituteAll"
   inherit isArocc;

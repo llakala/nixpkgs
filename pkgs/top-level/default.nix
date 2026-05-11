@@ -108,8 +108,8 @@ let
       (
         if
           (
-            ((localSystem.isDarwin && localSystem.isx86) || (crossSystem.isDarwin && crossSystem.isx86))
-            && config.allowDeprecatedx86_64Darwin == false
+            config.allowDeprecatedx86_64Darwin == false
+            && ((localSystem.isDarwin && localSystem.isx86) || (crossSystem.isDarwin && crossSystem.isx86))
           )
         then
           x86_64DarwinDeprecationWarning
