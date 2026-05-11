@@ -1,3 +1,12 @@
+let
+  validInputTypes = [
+    "int"
+    "bool"
+    "string"
+    "path"
+    "null"
+  ];
+in
 {
   lib,
   stdenv,
@@ -180,15 +189,7 @@ let
       # - https://github.com/NixOS/nixpkgs/pull/482866 (Correct fix)
       # - https://github.com/NixOS/nixpkgs/pull/498251 (Re-adds this @inputs filter)
       inputs' = lib.filterAttrs (
-        n: v:
-        (builtins.elem (builtins.typeOf v) [
-          "int"
-          "bool"
-          "string"
-          "path"
-          "null"
-        ])
-        || n == "packageOverrides"
+        n: v: builtins.elem (builtins.typeOf v) validInputTypes || n == "packageOverrides"
       ) inputs;
       override =
         attr:
