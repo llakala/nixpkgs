@@ -847,6 +847,9 @@ rec {
   */
   hasSuffix =
     suffix:
+    let
+      lenSuffix = stringLength suffix;
+    in
     if isPath suffix then
       # Before 23.05, paths would be copied to the store before converting them
       # to strings and comparing. This was surprising and confusing.
@@ -858,7 +861,6 @@ rec {
       content:
       let
         lenContent = stringLength content;
-        lenSuffix = stringLength suffix;
       in
       lenContent >= lenSuffix && substring (lenContent - lenSuffix) lenContent content == suffix;
 
