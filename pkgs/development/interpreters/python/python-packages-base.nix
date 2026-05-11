@@ -125,17 +125,19 @@ let
   );
 
   # Check whether a derivation provides a Python module.
-  hasPythonModule = drv: drv ? pythonModule && drv.pythonModule == python;
+  hasPythonModule = drv: drv ? pythonModule && drv.pythonModule == python || drv == python;
+  inherit (builtins) foldl' elem;
+  uniquePythonModules = foldl' (acc: e: if !hasPythonModule e || elem e acc then acc else acc ++ [ e ]) [ ];
 
   # Get list of required Python modules given a list of derivations.
   requiredPythonModules =
-    drvs:
     let
-      modules = lib.filter hasPythonModule drvs;
+      pythonOnly = [ python ];
     in
-    lib.unique (
-      [ python ] ++ modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules)
-    );
+    drvs:
+      uniquePythonModules (
+        pythonOnly ++ drvs ++ lib.concatLists (lib.catAttrs "requiredPythonModules" drvs)
+      );
 
   # Create a PYTHONPATH from a list of derivations. This function recurses into the items to find derivations
   # providing Python modules.

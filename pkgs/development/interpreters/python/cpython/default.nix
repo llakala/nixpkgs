@@ -1,3 +1,12 @@
+let
+  validInputTypes = [
+    "int"
+    "bool"
+    "string"
+    "path"
+    "null"
+  ];
+in
 {
   lib,
   stdenv,
@@ -129,11 +138,15 @@ let
     concatMapStringsSep
     concatStringsSep
     enableFeature
+    filter
+    filterAttrs
     getDev
     getLib
-    optionals
+    hasAttr
+    optional
+    optionalAttrs
     optionalString
-    replaceStrings
+    optionals
     ;
 
   withLibxcrypt =
@@ -160,7 +173,7 @@ let
         pythonOnBuildForHost = override pkgsBuildHost.${pythonAttr};
         pythonOnBuildForTarget = override pkgsBuildTarget.${pythonAttr};
         pythonOnHostForHost = override pkgsHostHost.${pythonAttr};
-        pythonOnTargetForTarget = lib.optionalAttrs (lib.hasAttr pythonAttr pkgsTargetTarget) (
+        pythonOnTargetForTarget = optionalAttrs (hasAttr pythonAttr pkgsTargetTarget) (
           override pkgsTargetTarget.${pythonAttr}
         );
       }
@@ -179,7 +192,7 @@ let
       # - https://github.com/NixOS/nixpkgs/pull/480005 (Wrong PR)
       # - https://github.com/NixOS/nixpkgs/pull/482866 (Correct fix)
       # - https://github.com/NixOS/nixpkgs/pull/498251 (Re-adds this @inputs filter)
-      inputs' = lib.filterAttrs (
+      inputs' = filterAttrs (
         n: v:
         (builtins.elem (builtins.typeOf v) [
           "int"
@@ -202,7 +215,7 @@ let
         in
         python;
       pythonVersion = with sourceVersion; "${major}.${minor}";
-      libPrefix = "python${pythonVersion}${lib.optionalString (!enableGIL) "t"}";
+      libPrefix = "python${pythonVersion}${optionalString (!enableGIL) "t"}";
     in
     passthruFun {
       inherit
@@ -227,7 +240,7 @@ let
       pythonABITags = [
         "abi3"
         "none"
-        "cp${sourceVersion.major}${sourceVersion.minor}${lib.optionalString (!enableGIL) "t"}"
+        "cp${sourceVersion.major}${sourceVersion.minor}${optionalString (!enableGIL) "t"}"
       ];
     };
 
@@ -266,7 +279,7 @@ let
         stdenv.cc.cc.libllvm.out
       ];
 
-  buildInputs = lib.filter (p: p != null) (
+  buildInputs = filter (p: p != null) (
     optionals (!withMinimalDeps) [
       bzip2
       libffi
@@ -360,7 +373,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   inherit nativeBuildInputs;
   buildInputs =
-    lib.optionals (!stdenv.hostPlatform.isWindows) [
+    optionals (!stdenv.hostPlatform.isWindows) [
       bashNonInteractive # only required for patchShebangs
     ]
     ++ buildInputs;
@@ -377,7 +390,7 @@ stdenv.mkDerivation (finalAttrs: {
     # libuuid, slowing down program startup a lot).
     noldconfigPatch
   ]
-  ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform && stdenv.hostPlatform.isFreeBSD) [
+  ++ optionals (stdenv.hostPlatform.isFreeBSD && stdenv.hostPlatform != stdenv.buildPlatform) [
     # Cross compilation only supports a limited number of "known good"
     # configurations. If you're reading this and it's been a long time
     # since this diff, consider submitting this patch upstream!
@@ -478,7 +491,7 @@ stdenv.mkDerivation (finalAttrs: {
     CPPFLAGS = concatStringsSep " " (map (p: "-I${getDev p}/include") buildInputs);
     LDFLAGS = concatStringsSep " " (map (p: "-L${getLib p}/lib") buildInputs);
     LIBS = "${optionalString (!stdenv.hostPlatform.isDarwin && withLibxcrypt) "-lcrypt"}";
-    NIX_LDFLAGS = lib.optionalString (stdenv.cc.isGNU && !stdenv.hostPlatform.isStatic) (
+    NIX_LDFLAGS = optionalString (stdenv.cc.isGNU && !stdenv.hostPlatform.isStatic) (
       {
         "glibc" = "-lgcc_s";
         "musl" = "-lgcc_eh";
@@ -553,8 +566,8 @@ stdenv.mkDerivation (finalAttrs: {
     "ac_cv_have_size_t_format=yes"
     "ac_cv_computed_gotos=yes"
     # Both fail when building for windows, normally configure checks this by itself but on other platforms this is set to yes always.
-    "ac_cv_file__dev_ptmx=${lib.boolToYesNo (!stdenv.hostPlatform.isWindows)}"
-    "ac_cv_file__dev_ptc=${lib.boolToYesNo (!stdenv.hostPlatform.isWindows)}"
+    "ac_cv_file__dev_ptmx=${boolToYesNo (!stdenv.hostPlatform.isWindows)}"
+    "ac_cv_file__dev_ptc=${boolToYesNo (!stdenv.hostPlatform.isWindows)}"
   ]
   ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform && pythonAtLeast "3.11") [
     "--with-build-python=${pythonOnBuildForHostInterpreter}"
@@ -630,11 +643,11 @@ stdenv.mkDerivation (finalAttrs: {
         [
           (placeholder "out")
         ]
-        ++ lib.optional withLibxcrypt libxcrypt
-        ++ lib.optional tzdataSupport tzdata
+        ++ optional withLibxcrypt libxcrypt
+        ++ optional tzdataSupport tzdata
       );
     in
-    lib.optionalString enableFramework ''
+    optionalString enableFramework ''
       for dir in include lib share; do
         ln -s $out/Library/Frameworks/Python.framework/Versions/Current/$dir $out/$dir
       done
@@ -653,7 +666,7 @@ stdenv.mkDerivation (finalAttrs: {
         fi
       done
     ''
-    + lib.optionalString (!static) ''
+    + optionalString (!static) ''
       touch $out/lib/${libPrefix}/test/__init__.py
     ''
     + ''
@@ -757,14 +770,14 @@ stdenv.mkDerivation (finalAttrs: {
       linkDLLsInfolder $out/lib/python*/lib-dynload/
     '';
 
-  preFixup = lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
+  preFixup = optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
     # Ensure patch-shebangs uses shebangs of host interpreter.
-    export PATH=${lib.makeBinPath [ "$out" ]}:$PATH
+    export PATH=${makeBinPath [ "$out" ]}:$PATH
   '';
 
   # Add CPython specific setup-hook that configures distutils.sysconfig to
   # always load sysconfigdata from host Python.
-  postFixup = lib.optionalString (!stdenv.hostPlatform.isDarwin) ''
+  postFixup = optionalString (!stdenv.hostPlatform.isDarwin) ''
     # https://github.com/python/cpython/blob/e488e300f5c01289c10906c2e53a8e43d6de32d8/configure.ac#L78
     sysconfigdataName="$(make --eval $'print-sysconfigdata-name:
     \t@echo _sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) ' print-sysconfigdata-name)"
@@ -796,10 +809,10 @@ stdenv.mkDerivation (finalAttrs: {
   # Enforce that we don't have references to the OpenSSL -dev package, which we
   # explicitly specify in our configure flags above.
   disallowedReferences =
-    lib.optionals (withOpenssl && !static && !enableFramework) [
+    optionals (withOpenssl && !static && !enableFramework) [
       openssl.dev
     ]
-    ++ lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
+    ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
       # Ensure we don't have references to build-time packages.
       # These typically end up in shebangs.
       pythonOnBuildForHost
@@ -855,7 +868,7 @@ stdenv.mkDerivation (finalAttrs: {
     changelog =
       let
         majorMinor = lib.versions.majorMinor version;
-        dashedVersion = lib.replaceStrings [ "." "a" "b" ] [ "-" "-alpha-" "-beta-" ] version;
+        dashedVersion = replaceStrings [ "." "a" "b" ] [ "-" "-alpha-" "-beta-" ] version;
       in
       if sourceVersion.suffix == "" then
         "https://docs.python.org/release/${version}/whatsnew/changelog.html"
