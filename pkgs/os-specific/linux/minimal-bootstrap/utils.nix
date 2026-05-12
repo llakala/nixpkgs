@@ -38,6 +38,10 @@ rec {
     ) baseDrv;
 
   writeTextFile =
+    let
+      PATH = lib.makeBinPath [ mescc-tools-extra ];
+      builder = "${kaem}/bin/kaem";
+    in
     {
       name, # the name of the derivation
       text,
@@ -45,10 +49,9 @@ rec {
       destination ? "", # relative path appended to $out eg "/bin/foo"
     }:
     derivationWithMeta {
-      inherit name text;
+      inherit name text PATH builder;
       passAsFile = [ "text" ];
 
-      builder = "${kaem}/bin/kaem";
       args = [
         "--verbose"
         "--strict"
@@ -69,7 +72,6 @@ rec {
         ))
       ];
 
-      PATH = lib.makeBinPath [ mescc-tools-extra ];
       destinationDir = dirOf destination;
       inherit destination;
     };

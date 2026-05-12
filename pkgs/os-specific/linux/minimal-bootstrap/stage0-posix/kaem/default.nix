@@ -46,7 +46,7 @@ derivationWithMeta {
           "--verbose"
           "--strict"
           "--file"
-          ((if env ? useBuiltin then builtins.toFile else writeText) "${name}-builder" buildCommand)
+          (writeText "${name}-builder" buildCommand)
         ];
 
         PATH =
