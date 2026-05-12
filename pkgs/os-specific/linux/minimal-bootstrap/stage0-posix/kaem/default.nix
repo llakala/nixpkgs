@@ -29,27 +29,38 @@ derivationWithMeta {
   PATH = lib.makeBinPath [ mescc-tools-extra ];
 
   passthru.runCommand =
+    let
+      builder = "${kaem}/bin/kaem";
+      cachedPath = lib.makeBinPath [
+        kaem
+        mescc-tools
+        mescc-tools-extra
+      ];
+    in
     name: env: buildCommand:
     derivationWithMeta (
       {
-        inherit name;
+        inherit name builder;
 
-        builder = "${kaem}/bin/kaem";
         args = [
           "--verbose"
           "--strict"
           "--file"
-          (writeText "${name}-builder" buildCommand)
+          ((if env ? useBuiltin then builtins.toFile else writeText) "${name}-builder" buildCommand)
         ];
 
-        PATH = lib.makeBinPath (
-          (env.nativeBuildInputs or [ ])
-          ++ [
-            kaem
-            mescc-tools
-            mescc-tools-extra
-          ]
-        );
+        PATH =
+          if env.nativeBuildInputs or [ ] == [ ] then
+            cachedPath
+          else
+            lib.makeBinPath (
+              env.nativeBuildInputs
+              ++ [
+                kaem
+                mescc-tools
+                mescc-tools-extra
+              ]
+            );
       }
       // (removeAttrs env [ "nativeBuildInputs" ])
     );
