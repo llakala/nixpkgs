@@ -132,11 +132,13 @@ let
     drvs:
     let
       modules = lib.filter hasPythonModule drvs;
+      extra = modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules);
+      names = map (drv: drv.name or drv.pname) extra;
+      final = lib.unique extra;
     in
-    lib.unique (
-      [ python ] ++ modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules)
+    builtins.deepSeq names (
+      builtins.trace names (builtins.trace (builtins.length extra != builtins.length final) final)
     );
-
   # Create a PYTHONPATH from a list of derivations. This function recurses into the items to find derivations
   # providing Python modules.
   makePythonPath = drvs: lib.makeSearchPath python.sitePackages (requiredPythonModules drvs);
@@ -156,6 +158,7 @@ let
         pythonModule = python;
         pythonPath = [ ]; # Deprecated, for compatibility.
         requiredPythonModules = builtins.addErrorContext "while calculating requiredPythonModules for ${drv.name or drv.pname}:" (
+          builtins.trace drv.name
           requiredPythonModules drv.propagatedBuildInputs
         );
       };
