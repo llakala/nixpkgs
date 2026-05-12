@@ -217,7 +217,7 @@ let
 
   plasma5Throws = lib.genAttrs' deprecatedPlasma5Packages (name: {
     inherit name;
-    value = removeRecurseForDerivations (checkInPkgs name (makePlasma5Throw name));
+    value = checkInPkgs name (makePlasma5Throw name);
   });
 
   warnAlias =
