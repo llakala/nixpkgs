@@ -271,7 +271,7 @@ lib.extendMkDerivation {
             if (isPythonModule drv) && (isMismatchedPython drv) then throwMismatch attrName drv else drv;
 
         in
-        attrName: inputs: map (checkDrv attrName) inputs;
+        attrName: map (checkDrv attrName);
 
       isBootstrapInstallPackage = isBootstrapInstallPackage' (finalAttrs.pname or null);
 
