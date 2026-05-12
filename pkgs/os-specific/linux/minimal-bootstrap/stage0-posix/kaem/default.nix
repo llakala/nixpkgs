@@ -12,6 +12,8 @@
 
 # Once mescc-tools-extra is available we can install kaem at /bin/kaem
 # to make it findable in environments
+let commonBuildInputs = "${kaem}/bin:${mescc-tools}/bin:${mescc-tools-extra}/bin";
+          in
 derivationWithMeta {
   inherit version kaem-unwrapped;
   pname = "kaem";
@@ -26,30 +28,32 @@ derivationWithMeta {
       chmod 555 ''${out}/bin/kaem
     '')
   ];
-  PATH = lib.makeBinPath [ mescc-tools-extra ];
+  PATH = "${mescc-tools-extra}/bin";
 
   passthru.runCommand =
+    let
+      builder = "${kaem}/bin/kaem";
+      cachedPath = lib.makeBinPath [
+        kaem
+        mescc-tools
+        mescc-tools-extra
+      ];
+    in
     name: env: buildCommand:
     derivationWithMeta (
       {
-        inherit name;
+        inherit name builder;
 
-        builder = "${kaem}/bin/kaem";
         args = [
           "--verbose"
           "--strict"
           "--file"
-          (writeText "${name}-builder" buildCommand)
+          ./default-builder.kaem
         ];
+        cmd = buildCommand;
+        passAsFile = [ "cmd" ];
 
-        PATH = lib.makeBinPath (
-          (env.nativeBuildInputs or [ ])
-          ++ [
-            kaem
-            mescc-tools
-            mescc-tools-extra
-          ]
-        );
+        PATH = if env ? extraPath then "${env.extraPath}:${commonBuildInputs}" else commonBuildInputs;
       }
       // (removeAttrs env [ "nativeBuildInputs" ])
     );
