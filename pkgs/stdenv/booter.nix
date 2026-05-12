@@ -71,7 +71,8 @@ let
         else
           let
             # Note the cycle -- call-by-need ensures finite fold.
-            cur = op pred (elemAt list n) (go cur (n + 1));
+            cur = op pred (elemAt list n succ) succ;
+            succ = go cur (n + 1);
           in
           cur;
       cur = go (lnul cur) 0;
@@ -96,9 +97,8 @@ let
   # Adds the stdenv to the arguments, and sticks in it the previous stage for
   # debugging purposes.
   folder =
-    nextStage: stageFun: prevStage:
+    nextStage: args: prevStage:
     let
-      args = stageFun prevStage;
       thisStage =
         if args.__raw or false then
           args
