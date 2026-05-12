@@ -69,8 +69,9 @@ let
       attrs
   ) teams;
 
-  errors = lib.concatLists (
-    lib.mapAttrsToList (name: value: value) (lib.filterAttrs (name: lib.isList) result)
+  anyErrors = builtins.any builtins.isList (builtins.attrValues result);
+  errors = builtins.concatMap (value: if builtins.isList value then value else [ ]) (
+    builtins.attrValues result
   );
 in
-if errors == [ ] then result else throw ("lib.teams:" + lib.concatStrings errors)
+if !anyErrors then result else throw ("lib.teams:" + lib.concatStrings errors)
