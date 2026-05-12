@@ -44,6 +44,9 @@ rec {
       executable ? false, # run chmod +x ?
       destination ? "", # relative path appended to $out eg "/bin/foo"
     }:
+    let
+      dir = dirOf destination;
+    in
     derivationWithMeta {
       inherit name text;
       passAsFile = [ "text" ];
@@ -53,11 +56,19 @@ rec {
         "--verbose"
         "--strict"
         "--file"
+        (
+          if dir == "." then
+            if executable then ./dirExecutable.kaem else ./dirNotExecutable.kaem
+          else if executable then
+            ./notDirExecutable.kaem
+          else
+            ./notDirNotExecutable.kaem
+        )
         (builtins.toFile "write-text-file.kaem" (
           ''
             target=''${out}''${destination}
           ''
-          + lib.optionalString (dirOf destination == ".") ''
+          + lib.optionalString (dir == ".") ''
             mkdir -p ''${out}''${destinationDir}
           ''
           + ''
@@ -70,7 +81,7 @@ rec {
       ];
 
       PATH = lib.makeBinPath [ mescc-tools-extra ];
-      destinationDir = dirOf destination;
+      destinationDir = dir;
       inherit destination;
     };
 
