@@ -266,10 +266,13 @@ let
 
   crt1 = compile "/lib/linux/${arch}-mes-mescc/crt1.c";
 
-  getRes = suffix: res: "${res}/${res.name}${suffix}";
-
-  archive = out: sources: "catm ${out} ${lib.concatMapStringsSep " " (getRes ".o") sources}";
-  sourceArchive = out: sources: "catm ${out} ${lib.concatMapStringsSep " " (getRes ".s") sources}";
+  archive =
+    out: sources: "catm ${out} ${lib.concatMapStringsSep " " (res: "${res}/${res.name}.o") sources}";
+  sourceArchive =
+    out: sources:
+    "catm ${out} ${
+      lib.concatMapStringsSep " " (res: "${res}/${res.name}.s") sources
+    }";
 
   mkLib =
     libname: sources:
@@ -362,7 +365,9 @@ let
           -nostdlib \
           -o ''${out}/bin/mes \
           ${libs}/lib/${arch}-mes/crt1.o \
-          ${lib.concatMapStringsSep " " (getRes ".o") (map compile mes_SOURCES)}
+          ${lib.concatMapStringsSep " " ((suffix: res: "${res}/${res.name}${suffix}") ".o") (
+            map compile mes_SOURCES
+          )}
       '';
 in
 {
