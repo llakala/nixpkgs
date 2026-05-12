@@ -19,7 +19,7 @@ rec {
     let
       passthru = attrs.passthru or { };
       validity = checkMeta.assertValidity { inherit meta attrs; };
-      meta = checkMeta.commonMeta { inherit validity attrs; };
+      meta = checkMeta.commonMeta { inherit validity attrs; } // { platforms = ["i686-linux" "x86_64-linux"]; };
       baseDrv = derivation (
         {
           inherit (buildPlatform) system;
@@ -46,6 +46,10 @@ rec {
     ) baseDrv;
 
   writeTextFile =
+    let
+      PATH = lib.makeBinPath [ mescc-tools-extra ];
+      builder = "${kaem}/bin/kaem";
+    in
     {
       name, # the name of the derivation
       text,
@@ -53,10 +57,9 @@ rec {
       destination ? "", # relative path appended to $out eg "/bin/foo"
     }:
     derivationWithMeta {
-      inherit name text;
+      inherit name text PATH builder;
       passAsFile = [ "text" ];
 
-      builder = "${kaem}/bin/kaem";
       args = [
         "--verbose"
         "--strict"
@@ -77,7 +80,6 @@ rec {
         ))
       ];
 
-      PATH = lib.makeBinPath [ mescc-tools-extra ];
       destinationDir = dirOf destination;
       inherit destination;
     };
