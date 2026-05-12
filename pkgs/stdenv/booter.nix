@@ -99,20 +99,25 @@ let
     nextStage: stageFun: prevStage:
     let
       args = stageFun prevStage;
-      args' = args // {
-        stdenv = args.stdenv // {
-          # For debugging
-          __bootPackages = prevStage;
-          __hatPackages = nextStage;
-        };
-      };
       thisStage =
         if args.__raw or false then
-          args'
+          args
+          // {
+            stdenv = args.stdenv // {
+              # For debugging
+              __bootPackages = prevStage;
+              __hatPackages = nextStage;
+            };
+          }
         else
           allPackages (
-            (removeAttrs args' [ "selfBuild" ])
+            (removeAttrs args [ "selfBuild" ])
             // {
+              stdenv = args.stdenv // {
+                # For debugging
+                __bootPackages = prevStage;
+                __hatPackages = nextStage;
+              };
               adjacentPackages =
                 if args.selfBuild or true then
                   null
