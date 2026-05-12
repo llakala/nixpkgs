@@ -41,6 +41,7 @@
 # other words, this does a foldr not foldl.
 stageFuns:
 let
+  inherit (builtins) elemAt;
 
   /*
     "dfold" a ternary function `op' between successive elements of `list' as if
@@ -70,7 +71,7 @@ let
         else
           let
             # Note the cycle -- call-by-need ensures finite fold.
-            cur = op pred (builtins.elemAt list n) (go cur (n + 1));
+            cur = op pred (elemAt list n) (go cur (n + 1));
           in
           cur;
       cur = go (lnul cur) 0;
@@ -89,7 +90,7 @@ let
     {
       allowCustomOverrides = index == 0;
     }
-    // ((builtins.elemAt stageFuns (len - index - 1)) prevStage)
+    // ((elemAt stageFuns (len - index - 1)) prevStage)
   ) len;
 
   # Adds the stdenv to the arguments, and sticks in it the previous stage for
