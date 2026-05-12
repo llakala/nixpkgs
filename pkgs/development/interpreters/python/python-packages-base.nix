@@ -130,11 +130,11 @@ let
   # Get list of required Python modules given a list of derivations.
   requiredPythonModules =
     drvs:
-    let
-      modules = lib.filter hasPythonModule drvs;
-    in
     lib.unique (
-      [ python ] ++ modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules)
+      [ python ]
+      ++ lib.concatMap (
+        drv: if hasPythonModule drv then [ drv ] ++ drv.requiredPythonModules else [ ]
+      ) drvs
     );
 
   # Create a PYTHONPATH from a list of derivations. This function recurses into the items to find derivations
