@@ -55,13 +55,19 @@ in
   # `stdenv` without a C compiler. Passing in this helps avoid infinite
   # recursions, and may eventually replace passing in the full stdenv.
   stdenvNoCC ? stdenv.override (
-    {
-      cc = null;
-      hasCC = false;
-    }
-    # Darwin doesn’t need an SDK in `stdenvNoCC`.  Dropping it shrinks the closure
-    # size down from ~1 GiB to ~83 MiB, which is a considerable reduction.
-    // lib.optionalAttrs stdenv.hostPlatform.isDarwin { extraBuildInputs = [ ]; }
+    if stdenv.hostPlatform.isDarwin then
+      {
+        # Darwin doesn’t need an SDK in `stdenvNoCC`.  Dropping it shrinks the closure
+        # size down from ~1 GiB to ~83 MiB, which is a considerable reduction.
+        extraBuildInputs = [ ];
+        cc = null;
+        hasCC = false;
+      }
+    else
+      {
+        cc = null;
+        hasCC = false;
+      }
   ),
 
   # This is used because stdenv replacement and the stdenvCross do benefit from
@@ -145,16 +151,19 @@ let
   splice = self: super: import ./splice.nix lib self (adjacentPackages != null);
 
   allPackages =
-    self: super:
     let
-      res = import ./all-packages.nix {
+      allPackagesFile = import ./all-packages.nix {
         inherit
           lib
           noSysDirs
           config
           overlays
           ;
-      } res self super;
+      };
+    in
+    self: super:
+    let
+      res = allPackagesFile res self super;
 
       conflictingAttrs = lib.intersectAttrs res super;
     in
