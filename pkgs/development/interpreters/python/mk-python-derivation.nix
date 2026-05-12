@@ -373,16 +373,16 @@ lib.extendMkDerivation {
 
       buildInputs = validatePythonMatches "buildInputs" (buildInputs ++ pythonPath);
 
-      propagatedBuildInputs = validatePythonMatches "propagatedBuildInputs" (
-        propagatedBuildInputs
-        ++ getFinalPassthru "dependencies"
+      propagatedBuildInputs =
+        validatePythonMatches "propagatedBuildInputs" (
+          propagatedBuildInputs ++ getFinalPassthru "dependencies"
+        )
         ++ [
           # we propagate python even for packages transformed with 'toPythonApplication'
           # this pollutes the PATH but avoids rebuilds
           # see https://github.com/NixOS/nixpkgs/issues/170887 for more context
           python
-        ]
-      );
+        ];
 
       inherit strictDeps;
 
