@@ -266,14 +266,6 @@ let
 
   crt1 = compile "/lib/linux/${arch}-mes-mescc/crt1.c";
 
-  archive =
-    out: sources: "catm ${out} ${lib.concatMapStringsSep " " (res: "${res}/${res.name}.o") sources}";
-  sourceArchive =
-    out: sources:
-    "catm ${out} ${
-      lib.concatMapStringsSep " " (res: "${res}/${res.name}.s") sources
-    }";
-
   mkLib =
     libname: sources:
     let
@@ -288,8 +280,8 @@ let
         mkdir -p ''${LIBDIR}
         cd ''${LIBDIR}
 
-        ${archive "${libname}.a" os}
-        ${sourceArchive "${libname}.s" os}
+        catm ${libname}.a ${lib.concatMapStringsSep " " (res: "${res}/${res.name}.o") os}
+        catm ${libname}.s ${lib.concatMapStringsSep " " (res: "${res}/${res.name}.s") os}
       '';
 
   libc-mini = mkLib "libc-mini" libc_mini_SOURCES;
