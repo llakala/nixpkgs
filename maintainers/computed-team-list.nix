@@ -14,13 +14,16 @@ let
   maintainerSetToList =
     githubTeam: users:
     let
-      missingUsers = lib.filter (login: !maintainersById ? ${toString users.${login}}) (
-        lib.attrNames users
-      );
+      idList = map (id: maintainersById.${toString id} or null) (builtins.attrValues users);
     in
-    if missingUsers == [ ] then
-      lib.mapAttrsToList (login: id: maintainersById.${toString id}) users
+    if builtins.all (id: id != null) idList then
+      idList
     else
+      let
+        missingUsers = lib.filter (login: !maintainersById ? ${toString users.${login}}) (
+          lib.attrNames users
+        );
+      in
       {
         errors = map (
           login:
