@@ -26,6 +26,9 @@
 # previous stage. It is idiomatic that attributes prefixed with `__` come with
 # special restrictions and should not be used under normal circumstances.
 { lib, allPackages }:
+let
+  inherit (builtins) elemAt;
+in
 
 # Type:
 #   [ pkgset -> (args to stage/default.nix) or ({ __raw = true; } // pkgs) ]
@@ -60,9 +63,8 @@ let
         f_0
   */
   dfold =
-    op: lnul: rnul: list:
+    op: lnul: rnul: listAtIndex:
     let
-      len = builtins.length list;
       go =
         pred: n:
         if n == len then
@@ -70,23 +72,24 @@ let
         else
           let
             # Note the cycle -- call-by-need ensures finite fold.
-            cur = op pred (builtins.elemAt list n) (go cur (n + 1));
+            cur = op pred (listAtIndex n) (go cur (n + 1));
           in
           cur;
       cur = go (lnul cur) 0;
     in
     cur;
+  len = builtins.length stageFuns;
 
-  # Take the list and disallow custom overrides in all but the final stage,
-  # and allow it in the final flag. Only defaults this boolean field if it
-  # isn't already set.
-  withAllowCustomOverrides = lib.lists.imap1 (
-    index: stageFun: prevStage:
-    # So true by default for only the first element because one
-    # 1-indexing. Since we reverse the list, this means this is true
-    # for the final stage.
-    { allowCustomOverrides = index == 1; } // (stageFun prevStage)
-  ) (lib.lists.reverseList stageFuns);
+  # Lookup a given index in the list, disallow custom overrides in all but the
+  # final stage. Only defaults this boolean field if it isn't already set.
+  withAllowCustomOverrides =
+    index: prevStage:
+    # True by default for only the first element. We iterate through the list in
+    # reverse, making this this only true for the final stage
+    {
+      allowCustomOverrides = index == 0;
+    }
+    // ((elemAt stageFuns (len - index - 1)) prevStage);
 
   # Adds the stdenv to the arguments, and sticks in it the previous stage for
   # debugging purposes.
