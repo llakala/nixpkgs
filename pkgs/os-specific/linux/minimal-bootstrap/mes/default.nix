@@ -336,6 +336,7 @@ let
   compiler =
     let
       objs = lib.strings.splitString " " mes_SOURCES;
+      removeSrcPrefix = lib.removePrefix "src/";
     in
     kaem.runCommand "${pname}-${version}"
       {
@@ -372,7 +373,7 @@ let
           -nostdlib \
           -o ''${out}/bin/mes \
           ${libs}/lib/${arch}-mes/crt1.o \
-          ${lib.concatMapStringsSep " " (obj: "${lib.removePrefix "src/" obj}.o") objs}
+          ${lib.concatMapStringsSep " " (obj: removeSrcPrefix "${obj}.o") objs}
       '';
 in
 {
