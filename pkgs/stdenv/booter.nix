@@ -70,12 +70,10 @@ let
         else
           let
             # Note the cycle -- call-by-need ensures finite fold.
-            cur = op pred (builtins.elemAt list n) succ;
-            succ = go cur (n + 1);
+            cur = op pred (builtins.elemAt list n) (go cur (n + 1));
           in
           cur;
-      lapp = lnul cur;
-      cur = go lapp 0;
+      cur = go (lnul cur) 0;
     in
     cur;
 
