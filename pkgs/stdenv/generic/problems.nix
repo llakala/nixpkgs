@@ -151,7 +151,9 @@ rec {
     {
       handlers = lib.mkOption {
         type = with types; attrsOf (attrsOf handlerType);
-        default = { };
+        default = {
+          hello.broken = "error";
+        };
         description = ''
           Specify how to handle packages with problems.
           Each key has the format `packageName.problemName`, each value is one of "error", "warn" or "ignore".
@@ -461,16 +463,25 @@ rec {
         ;
 
       # All the problem kinds that actually need to be checked
-      configuredProblems = definedConstraints.kinds ++ definedConstraints.names;
+      configuredProblemNames = definedConstraints.kinds ++ definedConstraints.names;
 
       # Filter out any problems that are always ignored in config.problems.
-      # Makes sure that automatic problems can cache with just config applied
-      automaticProblemsConfigCache = concatMap (
-        problem:
-        optionals (elem problem.kindName configuredProblems) [
-          (problem // { condition = problem.condition config; })
-        ]
-      ) automaticProblems;
+      definedProblems = filter (problem: elem problem.kindName configuredProblemNames) automaticProblems;
+
+      automaticProblemsHandler =
+        if definedConstraints.packages == [ ] then
+          if definedConstraints.names == [ ] && definedConstraints.kinds == [ ] then
+            # all empty
+            attrs: true
+          else
+            # kinds specified, but not names or packages
+            let
+              cachedProblems = map (problem: problem.condition config) definedProblems;
+            in
+            # kinds specified, not names or packages
+            attrs: all (condition: condition attrs) cachedProblems
+        else
+          5;
     in
     attrs:
     let
@@ -480,10 +491,7 @@ rec {
     if
       # Fast path for when there's no problem that needs to be handled
       # No automatic problems that needs handling
-      all (
-        problem:
-        problem.condition attrs -> handlerForProblem problem.kindName problem.kindName pname == "ignore"
-      ) automaticProblemsConfigCache
+      automaticProblemsHandler attrs
       && (
         # No manual problems
         manualProblems == { }
