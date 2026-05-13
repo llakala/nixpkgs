@@ -413,10 +413,10 @@ rec {
       inherit switch;
       handlerForProblem =
         if isString switch then
-          pname: name: kind:
+          kind: name: pname:
           switch
         else
-          pname: name: kind:
+          kind: name: pname:
           let
             switch' = switch.kindSpecific.${kind} or switch.kindFallback;
           in
@@ -454,13 +454,13 @@ rec {
       # No automatic problems that needs handling
       all (
         problem:
-        problem.condition attrs -> handlerForProblem pname problem.kindName problem.kindName == "ignore"
+        problem.condition attrs -> handlerForProblem problem.kindName problem.kindName pname == "ignore"
       ) automaticProblemsConfigCache
       && (
         # No manual problems
         manualProblems == { }
         # Or all manual problems are ignored
-        || all (name: handlerForProblem pname name (manualProblems.${name}.kind or name) == "ignore") (
+        || all (name: handlerForProblem (manualProblems.${name}.kind or name) name pname == "ignore") (
           attrNames manualProblems
         )
       )
@@ -475,7 +475,7 @@ rec {
             inherit name;
             # Kind falls back to the name
             kind = problem.kind or name;
-            handler = handlerForProblem pname name kind;
+            handler = handlerForProblem kind name pname;
             inherit problem;
           }) problems
         );
