@@ -1,6 +1,6 @@
 { lib }:
 let
-  inherit (lib) lists;
+  inherit (lib) lists concatMap;
   inherit (lib.systems) parse;
   inherit (lib.systems.inspect) predicates;
   inherit (lib.attrsets) matchAttrs;
@@ -119,7 +119,10 @@ let
 
   allParsed = map parse.mkSystemFromString all;
 
-  filterDoubles = f: map parse.doubleFromSystem (lists.filter f allParsed);
+  inherit (parse) doubleFromSystem;
+  filterDoubles = f: concatMap (
+    system: if f system then [ (doubleFromSystem system) ] else []
+  ) allParsed;
 
 in
 {
