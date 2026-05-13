@@ -438,11 +438,13 @@ rec {
       # This is here so that it gets cached for a (checkProblems config) thunk
       inherit (genHandlerSwitch config)
         handlerForProblem
+        switch
         ;
       # Makes sure that automatic problems can cache with just config applied
       automaticProblemsConfigCache = map (
         problem: problem // { condition = problem.condition config; }
       ) automaticProblems;
+
     in
     attrs:
     let
