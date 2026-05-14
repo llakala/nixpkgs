@@ -149,6 +149,11 @@ rec {
       problemKindType = types.enum kinds.known;
     in
     {
+      cachedHandlers = lib.mkOption {
+        type = types.attrs;
+        default = {};
+        internal = true;
+      };
       handlers = lib.mkOption {
         type = with types; attrsOf (attrsOf handlerType);
         default = { };
@@ -430,6 +435,27 @@ rec {
     in
     {
       inherit switch definedConstraints;
+
+      handleProblems =
+        problemHandler:
+        if isString switch then
+          let
+            canSkip = switch == "ignore";
+          in
+          attrs: if canSkip then null else problemHandler attrs
+        else if isString switch.kindFallback && all isString (attrValues switch.kindSpecific) then
+          let
+            kinds = filter (name: switch.kindSpecific.${name} != "ignore") (attrNames switch.kindSpecific);
+            cachedAutoProblems = concatMap (
+              problem:
+              optionals (elem problem.kindName kinds) [
+                (problem.condition config)
+              ]
+            ) automaticProblems;
+          in
+          (attrs: if all (problem: !problem attrs) cachedAutoProblems then null else problemHandler attrs)
+        else
+          builtins.trace "unimplemented" 5;
       handlerForProblem =
         if isString switch then
           kind: name: pname:

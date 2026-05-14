@@ -36,6 +36,8 @@ let
       }
     );
 
+    problemsFile = import ../stdenv/generic/problems.nix { inherit lib; };
+
   options = {
 
     # Internal stuff
@@ -471,7 +473,7 @@ let
       '';
     };
 
-    problems = (import ../stdenv/generic/problems.nix { inherit lib; }).configOptions;
+    problems = problemsFile.configOptions;
   };
 
 in
@@ -527,6 +529,8 @@ in
         handler = "warn";
       })
     ];
+
+    problems.cachedHandlers = problemsFile.genHandlerSwitch config;
   };
 
 }
