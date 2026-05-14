@@ -149,6 +149,11 @@ rec {
       problemKindType = types.enum kinds.known;
     in
     {
+      cachedHandlers = lib.mkOption {
+        type = types.attrs;
+        default = {};
+        internal = true;
+      };
       handlers = lib.mkOption {
         type = with types; attrsOf (attrsOf handlerType);
         default = { };
@@ -430,6 +435,27 @@ rec {
     in
     {
       inherit switch definedConstraints;
+
+      handleProblems =
+        problemHandler:
+        if isString switch then
+          let
+            canSkip = switch == "ignore";
+          in
+          attrs: if canSkip then null else problemHandler attrs
+        else if isString switch.kindFallback && all isString (attrValues switch.kindSpecific) then
+          let
+            kinds = filter (name: switch.kindSpecific.${name} != "ignore") (attrNames switch.kindSpecific);
+            cachedAutoProblems = concatMap (
+              problem:
+              optionals (elem problem.kindName kinds) [
+                (problem.condition config)
+              ]
+            ) automaticProblems;
+          in
+          (attrs: if all (problem: !problem attrs) cachedAutoProblems then null else problemHandler attrs)
+        else
+          builtins.trace "unimplemented" 5;
       handlerForProblem =
         if isString switch then
           kind: name: pname:
@@ -455,58 +481,28 @@ rec {
     config:
     let
       # This is here so that it gets cached for a (checkProblems config) thunk
-      inherit (genHandlerSwitch config)
-        handlerForProblem
-        definedConstraints
-        ;
+      inherit (config.problems.cachedHandlers) handleProblems handlerForProblem;
 
-      # All the problem kinds that actually need to be checked
-      configuredProblems = definedConstraints.kinds ++ definedConstraints.names;
-
-      # Filter out any problems that are always ignored in config.problems.
-      # Makes sure that automatic problems can cache with just config applied
-      automaticProblemsConfigCache = concatMap (
-        problem:
-        optionals (elem problem.kindName configuredProblems) [
-          (problem // { condition = problem.condition config; })
-        ]
-      ) automaticProblems;
-    in
-    attrs:
-    if
-      # Fast path for when there's no problem that needs to be handled
-      # No automatic problems that needs handling
-      all (
-        problem:
-        problem.condition attrs
-        -> handlerForProblem problem.kindName problem.kindName (getName attrs) == "ignore"
-      ) automaticProblemsConfigCache
-      && (
-        # No manual problems
-        !attrs ? meta.problems
-        # Or all manual problems are ignored
-        || all (
-          name: handlerForProblem (attrs.meta.problems.${name}.kind or name) name (getName attrs) == "ignore"
-        ) (attrNames attrs.meta.problems)
-      )
-    then
-      null
-    else
       # Slow path, only here we actually figure out which problems we need to handle
-      let
-        pname = getName attrs;
-        problems = attrs.meta.problems or { } // genAutomaticProblems config attrs;
-        problemsToHandle = filter (v: v.handler != "ignore") (
-          mapAttrsToList (name: problem: rec {
-            inherit name;
-            # Kind falls back to the name
-            kind = problem.kind or name;
-            handler = handlerForProblem kind name pname;
-            inherit problem;
-          }) problems
-        );
-      in
-      processProblems pname problemsToHandle;
+      problemHandler =
+        attrs:
+        let
+          pname = getName attrs;
+          problems = attrs.meta.problems or { } // genAutomaticProblems config attrs;
+          problemsToHandle = filter (v: v.handler != "ignore") (
+            mapAttrsToList (name: problem: rec {
+              inherit name;
+              # Kind falls back to the name
+              kind = problem.kind or name;
+              handler = handlerForProblem kind name pname;
+              inherit problem;
+            }) problems
+          );
+        in
+        processProblems pname problemsToHandle;
+
+    in
+    handleProblems problemHandler;
 
   processProblems =
     pname: problemsToHandle:
