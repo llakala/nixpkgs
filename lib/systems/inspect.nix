@@ -514,14 +514,40 @@ rec {
       ) pat2
     ) pat1;
 
-  matchAnyAttrs =
-    patterns:
-    if isList patterns then
-      attrs: any (pattern: matchAttrs pattern attrs) patterns
-    else
-      matchAttrs patterns;
+  matchAnyPattern =
+    let
+      # same as matchAttrs definition at the top of the file, but:
+      # - pattern names are cached and reused for multiple attrset calls
+      # - avoid running isAttrs since all patterns are nested attrsets
+      matchPattern =
+        pattern:
+        let
+          names = attrNames pattern;
+        in
+        attrs:
+        all (
+          attr:
+          attrs ? ${attr}
+          && (
+            let
+              lhs = pattern.${attr};
+              rhs = attrs.${attr};
+            in
+            lhs == rhs || matchAttrs lhs rhs
+          )
+        ) names;
 
-  predicates = mapAttrs (_: matchAnyAttrs) patterns;
+    in
+    pattern:
+    if isList pattern then
+      let
+        cachedPatterns = map matchPattern pattern;
+      in
+      attrs: any (pattern: pattern attrs) cachedPatterns
+    else
+      matchPattern pattern;
+
+  predicates = mapAttrs (_: matchAnyPattern) patterns;
 
   # these patterns are to be matched against the entire
   # {host,build,target}Platform structure; they include a `parsed={}` marker so
