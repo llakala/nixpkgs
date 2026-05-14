@@ -1812,7 +1812,7 @@ rec {
               rhs = attrs.${attr};
             in
             # Simple equality check is primarily for non-attrsets, but we run it
-            # on attrsets too, snce it may let us avoid recursing
+            # on attrsets too, since it may let us avoid recursing
             lhs == rhs || isAttrs lhs && isAttrs rhs && recurse lhs rhs
           )
         ) (attrNames pattern);
