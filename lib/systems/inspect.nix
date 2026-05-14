@@ -41,7 +41,7 @@ let
           rhs = attrs.${attr};
         in
         # Simple equality check is primarily for non-attrsets, but we run it
-        # on attrsets too, snce it may let us avoid recursing
+        # on attrsets too, since it may let us avoid recursing
         if isAttrs lhs then isAttrs rhs && matchAttrs lhs rhs else lhs == rhs
       )
     ) (attrNames pattern);
