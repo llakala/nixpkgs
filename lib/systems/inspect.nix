@@ -2,14 +2,16 @@
 
 let
   inherit (lib)
+    all
     any
+    attrNames
     attrValues
     concatMap
     filter
     hasPrefix
+    isAttrs
     isList
     mapAttrs
-    matchAttrs
     recursiveUpdateUntil
     toList
     ;
@@ -23,6 +25,24 @@ let
     cpuTypes
     execFormats
     ;
+
+  matchAttrs =
+    pattern: attrs:
+    pattern == { }
+    || all (
+      # Compare equality between `pattern` & `attrs`.
+      attr:
+      # Missing attr, not equal.
+      attrs ? ${attr}
+      && (
+        let
+          lhs = pattern.${attr};
+          rhs = attrs.${attr};
+        in
+        # If attrset check recursively
+        if isAttrs lhs then isAttrs rhs && matchAttrs lhs rhs else lhs == rhs
+      )
+    ) (attrNames pattern);
 
   abis = mapAttrs (_: abi: removeAttrs abi [ "assertions" ]) lib.systems.parse.abis;
 in
@@ -496,7 +516,7 @@ rec {
     else
       matchAttrs patterns;
 
-  predicates = mapAttrs (_: matchAnyAttrs) patterns;
+  predicates = mapAttrs (_: v: matchAnyAttrs v) patterns;
 
   # these patterns are to be matched against the entire
   # {host,build,target}Platform structure; they include a `parsed={}` marker so
