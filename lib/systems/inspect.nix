@@ -2,14 +2,16 @@
 
 let
   inherit (lib)
+    all
     any
+    attrNames
     attrValues
     concatMap
     filter
     hasPrefix
+    isAttrs
     isList
     mapAttrs
-    matchAttrs
     recursiveUpdateUntil
     toList
     ;
@@ -23,6 +25,26 @@ let
     cpuTypes
     execFormats
     ;
+
+  # Copied in from lib.attrsets, but with the initial isAttrs assertion removed,
+  # since this function is only ever called with attrsets
+  matchAttrs =
+    pattern: attrs:
+    all (
+      # Compare equality between `pattern` & `attrs`.
+      attr:
+      # Missing attr, not equal.
+      attrs ? ${attr}
+      && (
+        let
+          lhs = pattern.${attr};
+          rhs = attrs.${attr};
+        in
+        # Simple equality check is primarily for non-attrsets, but we run it
+        # on attrsets too, since it may let us avoid recursing
+        lhs == rhs || isAttrs lhs && isAttrs rhs && matchAttrs lhs rhs
+      )
+    ) (attrNames pattern);
 
   abis = mapAttrs (_: abi: removeAttrs abi [ "assertions" ]) lib.systems.parse.abis;
 in
