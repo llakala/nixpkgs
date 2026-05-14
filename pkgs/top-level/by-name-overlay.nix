@@ -4,7 +4,6 @@
 # and validity checks are done by CI on PRs.
 
 # Type: Path -> Overlay
-baseDirectory:
 let
   # Because of Nix's import-value cache, importing lib is free
   lib = import ../../lib;
@@ -19,6 +18,9 @@ let
     mergeAttrsList
     ;
 
+in
+baseDirectory:
+let
   # Package files for a single shard
   # Type: String -> String -> AttrsOf Path
   namesForShard =
