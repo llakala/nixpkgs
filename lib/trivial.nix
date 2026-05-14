@@ -14,8 +14,11 @@ let
     warn
     ;
   inherit (lib)
+    foldr
     isString
+    removePrefix
     ;
+  inherit (builtins) fromJSON match readFile;
 in
 {
   # Pull in some builtins not included elsewhere.
@@ -1046,7 +1049,7 @@ in
 
   info = msg: builtins.trace "INFO: ${msg}";
 
-  showWarnings = warnings: res: lib.foldr (w: x: warn w x) res warnings;
+  showWarnings = warnings: res: foldr (w: x: warn w x) res warnings;
 
   ## Function annotations
 
@@ -1101,11 +1104,10 @@ in
     ```
   */
   functionArgs =
-    f:
-    if f ? __functor then
-      f.__functionArgs or (functionArgs (f.__functor f))
-    else
-      builtins.functionArgs f;
+    let
+      functionArgs = builtins.functionArgs;
+    in
+    f: if f ? __functor then f.__functionArgs or (functionArgs (f.__functor f)) else functionArgs f;
 
   /**
     Check whether something is a function or something
@@ -1123,7 +1125,11 @@ in
     isFunction : Any -> Bool
     ```
   */
-  isFunction = f: builtins.isFunction f || (f ? __functor && isFunction (f.__functor f));
+  isFunction =
+    let
+      isFunction = builtins.isFunction;
+    in
+    f: isFunction f || (f ? __functor && isFunction (f.__functor f));
 
   /**
     `mirrorFunctionArgs f g` creates a new function `g'` with the same behavior as `g` (`g' x == g x`)
