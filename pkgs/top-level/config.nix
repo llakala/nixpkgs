@@ -6,7 +6,7 @@
 #     nix-build -A tests.config
 #
 
-{ config, lib, ... }:
+{ config, lib, ... }@args:
 
 let
   inherit (lib)
@@ -471,7 +471,7 @@ let
       '';
     };
 
-    problems = (import ../stdenv/generic/problems.nix { inherit lib; }).configOptions;
+    problems = (import ../stdenv/generic/problems.nix { inherit lib; }).configOptions args;
   };
 
 in

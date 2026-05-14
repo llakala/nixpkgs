@@ -148,7 +148,15 @@ rec {
       handlerType = types.enum handlers.levels;
       problemKindType = types.enum kinds.known;
     in
+    { config, ... }:
     {
+      cachedHandlers = lib.mkOption {
+        type = types.attrs;
+        default = genHandlerSwitch config;
+        internal = true;
+        visible = false;
+        readOnly = true;
+      };
       handlers = lib.mkOption {
         type = with types; attrsOf (attrsOf handlerType);
         default = { };
@@ -454,8 +462,17 @@ rec {
   genCheckProblems =
     config:
     let
-      # This is here so that it gets cached for a (checkProblems config) thunk
-      inherit (genHandlerSwitch config)
+      # One would expect this file to be only called once, but this function was
+      # actually executed ~15 times for pkgs.hello. During bootstrapping,
+      # multiple versions of stdenv are created, each one getting its own
+      # pointer to make-derivation.nix. make-derivation.nix imports check-meta,
+      # which imports this file.
+      #
+      # To only precompute our handlers once, we read an internal option that calls
+      # genHandlerSwitch with the final config. The better fix would be to clean
+      # up bootstrapping so it doesn't call these files over and over, but I'll
+      # leave that task to future generations.
+      inherit (config.problems.cachedHandlers)
         handlerForProblem
         definedConstraints
         ;
