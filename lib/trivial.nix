@@ -14,8 +14,11 @@ let
     warn
     ;
   inherit (lib)
+    foldr
     isString
+    removePrefix
     ;
+  inherit (builtins) fromJSON match readFile;
 in
 {
   # Pull in some builtins not included elsewhere.
@@ -789,7 +792,7 @@ in
     importJSON :: Path -> Any
     ```
   */
-  importJSON = path: builtins.fromJSON (builtins.readFile path);
+  importJSON = path: fromJSON (readFile path);
 
   /**
     Reads a TOML file.
@@ -836,7 +839,7 @@ in
     importTOML :: Path -> Any
     ```
   */
-  importTOML = path: fromTOML (builtins.readFile path);
+  importTOML = path: fromTOML (readFile path);
 
   /**
     `warn` *`message`* *`value`*
@@ -1046,7 +1049,7 @@ in
 
   info = msg: builtins.trace "INFO: ${msg}";
 
-  showWarnings = warnings: res: lib.foldr (w: x: warn w x) res warnings;
+  showWarnings = warnings: res: foldr (w: x: warn w x) res warnings;
 
   ## Function annotations
 
@@ -1101,11 +1104,10 @@ in
     ```
   */
   functionArgs =
-    f:
-    if f ? __functor then
-      f.__functionArgs or (functionArgs (f.__functor f))
-    else
-      builtins.functionArgs f;
+    let
+      functionArgs = builtins.functionArgs;
+    in
+    f: if f ? __functor then f.__functionArgs or (functionArgs (f.__functor f)) else functionArgs f;
 
   /**
     Check whether something is a function or something
@@ -1123,7 +1125,11 @@ in
     isFunction : Any -> Bool
     ```
   */
-  isFunction = f: builtins.isFunction f || (f ? __functor && isFunction (f.__functor f));
+  isFunction =
+    let
+      isFunction = builtins.isFunction;
+    in
+    f: isFunction f || (f ? __functor && isFunction (f.__functor f));
 
   /**
     `mirrorFunctionArgs f g` creates a new function `g'` with the same behavior as `g` (`g' x == g x`)
@@ -1226,17 +1232,17 @@ in
   fromHexString =
     str:
     let
-      match = builtins.match "(0x)?([0-7]?[0-9A-Fa-f]{1,15})" str;
+      matched = match "(0x)?([0-7]?[0-9A-Fa-f]{1,15})" str;
     in
-    if match != null then
-      (fromTOML "v=0x${builtins.elemAt match 1}").v
+    if matched != null then
+      (fromTOML "v=0x${builtins.elemAt matched 1}").v
     else
       # TODO: Turn this into a `throw` in 26.05.
-      assert lib.warn "fromHexString: ${
+      assert warn "fromHexString: ${
         lib.generators.toPretty { } str
       } is not a valid input and will be rejected in 26.05" true;
       let
-        noPrefix = lib.strings.removePrefix "0x" (lib.strings.toLower str);
+        noPrefix = removePrefix "0x" (lib.strings.toLower str);
       in
       (fromTOML "v=0x${noPrefix}").v;
 
