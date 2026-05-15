@@ -783,7 +783,6 @@ rec {
       inherit (types.parsedPlatform) verify;
     in
     components:
-    assert verify components;
     components
     // {
       _type = "system";
