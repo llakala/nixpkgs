@@ -38,14 +38,8 @@ let
 
   inherit (lib.strings) match;
 
-  inherit (lib.systems.inspect.predicates)
-    isAarch32
-    isBigEndian
-    isDarwin
-    isLinux
-    isPower64
-    isWindows
-    isCygwin
+  inherit (lib.systems.inspect)
+    predicates
     ;
 
   setTypes =
@@ -781,13 +775,13 @@ rec {
   mkSystem =
     let
       inherit (types.parsedPlatform) verify;
+      systemType = {
+        _type = "system";
+      };
     in
     components:
     assert verify components;
-    components
-    // {
-      _type = "system";
-    };
+    components // systemType;
 
   mkSkeletonFromList =
     l:
@@ -898,6 +892,15 @@ rec {
       getVendor = name: vendors.${name} or (throw "Unknown vendor: ${name}");
       getKernel = name: kernels.${name} or (throw "Unknown kernel: ${name}");
       getAbi = name: abis.${name} or (throw "Unknown ABI: ${name}");
+      isDarwin = parsed: parsed ? kernel.families.darwin && parsed.kernel.families.darwin == kernelFamilies.darwin;
+      isLinux = parsed: parsed.kernel == kernels.linux;
+      isWindows = parsed: parsed.kernel == kernels.windows;
+      isCygwin = parsed: parsed.kernel == kernels.cygwin;
+      isAarch32 = parsed: parsed.cpu.family == "arm" && parsed.cpu.bits == 32;
+      isPower64 = parsed: parsed.cpu.family == "power" && parsed.cpu.bits == 64;
+      isBigEndian = parsed: parsed.cpu.significantByte == significantBytes.bigEndian;
+      hasDarwinPrefix = hasPrefix "darwin";
+      hasBsdPrefix = hasPrefix "netbsd";
     in
     {
       cpu,
@@ -925,10 +928,10 @@ rec {
           else
             vendors.unknown;
         kernel =
-          if hasPrefix "darwin" args.kernel then
-            getKernel "darwin"
-          else if hasPrefix "netbsd" args.kernel then
-            getKernel "netbsd"
+          if hasDarwinPrefix args.kernel then
+            kernels.darwin
+          else if hasBsdPrefix args.kernel then
+            kernels.netbsd
           else
             getKernel (removeAbiSuffix args.kernel);
         abi =
