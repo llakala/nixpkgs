@@ -485,7 +485,7 @@ let
                 rust.platform.vendor or {
                   "w64" = "pc";
                 }
-                .${vendor.name} or vendor.name;
+                .${vendor} or vendor;
             };
 
           # The name of the rust target if it is standard, or the json file
