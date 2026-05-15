@@ -562,23 +562,24 @@ rec {
         unknown
         macho
         ;
-      inherit (kernelFamilies) bsd darwin;
+      darwin = { inherit (kernelFamilies) darwin; };
+      bsd = { inherit (kernelFamilies) bsd; };
     in
     setTypes types.openKernel {
       # TODO(@Ericson2314): Don't want to mass-rebuild yet to keeping 'darwin' as
       # the normalized name for macOS.
       macos = {
         execFormat = macho;
-        families = { inherit darwin; };
+        families = darwin;
         name = "darwin";
       };
       ios = {
         execFormat = macho;
-        families = { inherit darwin; };
+        families = darwin;
       };
       freebsd = {
         execFormat = elf;
-        families = { inherit bsd; };
+        families = bsd;
         name = "freebsd";
       };
       linux = {
@@ -587,7 +588,7 @@ rec {
       };
       netbsd = {
         execFormat = elf;
-        families = { inherit bsd; };
+        families = bsd;
       };
       none = {
         execFormat = unknown;
@@ -595,7 +596,7 @@ rec {
       };
       openbsd = {
         execFormat = elf;
-        families = { inherit bsd; };
+        families = bsd;
       };
       solaris = {
         execFormat = elf;
