@@ -6,6 +6,7 @@ let
     foldl
     hasInfix
     isAttrs
+    importJSON
     isList
     mapAttrs
     optional
@@ -17,7 +18,7 @@ let
 
   inherit (lib.strings) toJSON;
 
-  doubles = import ./doubles.nix { inherit lib; };
+  doubles = importJSON ./doubles/generated.json;
   parse = import ./parse.nix { inherit lib; };
   inspect = import ./inspect.nix { inherit lib; };
   platforms = import ./platforms.nix { inherit lib; };
