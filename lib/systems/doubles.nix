@@ -117,7 +117,7 @@ let
     "x86_64-uefi"
   ];
 
-  allParsed = map parse.mkSystemFromString all;
+  allParsed = map parse._mkSystemFromStringUnchecked all;
 
   filterDoubles = f: map parse.doubleFromSystem (lists.filter f allParsed);
 

@@ -782,8 +782,8 @@ rec {
     let
       inherit (types.parsedPlatform) verify;
     in
-    components:
-    assert verify components;
+    doTypecheck: components:
+    assert (if doTypecheck then verify else x: true) components;
     components
     // {
       _type = "system";
@@ -903,7 +903,7 @@ rec {
     or (throw "system string '${lib.concatStringsSep "-" l}' has invalid number of hyphen-separated components");
 
   # This should revert the job done by config.guess from the gcc compiler.
-  mkSystemFromSkeleton =
+  parseFromSkeleton =
     let
       getCpu = name: cpuTypes.${name} or (throw "Unknown CPU type: ${name}");
       getVendor = name: vendors.${name} or (throw "Unknown vendor: ${name}");
@@ -960,9 +960,18 @@ rec {
       };
 
     in
-    mkSystem parsed;
+    parsed;
 
-  mkSystemFromString = s: mkSystemFromSkeleton (mkSkeletonFromList (splitString "-" s));
+  mkSystemFromString =
+    let
+      mkCheckedSystem = mkSystem true;
+    in
+    s: mkCheckedSystem (parseFromSkeleton (mkSkeletonFromList (splitString "-" s)));
+  _mkSystemFromStringUnchecked =
+    let
+      mkUncheckedSystem = mkSystem false;
+    in
+    s: mkUncheckedSystem (parseFromSkeleton (mkSkeletonFromList (splitString "-" s)));
 
   kernelName = kernel: if kernel ? version then kernel.name + toString kernel.version else kernel.name;
 
