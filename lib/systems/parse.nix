@@ -52,9 +52,12 @@ let
   setTypes =
     type:
     if type ? verify then
+      let
+        inherit (type) verify;
+      in
       mapAttrs (
         name: value:
-        assert type.verify value;
+        assert verify value;
         { inherit name; } // value
       )
     else
@@ -104,9 +107,13 @@ rec {
     name = "cpu-type";
     description = "instruction set architecture name and information";
     verify =
+      let
+        verifyBitWidth = types.bitWidth.verify;
+        verifySignificantByte = types.significantByte.verify;
+      in
       v:
-      types.bitWidth.verify v.bits
-      && (if 8 < v.bits then types.significantByte.verify v.significantByte else !(v ? significantByte));
+      verifyBitWidth v.bits
+      && (if 8 < v.bits then verifySignificantByte v.significantByte else !(v ? significantByte));
   };
 
   types.cpuType = enum (attrValues cpuTypes);
@@ -538,7 +545,11 @@ rec {
     name = "open-kernel";
     description = "kernel name and information";
     verify =
-      v: types.execFormat.verify v.execFormat && all types.kernelFamily.verify (attrValues v.families);
+      let
+        verifyExecFormat = types.execFormat.verify;
+        verifyKernelFamily = types.kernelFamily.verify;
+      in
+      v: verifyExecFormat v.execFormat && all verifyKernelFamily (attrValues v.families);
   };
 
   types.kernel = enum (attrValues kernels);
@@ -756,8 +767,11 @@ rec {
   isSystem = v: v._type or null == "system";
 
   mkSystem =
+  let
+    inherit (types.parsedPlatform) verify;
+  in
     components:
-    assert types.parsedPlatform.verify components;
+    assert verify components;
     components
     // {
       _type = "system";
