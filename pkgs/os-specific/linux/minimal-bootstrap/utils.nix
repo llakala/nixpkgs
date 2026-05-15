@@ -7,6 +7,12 @@
   mescc-tools-extra,
   checkMeta,
 }:
+let
+  removedNames = [
+    "meta"
+    "passthru"
+  ];
+in
 rec {
   maybeContentAddressed = lib.optionalAttrs config.contentAddressedByDefault {
     __contentAddressed = true;
@@ -26,16 +32,16 @@ rec {
           inherit (meta) name;
         }
         // maybeContentAddressed
-        // (removeAttrs attrs [
-          "meta"
-          "passthru"
-        ])
+        // (removeAttrs attrs removedNames)
       );
       passthru' =
-        passthru
-        // lib.optionalAttrs (passthru ? tests) {
-          tests = lib.mapAttrs (_: f: f baseDrv) passthru.tests;
-        };
+        if passthru ? tests then
+          passthru
+          // {
+            tests = lib.mapAttrs (_: f: f baseDrv) passthru.tests;
+          }
+        else
+          passthru;
     in
     lib.extendDerivation validity.handled (
       {
