@@ -398,6 +398,9 @@ rec {
     ```
   */
   extendDerivation =
+    let
+      defaultOutputs = [ "out" ];
+    in
     condition: passthru: drv:
     let
       commonAttrs =
@@ -421,7 +424,7 @@ rec {
           ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
             f: (passthru.overrideAttrs f).${outputName};
         };
-      }) (drv.outputs or [ "out" ]);
+      }) (drv.outputs or defaultOutputs);
     in
     commonAttrs
     // {
