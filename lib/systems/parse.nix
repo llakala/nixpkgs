@@ -36,15 +36,7 @@ let
 
   inherit (lib.strings) match;
 
-  inherit (lib.systems.inspect.predicates)
-    isAarch32
-    isBigEndian
-    isDarwin
-    isLinux
-    isPower64
-    isWindows
-    isCygwin
-    ;
+  inherit (lib.systems) inspect;
 
   inherit (lib.types)
     enum
@@ -906,15 +898,24 @@ rec {
       getVendor = name: vendors.${name} or (throw "Unknown vendor: ${name}");
       getKernel = name: kernels.${name} or (throw "Unknown kernel: ${name}");
       getAbi = name: abis.${name} or (throw "Unknown ABI: ${name}");
+      inherit (inspect.predicates parsed)
+      isDarwin
+      isWindows
+      isCygwin
+      isLinux
+      isAarch32
+      isPower64
+      isBigEndian
+      ;
 
       parsed = {
         cpu = getCpu args.cpu;
         vendor =
           if args ? vendor then
             getVendor args.vendor
-          else if isDarwin parsed then
+          else if isDarwin then
             vendors.apple
-          else if (isWindows parsed || isCygwin parsed) then
+          else if (isWindows || isCygwin) then
             vendors.pc
           else
             vendors.unknown;
@@ -928,11 +929,11 @@ rec {
         abi =
           if args ? abi then
             getAbi args.abi
-          else if isLinux parsed || isWindows parsed then
-            if isAarch32 parsed then
+          else if isLinux || isWindows then
+            if isAarch32 then
               if versionAtLeast (parsed.cpu.version or "0") "6" then abis.gnueabihf else abis.gnueabi
             # Default ppc64 BE to ELFv1
-            else if isPower64 parsed && isBigEndian parsed then
+            else if isPower64 && isBigEndian then
               abis.gnuabielfv1
             else
               abis.gnu

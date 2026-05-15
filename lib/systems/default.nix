@@ -418,7 +418,7 @@ let
             throw "Don't know how to run ${final.config} executables.";
 
       }
-      // mapAttrs (n: v: v final.parsed) inspect.predicates
+      // inspect.predicates final.parsed
       // mapAttrs (n: v: v final.gcc.arch or "default") architectures.predicates
       // args
       // {
