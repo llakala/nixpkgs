@@ -20,10 +20,7 @@ let
 
   inherit (lib.systems.parse)
     kernels
-    kernelFamilies
-    significantBytes
     cpuTypes
-    execFormats
     ;
 
   # Copied in from lib.attrsets, but with:
