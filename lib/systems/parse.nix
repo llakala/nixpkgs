@@ -18,7 +18,6 @@
 
 let
   inherit (import ../../pkgs/stdenv/generic/meta-types.nix { inherit lib; })
-    record
     enum
     ;
   inherit (lib)
@@ -759,17 +758,31 @@ rec {
   ################################################################################
 
   # fully parsed representation of llvm- or nix-style platform tuple
-  types.parsedPlatform = record {
-    cpu = types.cpuType;
-    inherit (types) vendor kernel abi;
+  types.parsedPlatform = {
+    name = "system";
+    description = "fully parsed representation of llvm- or nix-style platform tuple";
+    verify =
+      let
+        verifyCpuType = types.cpuType.verify;
+        verifyVendor = types.vendor.verify;
+        verifyKernel = types.kernel.verify;
+        verifyAbi = types.abi.verify;
+      in
+      {
+        cpu,
+        vendor,
+        kernel,
+        abi,
+      }:
+      verifyCpuType cpu && verifyVendor vendor && verifyKernel kernel && verifyAbi abi;
   };
 
   isSystem = v: v._type or null == "system";
 
   mkSystem =
-  let
-    inherit (types.parsedPlatform) verify;
-  in
+    let
+      inherit (types.parsedPlatform) verify;
+    in
     components:
     assert verify components;
     components
