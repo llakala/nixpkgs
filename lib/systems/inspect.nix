@@ -21,9 +21,7 @@ let
   inherit (lib.systems.parse)
     kernels
     kernelFamilies
-    significantBytes
     cpuTypes
-    execFormats
     ;
 
   # Copied in from lib.attrsets, but with:
@@ -317,12 +315,12 @@ rec {
         ];
     isBigEndian = {
       cpu = {
-        significantByte = significantBytes.bigEndian;
+        significantByte = "bigEndian";
       };
     };
     isLittleEndian = {
       cpu = {
-        significantByte = significantBytes.littleEndian;
+        significantByte = "littleEndian";
       };
     };
 
@@ -471,13 +469,13 @@ rec {
     ];
 
     isElf = {
-      kernel.execFormat = execFormats.elf;
+      kernel.execFormat = "elf";
     };
     isMacho = {
-      kernel.execFormat = execFormats.macho;
+      kernel.execFormat = "macho";
     };
     isPE = {
-      kernel.execFormat = execFormats.pe;
+      kernel.execFormat = "pe";
     };
 
     isEabi = {
