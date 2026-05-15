@@ -182,12 +182,13 @@ lib.fix (self: {
     fields:
     assert isAttrs fields && all isTypeDef (attrValues fields);
     let
+      fieldNames = attrNames fieldVerifiers;
       # Map attrs directly to the verify function for performance
       fieldVerifiers = mapAttrs (_: t: t.verify) fields;
     in
     {
       name = "record";
-      verify = v: isAttrs v && all (k: fieldVerifiers ? ${k} && fieldVerifiers.${k} v.${k}) (attrNames v);
+      verify = v: isAttrs v && all (k: !fieldVerifiers ? ${k} || fieldVerifiers.${k} v.${k}) fieldNames;
       errors =
         ctx: v:
         if !isAttrs v then
