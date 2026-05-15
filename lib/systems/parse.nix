@@ -17,6 +17,7 @@
 { lib }:
 
 let
+  korora = import ../../pkgs/stdenv/generic/meta-types.nix { inherit lib; };
   inherit (lib)
     all
     any
@@ -28,7 +29,6 @@ let
     id
     length
     mapAttrs
-    mergeOneOption
     optionalString
     splitString
     versionAtLeast
@@ -46,20 +46,16 @@ let
     isCygwin
     ;
 
-  inherit (lib.types)
-    enum
-    isType
-    mkOptionType
-    setType
-    ;
-
-  setTypes =
+  validateAll =
     type:
-    mapAttrs (
-      name: value:
-      assert type.check value;
-      setType type.name ({ inherit name; } // value)
-    );
+    if type ? verify then
+      mapAttrs (
+        name: value:
+        assert type.verify value;
+        { inherit name; } // value
+      )
+    else
+      mapAttrs (name: value: { inherit name; } // value);
 
   # gnu-config will ignore the portion of a triple matching the
   # regex `e?abi.*$` when determining the validity of a triple.  In
@@ -76,16 +72,14 @@ in
 rec {
 
   ################################################################################
-
-  types.openSignificantByte = mkOptionType {
+  types.openSignificantByte = {
     name = "significant-byte";
     description = "Endianness";
-    merge = mergeOneOption;
   };
 
-  types.significantByte = enum (attrValues significantBytes);
+  types.significantByte = korora.enum (attrValues significantBytes);
 
-  significantBytes = setTypes types.openSignificantByte {
+  significantBytes = validateAll types.openSignificantByte {
     bigEndian = { };
     littleEndian = { };
   };
@@ -93,7 +87,7 @@ rec {
   ################################################################################
 
   # Reasonable power of 2
-  types.bitWidth = enum [
+  types.bitWidth = korora.enum [
     8
     16
     32
@@ -103,23 +97,22 @@ rec {
 
   ################################################################################
 
-  types.openCpuType = mkOptionType {
+  types.openCpuType = {
     name = "cpu-type";
     description = "instruction set architecture name and information";
-    merge = mergeOneOption;
-    check =
-      x:
-      types.bitWidth.check x.bits
-      && (if 8 < x.bits then types.significantByte.check x.significantByte else !(x ? significantByte));
+    verify =
+      v:
+      types.bitWidth.verify v.bits
+      && (if 8 < v.bits then types.significantByte.verify v.significantByte else !(v ? significantByte));
   };
 
-  types.cpuType = enum (attrValues cpuTypes);
+  types.cpuType = korora.enum (attrValues cpuTypes);
 
   cpuTypes =
     let
-      inherit (significantBytes) bigEndian littleEndian;
+      inherit (significantBytes) littleEndian bigEndian;
     in
-    setTypes types.openCpuType {
+    validateAll types.openCpuType {
       arm = {
         bits = 32;
         significantByte = littleEndian;
@@ -487,153 +480,119 @@ rec {
 
   ################################################################################
 
-  types.openVendor = mkOptionType {
-    name = "vendor";
-    description = "vendor for the platform";
-    merge = mergeOneOption;
-  };
+  types.vendor = korora.enum vendors;
 
-  types.vendor = enum (attrValues vendors);
-
-  vendors = setTypes types.openVendor {
-    apple = { };
-    pc = { };
-    knuth = { };
-
+  vendors = [
+    "apple"
+    "pc"
+    "knuth"
     # Actually matters, unlocking some MinGW-w64-specific options in GCC. See
     # bottom of https://sourceforge.net/p/mingw-w64/wiki2/Unicode%20apps/
-    w64 = { };
-
-    none = { };
-    unknown = { };
-  };
-
-  ################################################################################
-
-  types.openExecFormat = mkOptionType {
-    name = "exec-format";
-    description = "executable container used by the kernel";
-    merge = mergeOneOption;
-  };
-
-  types.execFormat = enum (attrValues execFormats);
-
-  execFormats = setTypes types.openExecFormat {
-    aout = { }; # a.out
-    elf = { };
-    macho = { };
-    pe = { };
-    wasm = { };
-
-    unknown = { };
-  };
+    "w64"
+    "none"
+    "unknown"
+  ];
 
   ################################################################################
 
-  types.openKernelFamily = mkOptionType {
-    name = "exec-format";
-    description = "executable container used by the kernel";
-    merge = mergeOneOption;
-  };
+  # executable container used by the kernel
+  types.execFormat = korora.enum execFormats;
 
-  types.kernelFamily = enum (attrValues kernelFamilies);
-
-  kernelFamilies = setTypes types.openKernelFamily {
-    bsd = { };
-    darwin = { };
-  };
+  execFormats = [
+    "aout" # a.out
+    "elf"
+    "macho"
+    "pe"
+    "wasm"
+    "unknown"
+  ];
 
   ################################################################################
 
-  types.openKernel = mkOptionType {
-    name = "kernel";
+  types.kernelFamily = korora.enum [
+    "bsd"
+    "darwin"
+  ];
+
+  ################################################################################
+
+  types.openKernel = {
+    name = "open-kernel";
     description = "kernel name and information";
-    merge = mergeOneOption;
-    check =
-      x: types.execFormat.check x.execFormat && all types.kernelFamily.check (attrValues x.families);
+    verify = v: types.execFormat.verify v.execFormat && all types.kernelFamily.verify v.families;
   };
 
-  types.kernel = enum (attrValues kernels);
+  types.kernel = korora.enum (attrValues kernels);
 
   kernels =
-    let
-      inherit (execFormats)
-        elf
-        pe
-        wasm
-        unknown
-        macho
-        ;
-      inherit (kernelFamilies) bsd darwin;
-    in
-    setTypes types.openKernel {
+    validateAll types.openKernel {
       # TODO(@Ericson2314): Don't want to mass-rebuild yet to keeping 'darwin' as
       # the normalized name for macOS.
       macos = {
-        execFormat = macho;
-        families = { inherit darwin; };
+        execFormat = "macho";
+        families = [ "darwin" ];
         name = "darwin";
       };
       ios = {
-        execFormat = macho;
-        families = { inherit darwin; };
+        execFormat = "macho";
+        families = [ "darwin" ];
       };
       freebsd = {
-        execFormat = elf;
-        families = { inherit bsd; };
+        execFormat = "elf";
+        families = [ "bsd" ];
         name = "freebsd";
       };
       linux = {
-        execFormat = elf;
-        families = { };
+        execFormat = "elf";
+        families = [ ];
       };
       netbsd = {
-        execFormat = elf;
-        families = { inherit bsd; };
+        execFormat = "elf";
+        families = [ "bsd" ];
       };
       none = {
-        execFormat = unknown;
-        families = { };
+        execFormat = "unknown";
+        families = [ ];
       };
       openbsd = {
-        execFormat = elf;
-        families = { inherit bsd; };
+        execFormat = "elf";
+        families = [ "bsd" ];
       };
       solaris = {
-        execFormat = elf;
-        families = { };
+        execFormat = "elf";
+        families = [ ];
       };
       wasi = {
-        execFormat = wasm;
-        families = { };
+        execFormat = "wasm";
+        families = [ ];
       };
       redox = {
-        execFormat = elf;
-        families = { };
+        execFormat = "elf";
+        families = [ ];
       };
       windows = {
-        execFormat = pe;
-        families = { };
+        execFormat = "pe";
+        families = [ ];
       };
       cygwin = {
-        execFormat = pe;
-        families = { };
+        execFormat = "pe";
+        families = [ ];
       };
       ghcjs = {
-        execFormat = unknown;
-        families = { };
+        execFormat = "unknown";
+        families = [ ];
       };
       genode = {
-        execFormat = elf;
-        families = { };
+        execFormat = "elf";
+        families = [ ];
       };
       mmixware = {
-        execFormat = unknown;
-        families = { };
+        execFormat = "unknown";
+        families = [ ];
       };
       uefi = {
-        execFormat = pe;
-        families = { };
+        execFormat = "pe";
+        families = [ ];
       };
     }
     // {
@@ -647,15 +606,14 @@ rec {
 
   ################################################################################
 
-  types.openAbi = mkOptionType {
+  types.openAbi = {
     name = "abi";
     description = "binary interface for compiled code and syscalls";
-    merge = mergeOneOption;
   };
 
-  types.abi = enum (attrValues abis);
+  types.abi = korora.enum (attrValues abis);
 
-  abis = setTypes types.openAbi {
+  abis = validateAll types.openAbi {
     msvc = { };
 
     # Note: eabi is specific to ARM and PowerPC.
@@ -760,29 +718,21 @@ rec {
 
   ################################################################################
 
-  types.parsedPlatform = mkOptionType {
-    name = "system";
-    description = "fully parsed representation of llvm- or nix-style platform tuple";
-    merge = mergeOneOption;
-    check =
-      {
-        cpu,
-        vendor,
-        kernel,
-        abi,
-      }:
-      types.cpuType.check cpu
-      && types.vendor.check vendor
-      && types.kernel.check kernel
-      && types.abi.check abi;
+  # fully parsed representation of llvm- or nix-style platform tuple
+  types.parsedPlatform = korora.record {
+    cpu = types.cpuType;
+    inherit (types) vendor kernel abi;
   };
 
-  isSystem = isType "system";
+  isSystem = v: v._type or null == "system";
 
   mkSystem =
     components:
-    assert types.parsedPlatform.check components;
-    setType "system" components;
+    assert types.parsedPlatform.verify components;
+    components
+    // {
+      _type = "system";
+    };
 
   mkSkeletonFromList =
     l:
@@ -890,7 +840,7 @@ rec {
   mkSystemFromSkeleton =
     let
       getCpu = name: cpuTypes.${name} or (throw "Unknown CPU type: ${name}");
-      getVendor = name: vendors.${name} or (throw "Unknown vendor: ${name}");
+      getVendor = name: if elem name vendors then name else throw "Unknown vendor: ${name}";
       getKernel = name: kernels.${name} or (throw "Unknown kernel: ${name}");
       getAbi = name: abis.${name} or (throw "Unknown ABI: ${name}");
     in
@@ -914,11 +864,11 @@ rec {
           if args ? vendor then
             getVendor args.vendor
           else if isDarwin parsed then
-            vendors.apple
+            "apple"
           else if (isWindows parsed || isCygwin parsed) then
-            vendors.pc
+            "pc"
           else
-            vendors.unknown;
+            "unknown";
         kernel =
           if hasPrefix "darwin" args.kernel then
             getKernel "darwin"
@@ -975,7 +925,7 @@ rec {
       optAbi = optionalString (abi != abis.unknown) "-${abi.name}";
       cpuName = if kernel.families ? darwin then darwinArch cpu else cpu.name;
     in
-    "${cpuName}-${vendor.name}-${kernelName kernel}${optExecFormat}${optAbi}";
+    "${cpuName}-${vendor}-${kernelName kernel}${optExecFormat}${optAbi}";
 
   # This is a function from parsed platforms (like stdenv.hostPlatform.parsed)
   # to parsed platforms.
