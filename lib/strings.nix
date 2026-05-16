@@ -564,9 +564,7 @@ rec {
   */
   makeSearchPath =
     subDir: paths:
-    concatStringsSep ":" (
-      concatMap (path: if path != null then [ (path + "/" + subDir) ] else [ ]) paths
-    );
+    substring 1 (-1) (concatMapStrings (path: if path != null then ":${path}/${subDir}" else "") paths);
 
   /**
     Construct a Unix-style search path by appending the given
