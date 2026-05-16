@@ -2028,11 +2028,7 @@ rec {
 
     :::
   */
-  getName =
-    let
-      parse = drv: (parseDrvName drv).name;
-    in
-    x: if isString x then parse x else x.pname or (parse x.name);
+  getName = x: if isString x then (parseDrvName x).name else x.pname or ((parseDrvName x.name).name);
 
   /**
     This function takes an argument `x` that's either a derivation or a
