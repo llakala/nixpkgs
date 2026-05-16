@@ -725,9 +725,7 @@ rec {
     warnIf (isPath s)
       ''
         lib.strings.normalizePath: The argument (${toString s}) is a path value, but only strings are supported.
-            Path values are always normalised in Nix, so there's no need to call this function on them.
-            This function also copies the path to the Nix store and returns the store path, the same as "''${path}" will, which may not be what you want.
-            This behavior is deprecated and will throw an error in the future.''
+            Path values are always normalised in Nix, so there's no need to call this function on them.''
       (
         builtins.foldl' (x: y: if y == "/" && hasSuffix "/" x then x else x + y) "" (stringToCharacters s)
       );
