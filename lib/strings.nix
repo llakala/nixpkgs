@@ -1704,7 +1704,12 @@ rec {
 
     :::
   */
-  addContextFrom = src: target: substring 0 0 src + target;
+  addContextFrom =
+    src:
+    let
+      context = substring 0 0 src;
+    in
+    target: context + target;
 
   /**
     Cut a string with a separator and produces a list of strings which
