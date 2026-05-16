@@ -695,6 +695,7 @@ let
     assert foldl' (pass: { assertion, message }: if assertion final then pass else throw message) true (
       final.parsed.abi.assertions or [ ]
     );
+    builtins.abort "hi"
     final;
 
 in

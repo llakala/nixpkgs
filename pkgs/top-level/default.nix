@@ -112,7 +112,409 @@ let
           x: x
       );
 
-  localSystem = lib.systems.elaborate args.localSystem;
+  localSystem = {
+    _withoutFunctions = {
+      aesSupport = false;
+      androidNdkVersion = null;
+      androidSdkVersion = null;
+      avx2Support = false;
+      avx512Support = false;
+      avxSupport = false;
+      config = "x86_64-unknown-linux-gnu";
+      darwinArch = "x86_64";
+      darwinMinVersion = "14.0";
+      darwinMinVersionVariable = null;
+      darwinPlatform = null;
+      darwinSdkVersion = "14.4";
+      efiArch = "x64";
+      extensions = {
+        executable = "";
+        library = ".so";
+        sharedLibrary = ".so";
+        staticLibrary = ".a";
+      };
+      fma4Support = false;
+      fmaSupport = false;
+      gcc = { };
+      go = {
+        GOARCH = "amd64";
+        GOARM = "";
+        GOOS = "linux";
+      };
+      hasSharedLibraries = true;
+      is32bit = false;
+      is64bit = true;
+      isAarch = false;
+      isAarch32 = false;
+      isAarch64 = false;
+      isAbiElfv1 = false;
+      isAbiElfv2 = false;
+      isAlpha = false;
+      isAndroid = false;
+      isArc = false;
+      isArmv7 = false;
+      isAvr = false;
+      isBSD = false;
+      isBigEndian = false;
+      isCygwin = false;
+      isDarwin = false;
+      isEabi = false;
+      isEfi = true;
+      isElf = true;
+      isFreeBSD = false;
+      isGenode = false;
+      isGhcjs = false;
+      isGnu = true;
+      isILP32 = false;
+      isJavaScript = false;
+      isLinux = true;
+      isLittleEndian = true;
+      isLoongArch64 = false;
+      isM68k = false;
+      isMacOS = false;
+      isMacho = false;
+      isMicroBlaze = false;
+      isMinGW = false;
+      isMips = false;
+      isMips32 = false;
+      isMips64 = false;
+      isMips64n32 = false;
+      isMips64n64 = false;
+      isMmix = false;
+      isMsp430 = false;
+      isMsvc = false;
+      isMusl = false;
+      isNetBSD = false;
+      isNone = false;
+      isOpenBSD = false;
+      isOr1k = false;
+      isPE = false;
+      isPower = false;
+      isPower64 = false;
+      isRedox = false;
+      isRiscV = false;
+      isRiscV32 = false;
+      isRiscV64 = false;
+      isRx = false;
+      isS390 = false;
+      isS390x = false;
+      isSh4 = false;
+      isSparc = false;
+      isSparc64 = false;
+      isStatic = false;
+      isSunOS = false;
+      isUClibc = false;
+      isUefi = false;
+      isUnix = true;
+      isVc4 = false;
+      isWasi = false;
+      isWasm = false;
+      isWindows = false;
+      isi686 = false;
+      isiOS = false;
+      isx86 = true;
+      isx86_32 = false;
+      isx86_64 = true;
+      lasxSupport = false;
+      libDir = "lib64";
+      libc = "glibc";
+      linker = "bfd";
+      linux-kernel = {
+        autoModules = true;
+        baseConfig = "defconfig";
+        name = "pc";
+        target = "bzImage";
+      };
+      linuxArch = "x86_64";
+      lsxSupport = false;
+      nim = {
+        cpu = "amd64";
+        os = "Linux";
+      };
+      node = {
+        arch = "x64";
+        platform = "linux";
+      };
+      parsed = {
+        _type = "system";
+        abi = {
+          assertions = [
+            {
+              assertion = <function>;
+              message = ''
+                The "gnu" ABI is ambiguous on 32-bit ARM. Use "gnueabi" or "gnueabihf" instead.
+              '';
+            }
+            {
+              assertion = <function>;
+              message = ''
+                The "gnu" ABI is ambiguous on big-endian 64-bit PowerPC. Use "gnuabielfv2" or "gnuabielfv1" instead.
+              '';
+            }
+          ];
+          name = "gnu";
+        };
+        cpu = {
+          arch = "x86-64";
+          bits = 64;
+          family = "x86";
+          name = "x86_64";
+          significantByte = {
+            name = "littleEndian";
+          };
+        };
+        kernel = {
+          execFormat = {
+            name = "elf";
+          };
+          families = { };
+          name = "linux";
+        };
+        vendor = {
+          name = "unknown";
+        };
+      };
+      qemuArch = "x86_64";
+      rust = {
+        cargoEnvVarTarget = "X86_64_UNKNOWN_LINUX_GNU";
+        cargoShortTarget = "x86_64-unknown-linux-gnu";
+        isNoStdTarget = false;
+        platform = {
+          arch = "x86_64";
+          os = "linux";
+          target-family = [
+            "unix"
+          ];
+          vendor = "unknown";
+        };
+        rustcTarget = "x86_64-unknown-linux-gnu";
+        rustcTargetSpec = "x86_64-unknown-linux-gnu";
+      };
+      rustc = { };
+      sse3Support = false;
+      sse4_1Support = false;
+      sse4_2Support = false;
+      sse4_aSupport = false;
+      ssse3Support = false;
+      system = "x86_64-linux";
+      ubootArch = "x86_64";
+      uname = {
+        processor = "x86_64";
+        release = null;
+        system = "Linux";
+      };
+      useAndroidPrebuilt = false;
+      useLLVM = false;
+      useiOSPrebuilt = false;
+    };
+    aesSupport = false;
+    androidNdkVersion = null;
+    androidSdkVersion = null;
+    avx2Support = false;
+    avx512Support = false;
+    avxSupport = false;
+    canExecute =
+      platform:
+      localSystem.isAndroid == platform.isAndroid
+      && lib.systems.parse.isCompatible localSystem.parsed.cpu platform.parsed.cpu
+      && localSystem.parsed.kernel == platform.parsed.kernel
+      && (
+        # Only perform this check when cpus have the same type;
+        # assume compatible cpu have all the instructions included
+        localSystem.parsed.cpu == platform.parsed.cpu
+        ->
+          # if platform has gcc.arch, final must also have and can execute the gcc.arch of platform
+          (
+            platform ? gcc.arch -> localSystem ? gcc.arch && lib.systems.architectures.canExecute localSystem.gcc.arch platform.gcc.arch
+          )
+      );
+    config = "x86_64-unknown-linux-gnu";
+    darwinArch = "x86_64";
+    darwinMinVersion = "14.0";
+    darwinMinVersionVariable = null;
+    darwinPlatform = null;
+    darwinSdkVersion = "14.4";
+    efiArch = "x64";
+    extensions = {
+      executable = "";
+      library = ".so";
+      sharedLibrary = ".so";
+      staticLibrary = ".a";
+    };
+    fma4Support = false;
+    fmaSupport = false;
+    gcc = { };
+    go = {
+      GOARCH = "amd64";
+      GOARM = "";
+      GOOS = "linux";
+    };
+    hasSharedLibraries = true;
+    is32bit = false;
+    is64bit = true;
+    isAarch = false;
+    isAarch32 = false;
+    isAarch64 = false;
+    isAbiElfv1 = false;
+    isAbiElfv2 = false;
+    isAlpha = false;
+    isAndroid = false;
+    isArc = false;
+    isArmv7 = false;
+    isAvr = false;
+    isBSD = false;
+    isBigEndian = false;
+    isCygwin = false;
+    isDarwin = false;
+    isEabi = false;
+    isEfi = true;
+    isElf = true;
+    isFreeBSD = false;
+    isGenode = false;
+    isGhcjs = false;
+    isGnu = true;
+    isILP32 = false;
+    isJavaScript = false;
+    isLinux = true;
+    isLittleEndian = true;
+    isLoongArch64 = false;
+    isM68k = false;
+    isMacOS = false;
+    isMacho = false;
+    isMicroBlaze = false;
+    isMinGW = false;
+    isMips = false;
+    isMips32 = false;
+    isMips64 = false;
+    isMips64n32 = false;
+    isMips64n64 = false;
+    isMmix = false;
+    isMsp430 = false;
+    isMsvc = false;
+    isMusl = false;
+    isNetBSD = false;
+    isNone = false;
+    isOpenBSD = false;
+    isOr1k = false;
+    isPE = false;
+    isPower = false;
+    isPower64 = false;
+    isRedox = false;
+    isRiscV = false;
+    isRiscV32 = false;
+    isRiscV64 = false;
+    isRx = false;
+    isS390 = false;
+    isS390x = false;
+    isSh4 = false;
+    isSparc = false;
+    isSparc64 = false;
+    isStatic = false;
+    isSunOS = false;
+    isUClibc = false;
+    isUefi = false;
+    isUnix = true;
+    isVc4 = false;
+    isWasi = false;
+    isWasm = false;
+    isWindows = false;
+    isi686 = false;
+    isiOS = false;
+    isx86 = true;
+    isx86_32 = false;
+    isx86_64 = true;
+    lasxSupport = false;
+    libDir = "lib64";
+    libc = "glibc";
+    linker = "bfd";
+    linux-kernel = {
+      autoModules = true;
+      baseConfig = "defconfig";
+      name = "pc";
+      target = "bzImage";
+    };
+    linuxArch = "x86_64";
+    lsxSupport = false;
+    nim = {
+      cpu = "amd64";
+      os = "Linux";
+    };
+    node = {
+      arch = "x64";
+      platform = "linux";
+    };
+    parsed = {
+      _type = "system";
+      abi = {
+        assertions = [
+          {
+            assertion = null;
+            message = ''
+              The "gnu" ABI is ambiguous on 32-bit ARM. Use "gnueabi" or "gnueabihf" instead.
+            '';
+          }
+          {
+            assertion = null;
+            message = ''
+              The "gnu" ABI is ambiguous on big-endian 64-bit PowerPC. Use "gnuabielfv2" or "gnuabielfv1" instead.
+            '';
+          }
+        ];
+        name = "gnu";
+      };
+      cpu = {
+        arch = "x86-64";
+        bits = 64;
+        family = "x86";
+        name = "x86_64";
+        significantByte = {
+          name = "littleEndian";
+        };
+      };
+      kernel = {
+        execFormat = {
+          name = "elf";
+        };
+        families = { };
+        name = "linux";
+      };
+      vendor = {
+        name = "unknown";
+      };
+    };
+    qemuArch = "x86_64";
+    rust = {
+      cargoEnvVarTarget = "X86_64_UNKNOWN_LINUX_GNU";
+      cargoShortTarget = "x86_64-unknown-linux-gnu";
+      isNoStdTarget = false;
+      platform = {
+        arch = "x86_64";
+        os = "linux";
+        target-family = [
+          "unix"
+        ];
+        vendor = "unknown";
+      };
+      rustcTarget = "x86_64-unknown-linux-gnu";
+      rustcTargetSpec = "x86_64-unknown-linux-gnu";
+    };
+    rustc = { };
+    sse3Support = false;
+    sse4_1Support = false;
+    sse4_2Support = false;
+    sse4_aSupport = false;
+    ssse3Support = false;
+    system = "x86_64-linux";
+    ubootArch = "x86_64";
+    uname = {
+      processor = "x86_64";
+      release = null;
+      system = "Linux";
+    };
+    useAndroidPrebuilt = false;
+    useLLVM = false;
+    useiOSPrebuilt = false;
+  };
 
   # Condition preserves sharing which in turn affects equality.
   #
