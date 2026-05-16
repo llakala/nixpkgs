@@ -1738,11 +1738,13 @@ rec {
     :::
   */
   splitString =
-    sep: s:
+    sep: str:
     let
-      splits = filter isString (split (escapeRegex (toString sep)) (toString s));
+      withContext = addContextFrom str;
     in
-    map (addContextFrom s) splits;
+    concatMap (split: if isString split then [ (withContext split) ] else [ ]) (
+      split (escapeRegex (toString sep)) (toString str)
+    );
 
   /**
     Splits a string into substrings based on a predicate that examines adjacent characters.
