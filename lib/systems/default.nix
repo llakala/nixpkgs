@@ -17,7 +17,7 @@ let
 
   inherit (lib.strings) toJSON;
 
-  doubles = import ./doubles.nix { inherit lib; };
+  doubles = lib.importJSON ./doubles/generated.json;
   parse = import ./parse.nix { inherit lib; };
   inspect = import ./inspect.nix { inherit lib; };
   platforms = import ./platforms.nix { inherit lib; };
