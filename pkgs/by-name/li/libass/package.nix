@@ -49,8 +49,6 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optional stdenv.hostPlatform.isDarwin [
     libiconv
   ];
-  # Workaround to avoid warning
-  allowNestedDependencyLists = true;
 
   meta = {
     description = "Portable ASS/SSA subtitle renderer";
