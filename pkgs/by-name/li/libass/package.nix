@@ -50,7 +50,6 @@ stdenv.mkDerivation (finalAttrs: {
     libiconv
   ];
   # Workaround to avoid warning
-  allowNestedDependencyLists = true;
 
   meta = {
     description = "Portable ASS/SSA subtitle renderer";
