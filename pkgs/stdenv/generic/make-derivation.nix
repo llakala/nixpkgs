@@ -483,7 +483,10 @@ let
             if isSingularDependency dep then
               index + 1
             else if isList dep then
-              warn
+              # ffmpeg has a nested list in its closure that causes mass
+              # rebuilds on darwin, so we use this attribute to prevent a
+              # warning. Support for this will be removed in the next release.
+              (if attrs.allowNestedDependencyLists or false then x: y: y else warn)
                 ''
                   Dependency of package '${attrs.name or attrs.pname}' uses a nested list in attribute '${name}'.
                   This is deprecated as of Nixpkgs release 26.05, and support will
