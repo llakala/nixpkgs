@@ -45,7 +45,12 @@ stdenv.mkDerivation (finalAttrs: {
     harfbuzz
   ]
   ++ lib.optional fontconfigSupport fontconfig
-  ++ lib.optional stdenv.hostPlatform.isDarwin libiconv;
+  # TODO: make into a non-nested list after branchoff (gives mass rebuilds)
+  ++ lib.optional stdenv.hostPlatform.isDarwin [
+    libiconv
+  ];
+  # Workaround to avoid warning
+  allowNestedDependencyLists = true;
 
   meta = {
     description = "Portable ASS/SSA subtitle renderer";
