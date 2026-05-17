@@ -229,6 +229,8 @@ let
     "disallowedReferences"
     "disallowedRequisites"
     "outputChecks"
+
+    "allowNestedDependencyList"
   ];
 
   defaultBuilderArgs = [
