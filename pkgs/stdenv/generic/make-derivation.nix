@@ -6,6 +6,27 @@
 #
 # See https://github.com/NixOS/nixpkgs/pull/430969 for measurements.
 
+let
+  nameLookups = {
+    depsBuildBuild = "buildBuild";
+    depsBuildBuildPropagated = "buildBuild";
+
+    nativeBuildInputs = "buildHost";
+    propagatedNativeBuildInputs = "buildHost";
+
+    depsBuildTarget = "buildTarget";
+    depsBuildTargetPropagated = "buildTarget";
+
+    depsHostHost = "hostHost";
+    depsHostHostPropagated = "hostHost";
+
+    buildInputs = "hostTarget";
+    propagatedBuildInputs = "hostTarget";
+
+    depsTargetTargetPropagated = "targetTarget";
+    depsTargetTarget = "targetTarget";
+  };
+in
 { lib, config }:
 
 stdenv:
@@ -13,18 +34,15 @@ stdenv:
 let
   # Lib attributes are inherited to the lexical scope for performance reasons.
   inherit (lib)
-    all
     attrNames
     concatLists
     concatMap
-    concatMapStrings
     concatMapStringsSep
     concatStringsSep
     elem
     extendDerivation
     filter
     filterAttrs
-    foldl'
     getDev
     head
     intersectAttrs
@@ -32,7 +50,6 @@ let
     isBool
     isDerivation
     isInt
-    isList
     isPath
     isString
     listToAttrs
@@ -43,7 +60,6 @@ let
     optionals
     pipe
     remove
-    seq
     splitString
     subtractLists
     toExtension
@@ -52,13 +68,13 @@ let
     unique
     unsafeDiscardStringContext
     unsafeGetAttrPos
-    warn
     warnIf
     zipAttrsWith
     ;
 
   inherit (lib.generators) toPretty;
   inherit (lib.strings) sanitizeDerivationName;
+  inherit (lib.lists) findFirstIndex;
 
   inherit (import ../../build-support/lib/cmake.nix { inherit lib stdenv; }) makeCMakeFlags;
   inherit (import ../../build-support/lib/meson.nix { inherit lib stdenv; }) makeMesonFlags;
@@ -469,35 +485,20 @@ let
         hardeningEnable ++ remove "all" hardeningDisable
       );
 
-      checkDependencyList = checkDependencyList' [ ];
-      checkDependencyList' =
-        positions: name: deps:
-        if all isSingularDependency deps then
-          deps
-        else
-          # iterate again with the index if an invalid type was passed, or we
-          # need to recurse into a sublist. making sublists take longer is
-          # worth it, since nobody uses them and handling them makes normal
-          # dependencies slower
-          seq (foldl' (
-            index: dep:
-            if isSingularDependency dep then
-              index + 1
-            else if isList dep then
-              # ffmpeg has a nested list in its closure that causes mass
-              # rebuilds on darwin, so we use this attribute to prevent a
-              # warning. Support for this will be removed in the next release.
-              (if attrs.allowNestedDependencyLists or false then x: y: y else warn)
-                ''
-                  Dependency of package '${attrs.name or attrs.pname}' uses a nested list in attribute '${name}'.
-                  This is deprecated as of Nixpkgs release 26.05, and support will
-                  be removed in a future nixpkgs release.''
-                (seq (checkDependencyList' ([ index ] ++ positions) name dep) (index + 1))
-            else
-              throw "Dependency is not of a valid type: ${
-                concatMapStrings (ix: "element ${toString ix} of ") ([ index ] ++ positions)
-              }${name} for ${attrs.name or attrs.pname}"
-          ) 1 deps) deps;
+      checkDependencyList =
+        attributeName: deps:
+        map (
+          drv:
+          assert
+            isSingularDependency drv
+            || (
+              let
+                index = findFirstIndex (drv: !isSingularDependency drv) (-1) deps;
+              in
+              throw "Dependency is not of a valid type: element ${toString index} of ${attributeName} for ${attrs.name or attrs.pname}"
+            );
+          getDev drv.__spliced.${nameLookups.attributeName} or drv
+        ) deps;
     in
     if erroneousHardeningFlags != [ ] then
       abort (
@@ -523,47 +524,23 @@ let
           ++ optional isWindows ../../build-support/setup-hooks/win-dll-link.sh
           ++ optionals doCheck nativeCheckInputs
           ++ optionals doInstallCheck nativeInstallCheckInputs;
-
         outputs = outputs';
 
         buildBuildOutputs =
-          if depsBuildBuild == [ ] then
-            [ ]
-          else
-            map (drv: getDev drv.__spliced.buildBuild or drv) (
-              checkDependencyList "depsBuildBuild" depsBuildBuild
-            );
+          if depsBuildBuild != [ ] then checkDependencyList "depsBuildBuild" depsBuildBuild else [ ];
         buildHostOutputs =
-          if nativeBuildInputs' == [ ] then
-            [ ]
+          if nativeBuildInputs' != [ ] then
+            checkDependencyList "nativeBuildInputs" nativeBuildInputs'
           else
-            map (drv: getDev drv.__spliced.buildHost or drv) (
-              checkDependencyList "nativeBuildInputs" nativeBuildInputs'
-            );
+            [ ];
         buildTargetOutputs =
-          if depsBuildTarget == [ ] then
-            [ ]
-          else
-            map (drv: getDev drv.__spliced.buildTarget or drv) (
-              checkDependencyList "depsBuildTarget" depsBuildTarget
-            );
+          if depsBuildTarget != [ ] then checkDependencyList "depsBuildTarget" depsBuildTarget else [ ];
         hostHostOutputs =
-          if depsHostHost == [ ] then
-            [ ]
-          else
-            map (drv: getDev drv.__spliced.hostHost or drv) (checkDependencyList "depsHostHost" depsHostHost);
+          if depsHostHost != [ ] then checkDependencyList "depsHostHost" depsHostHost else [ ];
         hostTargetOutputs =
-          if buildInputs' == [ ] then
-            [ ]
-          else
-            map (drv: getDev drv.__spliced.hostTarget or drv) (checkDependencyList "buildInputs" buildInputs');
+          if buildInputs' != [ ] then checkDependencyList "buildInputs" buildInputs' else [ ];
         targetTargetOutputs =
-          if depsTargetTarget == [ ] then
-            [ ]
-          else
-            map (drv: getDev drv.__spliced.targetTarget or drv) (
-              checkDependencyList "depsTargetTarget" depsTargetTarget
-            );
+          if depsTargetTarget != [ ] then checkDependencyList "depsTargetTarget" depsTargetTarget else [ ];
         allDependencies = concatLists [
           buildBuildOutputs
           buildHostOutputs
@@ -574,47 +551,35 @@ let
         ];
 
         propagatedBuildBuildOutputs =
-          if depsBuildBuildPropagated == [ ] then
-            [ ]
+          if depsBuildBuildPropagated != [ ] then
+            checkDependencyList "depsBuildBuildPropagated" depsBuildBuildPropagated
           else
-            map (drv: getDev drv.__spliced.buildBuild or drv) (
-              checkDependencyList "depsBuildBuildPropagated" depsBuildBuildPropagated
-            );
+            [ ];
         propagatedBuildHostOutputs =
-          if propagatedNativeBuildInputs == [ ] then
-            [ ]
+          if propagatedNativeBuildInputs != [ ] then
+            checkDependencyList "propagatedNativeBuildInputs" propagatedNativeBuildInputs
           else
-            map (drv: getDev drv.__spliced.buildHost or drv) (
-              checkDependencyList "propagatedNativeBuildInputs" propagatedNativeBuildInputs
-            );
+            [ ];
         propagatedBuildTargetOutputs =
-          if depsBuildTargetPropagated == [ ] then
-            [ ]
+          if depsBuildTargetPropagated != [ ] then
+            checkDependencyList "depsBuildTargetPropagated" depsBuildTargetPropagated
           else
-            map (drv: getDev drv.__spliced.buildTarget or drv) (
-              checkDependencyList "depsBuildTargetPropagated" depsBuildTargetPropagated
-            );
+            [ ];
         propagatedHostHostOutputs =
-          if depsHostHostPropagated == [ ] then
-            [ ]
+          if depsHostHostPropagated != [ ] then
+            checkDependencyList "depsHostHostPropagated" depsHostHostPropagated
           else
-            map (drv: getDev drv.__spliced.hostHost or drv) (
-              checkDependencyList "depsHostHostPropagated" depsHostHostPropagated
-            );
+            [ ];
         propagatedHostTargetOutputs =
-          if propagatedBuildInputs == [ ] then
-            [ ]
+          if propagatedBuildInputs != [ ] then
+            checkDependencyList "propagatedBuildInputs" propagatedBuildInputs
           else
-            map (drv: getDev drv.__spliced.hostTarget or drv) (
-              checkDependencyList "propagatedBuildInputs" propagatedBuildInputs
-            );
+            [ ];
         propagatedTargetTargetOutputs =
-          if depsTargetTargetPropagated == [ ] then
-            [ ]
+          if depsTargetTargetPropagated != [ ] then
+            checkDependencyList "depsTargetTargetPropagated" depsTargetTargetPropagated
           else
-            map (drv: getDev drv.__spliced.targetTarget or drv) (
-              checkDependencyList "depsTargetTargetPropagated" depsTargetTargetPropagated
-            );
+            [ ];
         allPropagatedDependencies = concatLists [
           propagatedBuildBuildOutputs
           propagatedBuildHostOutputs
