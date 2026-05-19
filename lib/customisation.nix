@@ -109,7 +109,7 @@ rec {
           _: sDrv: overrideDerivation sDrv f
         ) drv.__spliced;
       }
-    ) (derivation (drv.drvAttrs // (f drv)));
+    ) (drv.drvAttrs // (f drv));
 
   /**
     `makeOverridable` takes a function from attribute set to attribute set and
@@ -401,22 +401,34 @@ rec {
     let
       defaultOutputs = [ "out" ];
     in
-    condition: passthru: drv:
+    condition: passthru:
+    drvAttrs@{
+      outputs ? defaultOutputs,
+      ...
+    }:
     let
+      strict = derivationStrict drvAttrs;
       commonAttrs =
-        drv // (listToAttrs outputsList) // { all = map (x: x.value) outputsList; } // passthru;
+        drvAttrs
+        // (listToAttrs outputsList)
+        // {
+          inherit drvAttrs;
+          type = "derivation";
+          all = map (x: x.value) outputsList;
+          drvPath =
+            assert condition;
+            strict.drvPath;
+        }
+        // passthru;
 
       outputsList = map (outputName: {
         name = outputName;
         value = commonAttrs // {
-          inherit (drv.${outputName}) type outputName;
+          inherit outputName;
           outputSpecified = true;
-          drvPath =
-            assert condition;
-            drv.${outputName}.drvPath;
           outPath =
             assert condition;
-            drv.${outputName}.outPath;
+            strict.${outputName};
           # TODO: give the derivation control over the outputs.
           #       `overrideAttrs` may not be the only attribute that needs
           #       updating when switching outputs.
@@ -424,16 +436,14 @@ rec {
           ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
             f: (passthru.overrideAttrs f).${outputName};
         };
-      }) (drv.outputs or defaultOutputs);
+      }) outputs;
     in
     commonAttrs
     // {
-      drvPath =
-        assert condition;
-        drv.drvPath;
       outPath =
         assert condition;
-        drv.outPath;
+        strict.${head outputs};
+      outputName = head outputs;
     };
 
   /**
