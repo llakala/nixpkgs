@@ -1038,7 +1038,7 @@ let
         # should be made available to Nix expressions using the
         # derivation (e.g., in assertions).
         passthru
-    ) (derivation (derivationArg // checkedEnv));
+    ) (derivationArg // checkedEnv);
 
 in
 {
