@@ -147,7 +147,7 @@ let
 
 in
 rec {
-  isType = type: x: (x._type or "") == type;
+  isType = type: x: (x._type or null) == type;
 
   setType =
     typeName: value:
