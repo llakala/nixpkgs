@@ -81,7 +81,12 @@ let
     Most arguments are also passed through to the underlying call of [`derivation`](https://nixos.org/manual/nix/stable/language/derivations).
     :::
   */
-  mkDerivation = fnOrAttrs: makeDerivationExtensible (toFunction fnOrAttrs);
+  mkDerivation =
+    fnOrAttrs:
+    if isFunction fnOrAttrs then
+      makeDerivationExtensible (fnOrAttrs)
+    else
+      mkDerivationSimple (mkOverrideAttrs fnOrAttrs (_: fnOrAttrs)) fnOrAttrs;
 
   checkMeta = import ./check-meta.nix {
     inherit lib config;
@@ -89,6 +94,71 @@ let
     # to build it. This is a bit confusing for cross compilation.
     inherit (stdenv) hostPlatform;
   };
+
+  mkOverrideAttrs =
+    /**
+      Override the attributes that were passed to `mkDerivation` in order to generate this derivation.
+    */
+    # NOTE: the above documentation had to be duplicated in `lib/customisation.nix`: `makeOverridable`.
+    args: rattrs: f0:
+    makeDerivationExtensible (
+      final:
+      let
+        prev = rattrs final;
+        # inlined version of toExtension
+        thisOverlay =
+          if isFunction f0 then
+            let
+              fPrev = f0 prev;
+            in
+            if isFunction fPrev then
+              # f is (final: prev: { ... })
+              f0 final prev
+            else
+              # f is (prev: { ... })
+              fPrev
+          else
+            # f is not a function; probably { ... }
+            f0;
+      in
+      warnIf
+        (
+          prev ? src
+          && thisOverlay ? version
+          && prev ? version
+          # We could check that the version is actually distinct, but that
+          # would probably just delay the inevitable, or preserve tech debt.
+          # && prev.version != thisOverlay.version
+          && !(thisOverlay ? src)
+          && !(thisOverlay.__intentionallyOverridingVersion or false)
+        )
+        (
+          let
+            pos = unsafeGetAttrPos "version" thisOverlay;
+          in
+          ''
+            ${
+              args.name or "${args.pname or "<unknown name>"}-${args.version or "<unknown version>"}"
+            } was overridden with `version` but not `src` at ${pos.file or "<unknown file>"}:${
+              toString pos.line or "<unknown line>"
+            }:${toString pos.column or "<unknown column>"}.
+
+            This is most likely not what you want. In order to properly change the version of a package, override
+            both the `version` and `src` attributes:
+
+            hello.overrideAttrs (oldAttrs: rec {
+              version = "1.0.0";
+              src = pkgs.fetchurl {
+                url = "mirror://gnu/hello/hello-''${version}.tar.gz";
+                hash = "...";
+              };
+            })
+
+            (To silence this warning, set `__intentionallyOverridingVersion = true` in your `overrideAttrs` call.)
+          ''
+        )
+        (prev // (removeAttrs thisOverlay [ "__intentionallyOverridingVersion" ]))
+    );
 
   # Based off lib.makeExtensible, with modifications:
   makeDerivationExtensible =
@@ -102,73 +172,9 @@ let
       args = rattrs (args // { inherit finalPackage overrideAttrs; });
       #              ^^^^
 
-      /**
-        Override the attributes that were passed to `mkDerivation` in order to generate this derivation.
-      */
-      # NOTE: the above documentation had to be duplicated in `lib/customisation.nix`: `makeOverridable`.
-      overrideAttrs =
-        f0:
-        makeDerivationExtensible (
-          final:
-          let
-            prev = rattrs final;
-            # inlined version of toExtension
-            thisOverlay =
-              if isFunction f0 then
-                let
-                  fPrev = f0 prev;
-                in
-                if isFunction fPrev then
-                  # f is (final: prev: { ... })
-                  f0 final prev
-                else
-                  # f is (prev: { ... })
-                  fPrev
-              else
-                # f is not a function; probably { ... }
-                f0;
-          in
-          warnIf
-            (
-              prev ? src
-              && thisOverlay ? version
-              && prev ? version
-              # We could check that the version is actually distinct, but that
-              # would probably just delay the inevitable, or preserve tech debt.
-              # && prev.version != thisOverlay.version
-              && !(thisOverlay ? src)
-              && !(thisOverlay.__intentionallyOverridingVersion or false)
-            )
-            (
-              let
-                pos = unsafeGetAttrPos "version" thisOverlay;
-              in
-              ''
-                ${
-                  args.name or "${args.pname or "<unknown name>"}-${args.version or "<unknown version>"}"
-                } was overridden with `version` but not `src` at ${pos.file or "<unknown file>"}:${
-                  toString pos.line or "<unknown line>"
-                }:${toString pos.column or "<unknown column>"}.
-
-                This is most likely not what you want. In order to properly change the version of a package, override
-                both the `version` and `src` attributes:
-
-                hello.overrideAttrs (oldAttrs: rec {
-                  version = "1.0.0";
-                  src = pkgs.fetchurl {
-                    url = "mirror://gnu/hello/hello-''${version}.tar.gz";
-                    hash = "...";
-                  };
-                })
-
-                (To silence this warning, set `__intentionallyOverridingVersion = true` in your `overrideAttrs` call.)
-              ''
-            )
-            (prev // (removeAttrs thisOverlay [ "__intentionallyOverridingVersion" ]))
-        );
+      overrideAttrs = mkOverrideAttrs args rattrs;
 
       finalPackage = mkDerivationSimple overrideAttrs args;
-
     in
     finalPackage;
 
