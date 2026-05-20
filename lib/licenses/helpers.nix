@@ -1,4 +1,8 @@
 { lib }:
+
+let
+  inherit (lib) any all elem;
+in
 rec {
   /**
     Evaluate a license expression for a given predicate.
@@ -23,8 +27,8 @@ rec {
   evaluateProperty =
     predicate: permissive:
     let
-      OR = if permissive then lib.any else lib.all;
-      AND = if permissive then lib.all else lib.any;
+      OR = if permissive then any else all;
+      AND = if permissive then all else any;
       evaluateSubProperty = evaluateProperty predicate permissive;
     in
     license:
@@ -68,8 +72,8 @@ rec {
   evaluateNamedProperty =
     name: permissive:
     let
-      OR = if permissive then lib.any else lib.all;
-      AND = if permissive then lib.all else lib.any;
+      OR = if permissive then any else all;
+      AND = if permissive then all else any;
       evaluateSubProperty = evaluateNamedProperty name permissive;
     in
     license:
@@ -154,7 +158,7 @@ rec {
     - [licenses] List of licenses to look
     - [license] License expression to check
   */
-  containsLicenses = licenses: evaluateProperty (x: lib.lists.elem x licenses) false;
+  containsLicenses = licenses: evaluateProperty (x: elem x licenses) false;
 
   /**
     Convert a license expression to an SPDX license expression string.
