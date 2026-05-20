@@ -2,6 +2,22 @@
 
 let
   inherit (lib) any all elem;
+
+  handleComplexProperty =
+    evaluateSubProperty: AND: OR: license:
+    if license.licenseType == "compound" then
+      if license.operator == "OR" then
+        OR evaluateSubProperty license.licenses
+      else if license.operator == "AND" then
+        AND evaluateSubProperty license.licenses
+      else
+        throw "Unknown license operator"
+    else if license.licenseType == "exception" then
+      evaluateSubProperty license.license && evaluateSubProperty license.exception
+    else if license.licenseType == "plus" then
+      evaluateSubProperty license.license
+    else
+      throw "Unknown license type or legacy license";
 in
 rec {
   /**
@@ -29,24 +45,10 @@ rec {
     let
       OR = if permissive then any else all;
       AND = if permissive then all else any;
-      evaluateSubProperty = evaluateProperty predicate permissive;
+      evaluateComplexProperty = handleComplexProperty (evaluateProperty predicate permissive) AND OR;
     in
     license:
-    if license.licenseType == "simple" then
-      predicate license
-    else if license.licenseType == "compound" then
-      if license.operator == "OR" then
-        OR evaluateSubProperty license.licenses
-      else if license.operator == "AND" then
-        AND evaluateSubProperty license.licenses
-      else
-        throw "Unknown license operator"
-    else if license.licenseType == "exception" then
-      evaluateSubProperty license.license && evaluateSubProperty license.exception
-    else if license.licenseType == "plus" then
-      evaluateSubProperty license.license
-    else
-      throw "Unknown license type or legacy license";
+    if license.licenseType == "simple" then predicate license else evaluateComplexProperty license;
 
   /**
     Evaluate a license expression for a given property name. The property must
@@ -74,24 +76,13 @@ rec {
     let
       OR = if permissive then any else all;
       AND = if permissive then all else any;
-      evaluateSubProperty = evaluateNamedProperty name permissive;
+      evaluateComplexProperty = handleComplexProperty (evaluateNamedProperty name permissive) AND OR;
     in
     license:
     if license.licenseType == "simple" then
       license.${name}
-    else if license.licenseType == "compound" then
-      if license.operator == "OR" then
-        OR evaluateSubProperty license.licenses
-      else if license.operator == "AND" then
-        AND evaluateSubProperty license.licenses
-      else
-        throw "Unknown license operator"
-    else if license.licenseType == "exception" then
-      evaluateSubProperty license.license && evaluateSubProperty license.exception
-    else if license.licenseType == "plus" then
-      evaluateSubProperty license.license
     else
-      throw "Unknown license type or legacy license";
+      evaluateComplexProperty license;
 
   /**
     Check whether a license expression is free.
