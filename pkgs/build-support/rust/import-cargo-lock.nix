@@ -30,6 +30,23 @@ let
     optionalString
     removePrefix
     ;
+
+  # Parse a git source into different components.
+  parseGit =
+    src:
+    let
+      parts = match ''git\+([^?]+)(\?(rev|tag|branch)=(.*))?#(.*)'' src;
+      type = elemAt parts 2; # rev, tag or branch
+      value = elemAt parts 3;
+    in
+    if parts == null then
+      null
+    else
+      {
+        url = elemAt parts 0;
+        sha = elemAt parts 4;
+      }
+      // optionalAttrs (type != null) { inherit type value; };
 in
 
 {
@@ -60,23 +77,6 @@ in
 assert (lockFile == null) != (lockFileContents == null);
 
 let
-  # Parse a git source into different components.
-  parseGit =
-    src:
-    let
-      parts = match ''git\+([^?]+)(\?(rev|tag|branch)=(.*))?#(.*)'' src;
-      type = elemAt parts 2; # rev, tag or branch
-      value = elemAt parts 3;
-    in
-    if parts == null then
-      null
-    else
-      {
-        url = elemAt parts 0;
-        sha = elemAt parts 4;
-      }
-      // optionalAttrs (type != null) { inherit type value; };
-
   # shadows args.lockFileContents
   lockFileContents = if lockFile != null then readFile lockFile else args.lockFileContents;
 
