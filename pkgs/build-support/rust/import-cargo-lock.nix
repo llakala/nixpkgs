@@ -56,6 +56,19 @@ let
         sha = elemAt parts 4;
       }
       // optionalAttrs (type != null) { inherit type value; };
+
+  # Replaces values inherited by workspace members.
+  replaceWorkspaceValues = writers.writePython3 "replace-workspace-values" {
+    libraries = with python3Packages; [
+      tomli
+      tomli-w
+    ];
+    flakeIgnore = [
+      "E501"
+      "W503"
+    ];
+  } (readFile ./replace-workspace-values.py);
+
 in
 
 {
@@ -160,18 +173,6 @@ let
     };
 
   registries = defaultRegistries // extraRegistries;
-
-  # Replaces values inherited by workspace members.
-  replaceWorkspaceValues = writers.writePython3 "replace-workspace-values" {
-    libraries = with python3Packages; [
-      tomli
-      tomli-w
-    ];
-    flakeIgnore = [
-      "E501"
-      "W503"
-    ];
-  } (readFile ./replace-workspace-values.py);
 
   # Fetch and unpack a crate.
   mkCrate =
