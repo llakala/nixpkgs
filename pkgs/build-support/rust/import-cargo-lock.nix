@@ -36,6 +36,10 @@ let
   hasSparsePrefix = hasPrefix "sparse+";
   removeRegistryPrefix = removePrefix "registry+";
 
+  defaultRegistries = {
+    "https://github.com/rust-lang/crates.io-index" = "https://crates.io/api/v1/crates";
+  };
+
   # Parse a git source into different components.
   parseGit =
     src:
@@ -155,10 +159,7 @@ let
       sha256 = checksum;
     };
 
-  registries = {
-    "https://github.com/rust-lang/crates.io-index" = "https://crates.io/api/v1/crates";
-  }
-  // extraRegistries;
+  registries = defaultRegistries // extraRegistries;
 
   # Replaces values inherited by workspace members.
   replaceWorkspaceValues = writers.writePython3 "replace-workspace-values" {
@@ -180,8 +181,7 @@ let
       registryIndexUrl = removeRegistryPrefix pkg.source;
     in
     if
-      (hasRegistryPrefix pkg.source || hasSparsePrefix pkg.source)
-      && registries ? ${registryIndexUrl}
+      (hasRegistryPrefix pkg.source || hasSparsePrefix pkg.source) && registries ? ${registryIndexUrl}
     then
       let
         crateTarball = fetchCrate pkg registries.${registryIndexUrl};
