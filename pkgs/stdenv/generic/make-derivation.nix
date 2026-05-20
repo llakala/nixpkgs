@@ -21,7 +21,6 @@ let
     concatMapStringsSep
     concatStringsSep
     elem
-    extendDerivation
     filter
     filterAttrs
     foldl'
@@ -153,6 +152,58 @@ let
 
     in
     finalPackage;
+
+  # The extendDerivation in lib performs a lot of the same computations as
+  # builtins.derivation (defined here
+  # https://github.com/NixOS/nix/blob/master/src/libexpr/primops/derivation.nix).
+  # For performance reasons, we instead call derivationStrict manually on the
+  # derivation attrs to only perform this work once.
+  # This should be passed the derivation attrs themselves, without calling
+  # builtins.derivation on them
+  extendDerivationAttrs =
+    condition: passthru:
+    original@{
+      outputs ? defaultOutputs,
+      drvAttrs ? original,
+      ...
+    }:
+    let
+      strict = derivationStrict drvAttrs;
+      commonAttrs =
+        drvAttrs
+        // (listToAttrs outputsList)
+        // {
+          inherit drvAttrs;
+          type = "derivation";
+          all = map (x: x.value) outputsList;
+          drvPath =
+            assert condition;
+            strict.drvPath;
+        }
+        // passthru;
+
+      outputsList = map (outputName: {
+        name = outputName;
+        value = commonAttrs // {
+          inherit outputName;
+          outputSpecified = true;
+          outPath =
+            assert condition;
+            strict.${outputName};
+          ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
+            f: (passthru.overrideAttrs f).${outputName};
+        };
+      }) outputs;
+    in
+    commonAttrs
+    // {
+      outPath =
+        assert condition;
+        strict.${head outputs};
+      outputName = head outputs;
+    };
+
+  defaultOutputs = [ "out" ];
 
   knownHardeningFlags = [
     "bindnow"
@@ -412,7 +463,7 @@ let
       enableParallelBuilding ? config.enableParallelBuildingByDefault,
 
       separateDebugInfo ? false,
-      outputs ? [ "out" ],
+      outputs ? defaultOutputs,
       __darwinAllowLocalNetworking ? false,
       __impureHostDeps ? [ ],
       __propagatedImpureHostDeps ? [ ],
@@ -988,7 +1039,7 @@ let
         ) env';
     in
 
-    extendDerivation validity.handled (
+    extendDerivationAttrs validity.handled (
       {
         # A derivation that always builds successfully and whose runtime
         # dependencies are the original derivations build time dependencies
@@ -1001,7 +1052,7 @@ let
             # Add a name in case the original drv didn't have one
             name = "inputDerivation" + optionalString (derivationArg ? name) "-${derivationArg.name}";
             # This always only has one output
-            outputs = [ "out" ];
+            outputs = defaultOutputs;
             # This doesn’t require any system features even if the original
             # derivation did.
             requiredSystemFeatures = [ ];
@@ -1044,7 +1095,7 @@ let
         # should be made available to Nix expressions using the
         # derivation (e.g., in assertions).
         passthru
-    ) (derivation (derivationArg // checkedEnv));
+    ) (derivationArg // checkedEnv);
 
 in
 {
