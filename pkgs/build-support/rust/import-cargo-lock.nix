@@ -31,6 +31,11 @@ let
     removePrefix
     ;
 
+  hasGitPrefix = hasPrefix "git+";
+  hasRegistryPrefix = hasPrefix "registry+";
+  hasSparsePrefix = hasPrefix "sparse+";
+  removeRegistryPrefix = removePrefix "registry+";
+
   # Parse a git source into different components.
   parseGit =
     src:
@@ -101,7 +106,7 @@ let
   depCrates = deepSeq gitShaOutputHash (map mkCrate depPackages);
 
   # Map package name + version to git commit SHA for packages with a git source.
-  namesGitShas = listToAttrs (map nameGitSha (filter (pkg: hasPrefix "git+" pkg.source) depPackages));
+  namesGitShas = listToAttrs (map nameGitSha (filter (pkg: hasGitPrefix pkg.source) depPackages));
 
   nameGitSha =
     pkg:
@@ -172,10 +177,10 @@ let
     pkg:
     let
       gitParts = parseGit pkg.source;
-      registryIndexUrl = removePrefix "registry+" pkg.source;
+      registryIndexUrl = removeRegistryPrefix pkg.source;
     in
     if
-      (hasPrefix "registry+" pkg.source || hasPrefix "sparse+" pkg.source)
+      (hasRegistryPrefix pkg.source || hasSparsePrefix pkg.source)
       && registries ? ${registryIndexUrl}
     then
       let
