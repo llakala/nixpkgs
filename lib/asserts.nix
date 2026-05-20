@@ -5,6 +5,7 @@ let
     concatStringsSep
     ;
   inherit (lib.lists)
+    any
     filter
     ;
   inherit (lib.trivial)
@@ -191,10 +192,10 @@ rec {
   */
   checkAssertWarn =
     assertions: warnings: val:
-    let
-      failedAssertions = map (x: x.message) (filter (x: !x.assertion) assertions);
-    in
-    if failedAssertions != [ ] then
+    if any (x: !x.assertion) assertions then
+      let
+        failedAssertions = map (x: x.message) (filter (x: !x.assertion) assertions);
+      in
       throw "\nFailed assertions:\n${concatStringsSep "\n" (map (x: "- ${x}") failedAssertions)}"
     else
       showWarnings warnings val;
