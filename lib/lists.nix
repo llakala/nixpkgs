@@ -445,7 +445,11 @@ rec {
 
     :::
   */
-  flatten = x: if isList x then concatMap flatten x else [ x ];
+  flatten =
+    let
+      recurse = x: if isList x then concatMap recurse x else [ x ];
+    in
+    concatMap recurse;
 
   /**
     Remove elements equal to `e` from a list.  Useful for `buildInputs`.
