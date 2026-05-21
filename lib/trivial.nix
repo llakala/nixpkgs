@@ -1040,11 +1040,12 @@ in
   */
   checkListOfEnum =
     msg: valid: given:
-    let
-      unexpected = lib.subtractLists valid given;
-    in
-    lib.throwIfNot (unexpected == [ ])
-      "${msg}: ${builtins.concatStringsSep ", " (map toString unexpected)} unexpected; valid ones: ${builtins.concatStringsSep ", " (map toString valid)}";
+    lib.throwIfNot (valid == given) (
+      let
+        unexpected = lib.subtractLists valid given;
+      in
+      "${msg}: ${builtins.concatStringsSep ", " (map toString unexpected)} unexpected; valid ones: ${builtins.concatStringsSep ", " (map toString valid)}"
+    );
 
   info = msg: builtins.trace "INFO: ${msg}";
 
