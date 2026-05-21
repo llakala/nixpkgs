@@ -12,7 +12,6 @@ let
     isFunction
     mirrorFunctionArgs
     isAttrs
-    setFunctionArgs
     optionalAttrs
     attrNames
     filter
@@ -152,7 +151,10 @@ rec {
     f:
     let
       # Creates a functor with the same arguments as f
-      mirrorArgs = mirrorFunctionArgs f;
+      mirrorArgs = g: {
+        __functor = self: g;
+        __functionArgs = functionArgs f; # uncached for all g, because these are often never checked
+      };
 
       f' =
         origArgs:
@@ -192,8 +194,9 @@ rec {
           }
         else if isFunction result then
           # Transform the result into a functor while propagating its arguments
-          setFunctionArgs result (functionArgs result)
-          // {
+          {
+            __functor = self: result;
+            __functionArgs = functionArgs result;
             override = overrideArgs;
           }
         else
