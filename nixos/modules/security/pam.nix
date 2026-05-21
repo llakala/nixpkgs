@@ -898,15 +898,9 @@ let
                 ))
                 (map (
                   rule:
-                  lib.concatStringsSep " " (
-                    [
-                      type
-                      rule.control
-                      rule.modulePath
-                    ]
-                    ++ map formatModuleArgument rule.args
-                    ++ [ "# ${rule.name} (order ${toString rule.order})" ]
-                  )
+                  "${type} ${rule.control} ${rule.modulePath}${
+                    if rule.args == [ ] then "" else " " + lib.concatStringsSep " " (map formatModuleArgument rule.args)
+                  } # ${rule.name} (order ${toString rule.order})"
                 ))
                 (lib.concatStringsSep "\n")
               ];
