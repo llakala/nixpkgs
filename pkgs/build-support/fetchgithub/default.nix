@@ -32,6 +32,16 @@ let
     "forceFetchGit"
   ];
 
+  excludePassthruNames = [
+    "owner"
+    "repo"
+    "tag"
+    "rev"
+    "private"
+    "githubBase"
+    "varPrefix"
+  ];
+
   faUseFetchGit = lib.mapAttrs (_: _: true) useFetchGitArgsDefault;
 
   adjustFunctionArgs = f: lib.setFunctionArgs f (faUseFetchGit // lib.functionArgs f);
@@ -91,15 +101,7 @@ decorate (
         position = "${position.file}:${toString position.line}";
       };
     passthruAttrs = removeAttrs args (
-      [
-        "owner"
-        "repo"
-        "tag"
-        "rev"
-        "private"
-        "githubBase"
-        "varPrefix"
-      ]
+      excludePassthruNames
       ++ (if useFetchGit then excludeUseFetchGitArgNames else lib.attrNames faUseFetchGit)
     );
     varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
