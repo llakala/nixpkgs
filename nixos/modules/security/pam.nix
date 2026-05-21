@@ -881,17 +881,6 @@ let
 
         text =
           let
-            ensureUniqueOrder =
-              type: rules:
-              let
-                checkPair =
-                  a: b:
-                  assert lib.assertMsg (a.order != b.order)
-                    "security.pam.services.${name}.rules.${type}: rules '${a.name}' and '${b.name}' cannot have the same order value (${toString a.order})";
-                  b;
-                checked = lib.zipListsWith checkPair rules (lib.drop 1 rules);
-              in
-              lib.take 1 rules ++ checked;
             # Formats a string for use in `module-arguments`. See `man pam.conf`.
             formatModuleArgument =
               token: if lib.hasInfix " " token then "[${lib.replaceStrings [ "]" ] [ "\\]" ] token}]" else token;
@@ -900,8 +889,13 @@ let
               lib.pipe cfg.rules.${type} [
                 lib.attrValues
                 (lib.filter (rule: rule.enable))
-                (lib.sort (a: b: a.order < b.order))
-                (ensureUniqueOrder type)
+                (lib.sort (
+                  a: b:
+                  if a.order != b.order then
+                    a.order < b.order
+                  else
+                    throw "security.pam.services.${name}.rules.${type}: rules '${a.name}' and '${b.name}' cannot have the same order value (${toString a.order})"
+                ))
                 (map (
                   rule:
                   lib.concatStringsSep " " (
