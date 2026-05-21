@@ -21,7 +21,6 @@ let
     concatMapStringsSep
     concatStringsSep
     elem
-    extendDerivation
     filter
     filterAttrs
     foldl'
@@ -57,6 +56,52 @@ let
     zipAttrsWith
     ;
 
+
+  extendDerivation =
+    condition: passthru:
+    drvAttrs@{
+      outputs ? [ "out" ],
+      ...
+    }:
+    let
+      strict = derivationStrict drvAttrs;
+      commonAttrs =
+        drvAttrs
+        // (listToAttrs outputsList)
+        // {
+          inherit drvAttrs;
+          type = "derivation";
+          all = map (x: x.value) outputsList;
+          drvPath =
+            assert condition;
+            strict.drvPath;
+        }
+        // passthru;
+
+      outputsList = map (outputName: {
+        name = outputName;
+        value = commonAttrs // {
+          inherit outputName;
+          outputSpecified = true;
+          outPath =
+            assert condition;
+            strict.${outputName};
+          # TODO: give the derivation control over the outputs.
+          #       `overrideAttrs` may not be the only attribute that needs
+          #       updating when switching outputs.
+          # TODO: also add overrideAttrs when overrideAttrs is not custom, e.g. when not splicing.
+          ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
+            f: (passthru.overrideAttrs f).${outputName};
+        };
+      }) outputs;
+    in
+    commonAttrs
+    // rec {
+      outPath =
+        assert condition;
+        strict.${outputName};
+      outputName = head outputs;
+    };
   inherit (lib.generators) toPretty;
   inherit (lib.strings) sanitizeDerivationName;
 
@@ -1044,7 +1089,7 @@ let
         # should be made available to Nix expressions using the
         # derivation (e.g., in assertions).
         passthru
-    ) (derivation (derivationArg // checkedEnv));
+    ) (derivationArg // checkedEnv);
 
 in
 {
