@@ -13,7 +13,12 @@
   unzip,
   glibcLocalesUtf8,
 }:
-
+let
+  defaultNativeBuildInputs = lib.optionals withUnzip [
+    unzip
+    glibcLocalesUtf8
+  ];
+in
 lib.extendMkDerivation {
   constructDrv = fetchurl;
 
@@ -68,12 +73,7 @@ lib.extendMkDerivation {
       # Have to pull in glibcLocalesUtf8 for unzip in setup-hook.sh to handle
       # UTF-8 aware locale:
       #   https://github.com/NixOS/nixpkgs/issues/176225#issuecomment-1146617263
-      nativeBuildInputs =
-        lib.optionals withUnzip [
-          unzip
-          glibcLocalesUtf8
-        ]
-        ++ nativeBuildInputs;
+      nativeBuildInputs = defaultNativeBuildInputs ++ nativeBuildInputs;
 
       postFetch = ''
         unpackDir="$TMPDIR/unpack"
