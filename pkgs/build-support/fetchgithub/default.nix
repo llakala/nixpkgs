@@ -5,6 +5,19 @@
   fetchzip,
 }@args:
 let
+  inherit (lib)
+    attrNames
+    functionArgs
+    makeOverridable
+    mapAttrs
+    optionalAttrs
+    optionalString
+    overrideExisting
+    revOrTag
+    setFunctionArgs
+    xor
+    ;
+
   # Here defines fetchFromGitHub arguments that determines useFetchGit,
   # The attribute value is their default values.
   # As fetchFromGitHub prefers fetchzip for hash stability,
@@ -26,9 +39,7 @@ let
 
   useFetchGitArgsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
 
-  overrideFetchGitArgs = lib.overrideExisting (
-    removeAttrs useFetchGitArgsDefault excludedFetchGitNames
-  );
+  overrideFetchGitArgs = overrideExisting (removeAttrs useFetchGitArgsDefault excludedFetchGitNames);
 
   excludedPassthruNames = [
     "owner"
@@ -46,13 +57,13 @@ let
   excludedFetchGitNames = [ "forceFetchGit" ];
 
   excludePassthruFetchGitNames = excludedPassthruNames ++ excludedFetchGitNames;
-  excludedPassthruFetchZipNames = excludedPassthruNames ++ lib.attrNames useFetchGitArgsDefault;
+  excludedPassthruFetchZipNames = excludedPassthruNames ++ attrNames useFetchGitArgsDefault;
 
-  faUseFetchGit = lib.mapAttrs (_: _: true) useFetchGitArgsDefault;
+  faUseFetchGit = mapAttrs (_: _: true) useFetchGitArgsDefault;
 
-  adjustFunctionArgs = f: lib.setFunctionArgs f (faUseFetchGit // lib.functionArgs f);
+  adjustFunctionArgs = f: setFunctionArgs f (faUseFetchGit // functionArgs f);
 
-  decorate = f: lib.makeOverridable (adjustFunctionArgs f);
+  decorate = f: makeOverridable (adjustFunctionArgs f);
 
   # fetchzip may not be overridable when using external tools, for example nix-prefetch
   fetchzip =
@@ -76,13 +87,13 @@ decorate (
   }@args:
 
   assert (
-    lib.xor (tag == null) (rev == null)
+    xor (tag == null) (rev == null)
     || throw "${functionName} requires one of either `rev` or `tag` to be provided (not both)."
   );
 
   let
     useFetchGit =
-      lib.mapAttrs (
+      mapAttrs (
         name: nonNullDefault:
         if args ? ${name} && (useFetchGitArgsDefaultNullable ? ${name} -> args.${name} != null) then
           args.${name}
@@ -111,29 +122,29 @@ decorate (
               {
                 type = "github";
                 # https://github.com/package-url/purl-spec/blob/18fd3e395dda53c00bc8b11fe481666dc7b3807a/types-doc/github-definition.md
-                spec = "${owner}/${repo}@${(lib.revOrTag rev tag)}";
+                spec = "${owner}/${repo}@${(revOrTag rev tag)}";
               }
             else
               {
                 type = "generic";
                 # https://github.com/package-url/purl-spec/blob/18fd3e395dda53c00bc8b11fe481666dc7b3807a/types-doc/generic-definition.md
-                spec = "${repo}?vcs_url=https://${githubBase}/${owner}/${repo}@${(lib.revOrTag rev tag)}";
+                spec = "${repo}?vcs_url=https://${githubBase}/${owner}/${repo}@${(revOrTag rev tag)}";
               };
         }
         // meta.identifiers or { };
       }
-      // lib.optionalAttrs (position != null) {
+      // optionalAttrs (position != null) {
         # to indicate where derivation originates, similar to make-derivation.nix's mkDerivation
         position = "${position.file}:${toString position.line}";
       };
     passthruAttrs = removeAttrs args (
       (if useFetchGit then excludePassthruFetchGitNames else excludedPassthruFetchZipNames)
     );
-    varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
+    varBase = "NIX${optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
     # We prefer fetchzip in cases we don't need submodules as the hash
     # is more stable in that case.
     fetcher = if useFetchGit then fetchgit else fetchzip;
-    privateAttrs = lib.optionalAttrs private {
+    privateAttrs = optionalAttrs private {
       netrcPhase =
         # When using private repos:
         # - Fetching with git works using https://github.com but not with the GitHub API endpoint
@@ -224,7 +235,7 @@ decorate (
         # TODO(@ShamrockLee): Change back to `inherit name;` after reconstruction with lib.extendMkDerivation
         name =
           args.name
-            or (repoRevToNameMaybe finalAttrs.repo (lib.revOrTag finalAttrs.revCustom finalAttrs.tag) "github");
+            or (repoRevToNameMaybe finalAttrs.repo (revOrTag finalAttrs.revCustom finalAttrs.tag) "github");
         meta = newMeta;
       };
   in
