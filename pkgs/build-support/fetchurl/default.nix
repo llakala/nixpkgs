@@ -277,8 +277,6 @@ lib.extendMkDerivation {
 
       finalHashHasColon = match ".*:.*" finalAttrs.hash != null;
       finalHashColonMatch = match "([^:]+)[:](.*)" finalAttrs.hash;
-
-      resolvedUrl = head (resolveUrl url);
     in
 
     derivationArgs
@@ -377,7 +375,8 @@ lib.extendMkDerivation {
 
       inherit meta;
       passthru = {
-        inherit url resolvedUrl;
+        inherit url;
+        resolvedUrl = head (resolveUrl url);
       }
       // passthru;
     };
