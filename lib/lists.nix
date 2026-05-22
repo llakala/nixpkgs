@@ -276,11 +276,14 @@ rec {
     :::
   */
   foldl' =
+    let
+      inherit (builtins) seq foldl';
+    in
     op: acc:
     # The builtin `foldl'` is a bit lazier than one might expect.
     # See https://github.com/NixOS/nix/pull/7158.
     # In particular, the initial accumulator value is not forced before the first iteration starts.
-    builtins.seq acc (builtins.foldl' op acc);
+    seq acc (foldl' op acc);
 
   /**
     Map with index starting from 0
@@ -1504,7 +1507,12 @@ rec {
 
     :::
   */
-  take = count: sublist 0 count;
+  take =
+    count: list:
+    let
+      len = length list;
+    in
+    genList (n: elemAt list n) (if count > len then len else count);
 
   /**
     Returns the last (at most) N elements of a list.
@@ -1572,7 +1580,12 @@ rec {
 
     :::
   */
-  drop = count: list: sublist count (length list) list;
+  drop =
+    count: list:
+    let
+      len = length list;
+    in
+    genList (n: elemAt list (n + count)) (if count >= len then 0 else len - count);
 
   /**
     Remove the last (at most) N elements of a list.
