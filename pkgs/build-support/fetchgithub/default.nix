@@ -26,11 +26,21 @@ let
 
   useFetchGitargsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
 
+  excludePassthruNames = [
+    "owner"
+    "repo"
+    "tag"
+    "rev"
+    "private"
+    "githubBase"
+    "varPrefix"
+  ];
+
   # useFetchGitArgsWD to exclude from automatic passing.
   # Other useFetchGitArgsWD will pass down to fetchgit.
-  excludeUseFetchGitArgNames = [
-    "forceFetchGit"
-  ];
+  fetchGitNames = excludePassthruNames ++ [ "forceFetchGit" ];
+
+  noFetchGitNames = excludePassthruNames ++ lib.attrNames useFetchGitArgsDefault;
 
   faUseFetchGit = lib.mapAttrs (_: _: true) useFetchGitArgsDefault;
 
@@ -74,7 +84,7 @@ decorate (
           nonNullDefault
       ) useFetchGitargsDefaultNonNull != useFetchGitargsDefaultNonNull;
 
-    useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs useFetchGitArgsDefault excludeUseFetchGitArgNames) args;
+    useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs useFetchGitArgsDefault fetchGitNames) args;
 
     position = (
       if args.meta.description or null != null then
@@ -94,18 +104,7 @@ decorate (
         # to indicate where derivation originates, similar to make-derivation.nix's mkDerivation
         position = "${position.file}:${toString position.line}";
       };
-    passthruAttrs = removeAttrs args (
-      [
-        "owner"
-        "repo"
-        "tag"
-        "rev"
-        "private"
-        "githubBase"
-        "varPrefix"
-      ]
-      ++ (if useFetchGit then excludeUseFetchGitArgNames else lib.attrNames faUseFetchGit)
-    );
+    passthruAttrs = removeAttrs args ((if useFetchGit then fetchGitNames else noFetchGitNames));
     varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
     # We prefer fetchzip in cases we don't need submodules as the hash
     # is more stable in that case.
