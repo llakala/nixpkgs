@@ -84,6 +84,22 @@ let
     else
       map (mirror: mirror + elemAt mirrorSplit 1) mirrorList;
 
+  rewriteAllUrls =
+    urls:
+    if rewriteURL == null then
+      urls
+    else
+      let
+        u = concatMap (
+          url:
+          let
+            rewritten = rewriteURL url;
+          in
+          if isString rewritten then [ rewritten ] else [ ]
+        ) urls;
+      in
+      if u == [ ] then throw "urls is empty after rewriteURL (was ${toString urls})" else u;
+
   impureEnvVars =
     lib.fetchers.proxyImpureEnvVars
     ++ [
@@ -209,17 +225,7 @@ lib.extendMkDerivation {
         else
           throw "fetchurl requires either `url` or `urls` to be set: ${lib.generators.toPretty { } args}";
 
-      urls_ =
-        let
-          u = concatMap (
-            url:
-            let
-              rewritten = rewriteURL url;
-            in
-            if isString rewritten then [ rewritten ] else [ ]
-          ) preRewriteUrls;
-        in
-        if u == [ ] then throw "urls is empty after rewriteURL (was ${toString preRewriteUrls})" else u;
+      urls_ = rewriteAllUrls preRewriteUrls;
 
       hash_ =
         if
