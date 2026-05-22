@@ -57,15 +57,6 @@ lib.extendMkDerivation {
       # the rest are given to fetchurl as is
       ...
     }:
-
-    let
-      tmpFilename =
-        if finalAttrs.extension != null then
-          "download.${finalAttrs.extension}"
-        else
-          baseNameOf (if url != "" then url else builtins.head urls);
-    in
-
     {
       inherit name;
       recursiveHash = true;
@@ -82,7 +73,12 @@ lib.extendMkDerivation {
         mkdir "$unpackDir"
         cd "$unpackDir"
 
-        renamed="$TMPDIR/${tmpFilename}"
+        renamed="$TMPDIR/${
+          if finalAttrs.extension != null then
+            "download.${finalAttrs.extension}"
+          else
+            baseNameOf (if url != "" then url else builtins.head urls)
+        }"
         mv "$downloadedFile" "$renamed"
         unpackFile "$renamed"
         chmod -R +w "$unpackDir"
