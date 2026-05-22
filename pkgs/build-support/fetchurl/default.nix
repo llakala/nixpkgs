@@ -28,6 +28,8 @@ let
     warnIf
     ;
 
+  nixpkgsVersion = lib.trivial.release;
+
   mirrors = import ./mirrors.nix // {
     inherit hashedMirrors;
   };
@@ -370,7 +372,7 @@ lib.extendMkDerivation {
 
       impureEnvVars = impureEnvVars ++ netrcImpureEnvVars;
 
-      nixpkgsVersion = lib.trivial.release;
+      inherit nixpkgsVersion;
 
       inherit preferLocalBuild;
 
