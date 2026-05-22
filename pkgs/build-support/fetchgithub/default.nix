@@ -35,7 +35,7 @@ let
 
   useFetchGitargsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
 
-  excludePassthruNames = [
+  excludedPassthruNames = [
     "owner"
     "repo"
     "tag"
@@ -47,9 +47,10 @@ let
 
   # useFetchGitArgsWD to exclude from automatic passing.
   # Other useFetchGitArgsWD will pass down to fetchgit.
-  fetchGitNames = excludePassthruNames ++ [ "forceFetchGit" ];
+  excludedFetchGitNames = [ "forceFetchGit" ];
 
-  noFetchGitNames = excludePassthruNames ++ lib.attrNames useFetchGitArgsDefault;
+  excludePassthruFetchGitNames = excludedPassthruNames ++ excludedFetchGitNames;
+  excludedPassthruFetchZipNames = excludedPassthruNames ++ lib.attrNames useFetchGitArgsDefault;
 
   faUseFetchGit = lib.mapAttrs (_: _: true) useFetchGitArgsDefault;
 
@@ -91,7 +92,7 @@ decorate (
           nonNullDefault
       ) useFetchGitargsDefaultNonNull != useFetchGitargsDefaultNonNull;
 
-    useFetchGitArgsWDPassing = overrideExisting (removeAttrs useFetchGitArgsDefault fetchGitNames) args;
+    useFetchGitArgsWDPassing = overrideExisting (removeAttrs useFetchGitArgsDefault excludedFetchGitNames) args;
 
     position = (
       if args.meta.description or null != null then
@@ -111,7 +112,7 @@ decorate (
         # to indicate where derivation originates, similar to make-derivation.nix's mkDerivation
         position = "${position.file}:${toString position.line}";
       };
-    passthruAttrs = removeAttrs args ((if useFetchGit then fetchGitNames else noFetchGitNames));
+    passthruAttrs = removeAttrs args ((if useFetchGit then excludePassthruFetchGitNames else excludedPassthruFetchZipNames));
     varBase = "NIX${optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
     # We prefer fetchzip in cases we don't need submodules as the hash
     # is more stable in that case.
