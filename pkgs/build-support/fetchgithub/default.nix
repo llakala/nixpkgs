@@ -190,9 +190,6 @@ decorate (
             };
           }
         else
-          let
-            revWithTag = finalAttrs.rev;
-          in
           {
             # Use the API endpoint for private repos, as the archive URI doesn't
             # support access with GitHub's fine-grained access tokens.
@@ -201,15 +198,12 @@ decorate (
             # relatively restrictive rate limits for unauthenticated users.
             url =
               if private then
-                let
-                  endpoint = "/repos/${finalAttrs.owner}/${finalAttrs.repo}/tarball/${revWithTag}";
-                in
                 if githubBase == "github.com" then
-                  "https://api.github.com${endpoint}"
+                  "https://api.github.com/repos/${finalAttrs.owner}/${finalAttrs.repo}/tarball/${finalAttrs.rev}"
                 else
-                  "https://${githubBase}/api/v3${endpoint}"
+                  "https://${githubBase}/api/v3/repos/${finalAttrs.owner}/${finalAttrs.repo}/tarball/${finalAttrs.rev}"
               else
-                "${baseUrl}/archive/${revWithTag}.tar.gz";
+                "${baseUrl}/archive/${finalAttrs.rev}.tar.gz";
             extension = "tar.gz";
             derivationArgs = {
               inherit
