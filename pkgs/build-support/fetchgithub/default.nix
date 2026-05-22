@@ -24,6 +24,16 @@ let
     sparseCheckout = [ ];
   };
 
+  removedPassthruNames = [
+    "owner"
+    "repo"
+    "tag"
+    "rev"
+    "private"
+    "githubBase"
+    "varPrefix"
+  ];
+
   useFetchGitargsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
 
   # useFetchGitArgsWD to exclude from automatic passing.
@@ -95,15 +105,7 @@ decorate (
         position = "${position.file}:${toString position.line}";
       };
     passthruAttrs = removeAttrs args (
-      [
-        "owner"
-        "repo"
-        "tag"
-        "rev"
-        "private"
-        "githubBase"
-        "varPrefix"
-      ]
+      removedPassthruNames
       ++ (if useFetchGit then excludeUseFetchGitArgNames else lib.attrNames faUseFetchGit)
     );
     varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
