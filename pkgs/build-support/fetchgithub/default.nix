@@ -5,6 +5,15 @@
   fetchzip,
 }@args:
 let
+  inherit (lib)
+    optionalAttrs
+    optionalString
+    mapAttrs
+    xor
+    revOrTag
+    overrideExisting
+    ;
+
   # Here defines fetchFromGitHub arguments that determines useFetchGit,
   # The attribute value is their default values.
   # As fetchFromGitHub prefers fetchzip for hash stability,
@@ -69,12 +78,12 @@ decorate (
   }@args:
 
   assert
-    lib.xor (tag == null) (rev == null)
+    xor (tag == null) (rev == null)
     || throw "fetchFromGitHub requires one of either `rev` or `tag` to be provided (not both).";
 
   let
     useFetchGit =
-      lib.mapAttrs (
+      mapAttrs (
         name: nonNullDefault:
         if args ? ${name} && (useFetchGitArgsDefaultNullable ? ${name} -> args.${name} != null) then
           args.${name}
@@ -82,7 +91,7 @@ decorate (
           nonNullDefault
       ) useFetchGitargsDefaultNonNull != useFetchGitargsDefaultNonNull;
 
-    useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs useFetchGitArgsDefault fetchGitNames) args;
+    useFetchGitArgsWDPassing = overrideExisting (removeAttrs useFetchGitArgsDefault fetchGitNames) args;
 
     position = (
       if args.meta.description or null != null then
@@ -98,16 +107,16 @@ decorate (
       // {
         homepage = meta.homepage or baseUrl;
       }
-      // lib.optionalAttrs (position != null) {
+      // optionalAttrs (position != null) {
         # to indicate where derivation originates, similar to make-derivation.nix's mkDerivation
         position = "${position.file}:${toString position.line}";
       };
     passthruAttrs = removeAttrs args ((if useFetchGit then fetchGitNames else noFetchGitNames));
-    varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
+    varBase = "NIX${optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
     # We prefer fetchzip in cases we don't need submodules as the hash
     # is more stable in that case.
     fetcher = if useFetchGit then fetchgit else fetchzip;
-    privateAttrs = lib.optionalAttrs private {
+    privateAttrs = optionalAttrs private {
       netrcPhase =
         # When using private repos:
         # - Fetching with git works using https://github.com but not with the GitHub API endpoint
@@ -198,7 +207,7 @@ decorate (
         # TODO(@ShamrockLee): Change back to `inherit name;` after reconstruction with lib.extendMkDerivation
         name =
           args.name
-            or (repoRevToNameMaybe finalAttrs.repo (lib.revOrTag finalAttrs.revCustom finalAttrs.tag) "github");
+            or (repoRevToNameMaybe finalAttrs.repo (revOrTag finalAttrs.revCustom finalAttrs.tag) "github");
         meta = newMeta;
       };
   in
