@@ -11,6 +11,21 @@
 }:
 
 let
+  inherit (lib)
+    concatMap
+    elemAt
+    fakeHash
+    fakeSha256
+    fakeSha512
+    filter
+    hasPrefix
+    head
+    isList
+    isString
+    length
+    match
+    warnIf
+    ;
 
   mirrors = import ./mirrors.nix // {
     inherit hashedMirrors;
@@ -60,14 +75,14 @@ let
   resolveUrl =
     url:
     let
-      mirrorSplit = lib.match "mirror://([[:alpha:]]+)/(.+)" url;
-      mirrorName = lib.head mirrorSplit;
+      mirrorSplit = match "mirror://([[:alpha:]]+)/(.+)" url;
+      mirrorName = head mirrorSplit;
       mirrorList = mirrors."${mirrorName}" or (throw "unknown mirror:// site ${mirrorName}");
     in
     if mirrorSplit == null || mirrorName == null then
       [ url ]
     else
-      map (mirror: mirror + lib.elemAt mirrorSplit 1) mirrorList;
+      map (mirror: mirror + elemAt mirrorSplit 1) mirrorList;
 
   impureEnvVars =
     lib.fetchers.proxyImpureEnvVars
@@ -186,34 +201,28 @@ lib.extendMkDerivation {
     let
       preRewriteUrls =
         if urls != [ ] && url == "" then
-          (
-            if lib.isList urls then urls else throw "`urls` is not a list: ${lib.generators.toPretty { } urls}"
-          )
+          (if isList urls then urls else throw "`urls` is not a list: ${lib.generators.toPretty { } urls}")
         else if urls == [ ] && url != "" then
           (
-            if lib.isString url then
-              [ url ]
-            else
-              throw "`url` is not a string: ${lib.generators.toPretty { } urls}"
+            if isString url then [ url ] else throw "`url` is not a string: ${lib.generators.toPretty { } urls}"
           )
         else
           throw "fetchurl requires either `url` or `urls` to be set: ${lib.generators.toPretty { } args}";
 
       urls_ =
         let
-          u = lib.lists.concatMap (
+          u = concatMap (
             url:
             let
               rewritten = rewriteURL url;
             in
-            if lib.isString rewritten then [ rewritten ] else [ ]
+            if isString rewritten then [ rewritten ] else [ ]
           ) preRewriteUrls;
         in
         if u == [ ] then throw "urls is empty after rewriteURL (was ${toString preRewriteUrls})" else u;
 
       hash_ =
         if
-          with lib.lists;
           length (
             filter (s: s != "") [
               hash
@@ -255,15 +264,15 @@ lib.extendMkDerivation {
         else if cacert != null then
           {
             outputHashAlgo = null;
-            outputHash = lib.fakeHash;
+            outputHash = fakeHash;
           }
         else
           throw "fetchurl requires a hash for fixed-output derivation: ${lib.generators.toPretty { } urls_}";
 
-      finalHashHasColon = lib.match ".*:.*" finalAttrs.hash != null;
-      finalHashColonMatch = lib.match "([^:]+)[:](.*)" finalAttrs.hash;
+      finalHashHasColon = match ".*:.*" finalAttrs.hash != null;
+      finalHashColonMatch = match "([^:]+)[:](.*)" finalAttrs.hash;
 
-      resolvedUrl = lib.head (resolveUrl url);
+      resolvedUrl = head (resolveUrl url);
     in
 
     derivationArgs
@@ -278,7 +287,7 @@ lib.extendMkDerivation {
         else if name != null then
           name
         else
-          baseNameOf (toString (lib.head urls_));
+          baseNameOf (toString (head urls_));
 
       builder = ./builder.sh;
 
@@ -295,17 +304,17 @@ lib.extendMkDerivation {
         if
           hash_.outputHashAlgo == null
           || hash_.outputHash == ""
-          || lib.hasPrefix hash_.outputHashAlgo hash_.outputHash
+          || hasPrefix hash_.outputHashAlgo hash_.outputHash
         then
           hash_.outputHash
         else
           "${hash_.outputHashAlgo}:${hash_.outputHash}";
-      outputHashAlgo = if finalHashHasColon then lib.head finalHashColonMatch else null;
+      outputHashAlgo = if finalHashHasColon then head finalHashColonMatch else null;
       outputHash =
         if finalAttrs.hash == "" then
-          lib.fakeHash
+          fakeHash
         else if finalHashHasColon then
-          lib.elemAt finalHashColonMatch 1
+          elemAt finalHashColonMatch 1
         else
           finalAttrs.hash;
 
@@ -315,9 +324,9 @@ lib.extendMkDerivation {
         if
           (
             hash_.outputHash == ""
-            || hash_.outputHash == lib.fakeSha256
-            || hash_.outputHash == lib.fakeSha512
-            || hash_.outputHash == lib.fakeHash
+            || hash_.outputHash == fakeSha256
+            || hash_.outputHash == fakeSha512
+            || hash_.outputHash == fakeHash
             || netrcPhase != null
           )
         then
@@ -327,7 +336,7 @@ lib.extendMkDerivation {
 
       outputHashMode = if (recursiveHash || executable) then "recursive" else "flat";
 
-      curlOpts = lib.warnIf (lib.isList curlOpts) (
+      curlOpts = warnIf (isList curlOpts) (
         let
           url = toString (builtins.head urls_);
           curlOptsRepresentation = lib.generators.toPretty { multiline = false; } curlOpts;
