@@ -24,13 +24,29 @@ let
     sparseCheckout = [ ];
   };
 
-  useFetchGitargsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
+  useFetchGitArgsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
+
+  overrideFetchGitArgs = lib.overrideExisting (
+    removeAttrs useFetchGitArgsDefault excludedFetchGitNames
+  );
+
+  excludedPassthruNames = [
+    "owner"
+    "repo"
+    "tag"
+    "rev"
+    "functionName"
+    "private"
+    "githubBase"
+    "varPrefix"
+  ];
 
   # useFetchGitArgsWD to exclude from automatic passing.
   # Other useFetchGitArgsWD will pass down to fetchgit.
-  excludeUseFetchGitArgNames = [
-    "forceFetchGit"
-  ];
+  excludedFetchGitNames = [ "forceFetchGit" ];
+
+  excludePassthruFetchGitNames = excludedPassthruNames ++ excludedFetchGitNames;
+  excludedPassthruFetchZipNames = excludedPassthruNames ++ lib.attrNames useFetchGitArgsDefault;
 
   faUseFetchGit = lib.mapAttrs (_: _: true) useFetchGitArgsDefault;
 
@@ -72,9 +88,9 @@ decorate (
           args.${name}
         else
           nonNullDefault
-      ) useFetchGitargsDefaultNonNull != useFetchGitargsDefaultNonNull;
+      ) useFetchGitArgsDefaultNonNull != useFetchGitArgsDefaultNonNull;
 
-    useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs useFetchGitArgsDefault excludeUseFetchGitArgNames) args;
+    useFetchGitArgsWDPassing = overrideFetchGitArgs args;
 
     position = (
       if args.meta.description or null != null then
@@ -111,17 +127,7 @@ decorate (
         position = "${position.file}:${toString position.line}";
       };
     passthruAttrs = removeAttrs args (
-      [
-        "owner"
-        "repo"
-        "tag"
-        "rev"
-        "functionName"
-        "private"
-        "githubBase"
-        "varPrefix"
-      ]
-      ++ (if useFetchGit then excludeUseFetchGitArgNames else lib.attrNames faUseFetchGit)
+      (if useFetchGit then excludePassthruFetchGitNames else excludedPassthruFetchZipNames)
     );
     varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
     # We prefer fetchzip in cases we don't need submodules as the hash
