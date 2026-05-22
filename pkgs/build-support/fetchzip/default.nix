@@ -54,7 +54,7 @@ lib.extendMkDerivation {
 
       # the rest are given to fetchurl as is
       ...
-    }@args:
+    }:
 
     let
       tmpFilename =
