@@ -3,6 +3,7 @@
   repoRevToNameMaybe,
   fetchgit,
   fetchzip,
+  config,
 }@args:
 let
   inherit (lib)
@@ -40,6 +41,8 @@ let
   useFetchGitArgsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
 
   overrideFetchGitArgs = overrideExisting (removeAttrs useFetchGitArgsDefault excludedFetchGitNames);
+
+  sourceNameIsSource = config.fetchedSourceNameDefault == "source";
 
   excludedPassthruNames = [
     "owner"
@@ -228,8 +231,12 @@ decorate (
       // {
         # TODO(@ShamrockLee): Change back to `inherit name;` after reconstruction with lib.extendMkDerivation
         name =
-          args.name
-            or (repoRevToNameMaybe finalAttrs.repo (revOrTag finalAttrs.revCustom finalAttrs.tag) "github");
+          args.name or (
+            if sourceNameIsSource then
+              "source"
+            else
+              repoRevToNameMaybe finalAttrs.repo (revOrTag finalAttrs.revCustom finalAttrs.tag) "github"
+          );
         meta = newMeta;
       };
   in
