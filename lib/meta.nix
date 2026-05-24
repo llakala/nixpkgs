@@ -570,13 +570,19 @@ rec {
     :::
   */
   getExe' =
+    let
+      isNestedSlash = match ".*/.*";
+    in
     x: y:
-    assert assertMsg (isDerivation x)
-      "lib.meta.getExe': The first argument is of type ${typeOf x}, but it should be a derivation instead.";
-    assert assertMsg (isString y)
-      "lib.meta.getExe': The second argument is of type ${typeOf y}, but it should be a string instead.";
-    assert assertMsg (match ".*/.*" y == null)
-      "lib.meta.getExe': The second argument \"${y}\" is a nested path with a \"/\" character, but it should just be the name of the executable instead.";
+    assert
+      isDerivation x
+      || throw "lib.meta.getExe': The first argument is of type ${typeOf x}, but it should be a derivation instead.";
+    assert
+      isString y
+      || throw "lib.meta.getExe': The second argument is of type ${typeOf y}, but it should be a string instead.";
+    assert
+      isNestedSlash y == null
+      || throw "lib.meta.getExe': The second argument \"${y}\" is a nested path with a \"/\" character, but it should just be the name of the executable instead.";
     "${getBin x}/bin/${y}";
 
   /**
