@@ -2218,7 +2218,13 @@ rec {
 
     :::
   */
-  recurseIntoAttrs = attrs: attrs // { recurseForDerivations = true; };
+  recurseIntoAttrs =
+    let
+      doRecurse = {
+        recurseForDerivations = true;
+      };
+    in
+    attrs: attrs // doRecurse;
 
   /**
     Undo the effect of `recurseIntoAttrs`.
