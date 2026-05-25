@@ -470,12 +470,11 @@ let
         information.
       '';
     };
-
-    problems = (import ../stdenv/generic/problems.nix { inherit lib; }).configOptions args;
   };
 
 in
 {
+  imports = [ (import ../stdenv/generic/problems.nix { inherit lib; }).module ];
 
   freeformType =
     let
