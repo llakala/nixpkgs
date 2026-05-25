@@ -332,8 +332,23 @@ rec {
     :::
   */
   getAttrFromPath =
-    attrPath: set:
-    attrByPath attrPath (abort ("cannot find attribute '" + concatStringsSep "." attrPath + "'")) set;
+    attrPath:
+    let
+      lenAttrPath = length attrPath;
+      getAttrFromPath' =
+        n: s:
+        if n == lenAttrPath then
+          s
+        else
+          let
+            attr = elemAt attrPath n;
+          in
+          if s ? ${attr} then
+            getAttrFromPath' (n + 1) s.${attr}
+          else
+            abort ("cannot find attribute '" + concatStringsSep "." attrPath + "'");
+    in
+    getAttrFromPath' 0;
 
   /**
     Map each attribute in the given set and merge them into a new attribute set.
