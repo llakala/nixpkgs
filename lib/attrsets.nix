@@ -1141,7 +1141,7 @@ rec {
 
     :::
   */
-  attrsToList = mapAttrsToList nameValuePair;
+  attrsToList = attrs: attrValues (mapAttrs nameValuePair attrs);
 
   /**
     Like `mapAttrs`, except that it recursively applies itself to the *leaf* attributes of a potentially-nested attribute set:
