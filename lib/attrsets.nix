@@ -1062,7 +1062,7 @@ rec {
 
     :::
   */
-  mapAttrs' = f: set: listToAttrs (mapAttrsToList f set);
+  mapAttrs' = f: set: listToAttrs (attrValues (mapAttrs f set));
 
   /**
     Call a function for each attribute in the given set and return
