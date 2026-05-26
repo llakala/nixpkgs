@@ -443,10 +443,10 @@ rec {
       inherit switch definedConstraints;
       handlerForProblem =
         if isString switch then
-          pname: name: kind:
+          kind: name: pname:
           switch
         else
-          pname: name: kind:
+          kind: name: pname:
           let
             switch' = switch.kindSpecific.${kind} or switch.kindFallback;
           in
@@ -484,12 +484,14 @@ rec {
       configuredProblems = definedConstraints.kinds ++ definedConstraints.names;
 
       # Filter out any problems that are always ignored in config.problems.
-      # Makes sure that automatic problems can cache with just config applied
+      # Makes sure to cache the condition by appliny config, and the handler
+      # by applying the problem's kind and name
       automaticProblemsConfigCache = concatMap (
         problem:
-        optionals (elem problem.kindName configuredProblems) [
-          (problem // { condition = problem.condition config; })
-        ]
+        optional (elem problem.kindName configuredProblems) {
+          condition = problem.condition config;
+          handler = handlerForProblem problem.kindName problem.kindName;
+        }
       ) automaticProblems;
     in
     attrs:
@@ -498,16 +500,14 @@ rec {
     in
     if
       # Fast path for when there's no problem that needs to be handled
-      # No automatic problems that needs handling
       all (
-        problem:
-        problem.condition attrs -> handlerForProblem pname problem.kindName problem.kindName == "ignore"
+        problem: problem.condition attrs -> problem.handler pname == "ignore"
       ) automaticProblemsConfigCache
       && (
         # No manual problems
         !attrs ? meta.problems
         # Or all manual problems are ignored
-        || all (name: handlerForProblem pname name (attrs.meta.problems.${name}.kind or name) == "ignore") (
+        || all (name: handlerForProblem (attrs.meta.problems.${name}.kind or name) name pname == "ignore") (
           attrNames attrs.meta.problems
         )
       )
@@ -522,7 +522,7 @@ rec {
             inherit name;
             # Kind falls back to the name
             kind = problem.kind or name;
-            handler = handlerForProblem pname name kind;
+            handler = handlerForProblem kind name pname;
             inherit problem;
           }) problems
         );
