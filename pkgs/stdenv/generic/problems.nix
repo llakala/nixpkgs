@@ -483,12 +483,13 @@ rec {
 
       # Filter out any problems that are always ignored in config.problems.
       # Makes sure that automatic problems can cache with just config applied
-      automaticProblemsConfigCache = concatMap (
+      automaticProblemsCached = concatMap (
         problem:
         optionals (elem problem.kindName configuredProblems) [
           (problem // { condition = problem.condition config; })
         ]
       ) automaticProblems;
+      automaticConditionsCached = map (problem: problem.condition) automaticProblemsCached;
     in
     attrs:
     let
@@ -497,18 +498,22 @@ rec {
     if
       # Fast path for when there's no problem that needs to be handled
       # No automatic problems that needs handling
-      all (
-        problem:
-        problem.condition attrs -> handlerForProblem pname problem.kindName problem.kindName == "ignore"
-      ) automaticProblemsConfigCache
+      (
+        all (condition: !condition attrs) automaticConditionsCached
+        || all (
+          problem:
+          problem.condition attrs -> handlerForProblem pname problem.kindName problem.kindName == "ignore"
+        ) automaticProblemsCached
+
+      )
       && (
         # No manual problems
         !attrs ? meta.problems
         || attrs.meta.problems == { }
         # Or all manual problems are ignored
-        || all (
-          name: handlerForProblem pname name (attrs.meta.problems.${name}.kind or name) == "ignore"
-        ) (attrNames attrs.meta.problems)
+        || all (name: handlerForProblem pname name (attrs.meta.problems.${name}.kind or name) == "ignore") (
+          attrNames attrs.meta.problems
+        )
       )
     then
       null
