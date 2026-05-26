@@ -454,9 +454,10 @@ lib.extendMkDerivation {
       lib.mapAttrs
         (
           name: value:
-          lib.throwIf (
-            attrs.${name} == [ ]
-          ) "${lib.getName finalAttrs}: ${name} must be unspecified, null or a non-empty list." attrs.${name}
+          if value == [ ] then
+            throw "${lib.getName finalAttrs}: ${name} must be unspecified, null or a non-empty list."
+          else
+            value
         )
         {
           ${if attrs ? enabledTestMarks then "enabledTestMarks" else null} = attrs.enabledTestMarks;
