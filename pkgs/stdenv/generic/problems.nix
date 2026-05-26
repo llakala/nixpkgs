@@ -493,7 +493,6 @@ rec {
     attrs:
     let
       pname = getName attrs;
-      manualProblems = attrs.meta.problems or { };
     in
     if
       # Fast path for when there's no problem that needs to be handled
@@ -504,10 +503,10 @@ rec {
       ) automaticProblemsConfigCache
       && (
         # No manual problems
-        manualProblems == { }
+        !attrs ? meta.problems
         # Or all manual problems are ignored
-        || all (name: handlerForProblem pname name (manualProblems.${name}.kind or name) == "ignore") (
-          attrNames manualProblems
+        || all (name: handlerForProblem pname name (attrs.meta.problems.${name}.kind or name) == "ignore") (
+          attrNames attrs.meta.problems
         )
       )
     then
