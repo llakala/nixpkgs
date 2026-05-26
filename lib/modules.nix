@@ -23,7 +23,6 @@ let
     init
     isAttrs
     isBool
-    isFunction
     oldestSupportedReleaseIsAtLeast
     isList
     isString
@@ -69,6 +68,8 @@ let
     levenshtein
     levenshteinAtMost
     ;
+
+  inherit (builtins) isFunction;
 
   showDeclPrefix =
     loc: decl: prefix:
