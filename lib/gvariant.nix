@@ -191,10 +191,14 @@ rec {
   mkArray =
     elems:
     let
-      vs = map mkValue (if elems == [ ] then throw "Please create empty array with mkEmptyArray." else elems);
-      elemType = lib.throwIfNot (lib.all (t: (head vs).type == t) (
-        map (v: v.type) vs
-      )) "Elements in a list should have same type." (head vs).type;
+      vs = map mkValue (
+        if elems == [ ] then throw "Please create empty array with mkEmptyArray." else elems
+      );
+      elemType =
+        if lib.any (t: (head vs).type != t) (map (v: v.type) vs) then
+          throw "Elements in a list should have same type."
+        else
+          (head vs).type;
     in
     mkPrimitive (type.arrayOf elemType) vs
     // {
