@@ -23,7 +23,6 @@
 let
   inherit (lib)
     addErrorContext
-    assertMsg
     attrNames
     concatLists
     concatMapStringsSep
@@ -831,7 +830,7 @@ rec {
         _type == "lua-inline";
 
       generatedBindings =
-        assert assertMsg (badVarNames == [ ]) "Bad Lua var names: ${toPretty { } badVarNames}";
+        assert (badVarNames == [ ]) || throw "Bad Lua var names: ${toPretty { } badVarNames}";
         concatStrings (mapAttrsToList (key: value: "${indent}${key} = ${toLua innerArgs value}\n") v);
 
       # https://en.wikibooks.org/wiki/Lua_Programming/variable#Variable_names
