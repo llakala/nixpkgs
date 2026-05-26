@@ -46,7 +46,6 @@ let
     setAttrByPath
     substring
     take
-    throwIfNot
     trace
     typeOf
     types
