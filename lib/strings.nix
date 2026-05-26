@@ -1304,16 +1304,16 @@ rec {
   */
   toShellVar =
     name: value:
-    lib.throwIfNot (isValidPosixName name) "toShellVar: ${name} is not a valid shell variable name" (
-      if isAttrs value && !isStringLike value then
-        "declare -A ${name}=(${
-          concatStringsSep " " (lib.mapAttrsToList (n: v: "[${escapeShellArg n}]=${escapeShellArg v}") value)
-        })"
-      else if isList value then
-        "declare -a ${name}=(${escapeShellArgs value})"
-      else
-        "${name}=${escapeShellArg value}"
-    );
+    if !isValidPosixName name then
+      throw "toShellVar: ${name} is not a valid shell variable name"
+    else if isAttrs value && !isStringLike value then
+      "declare -A ${name}=(${
+        concatStringsSep " " (lib.mapAttrsToList (n: v: "[${escapeShellArg n}]=${escapeShellArg v}") value)
+      })"
+    else if isList value then
+      "declare -a ${name}=(${escapeShellArgs value})"
+    else
+      "${name}=${escapeShellArg value}";
 
   /**
     Translate an attribute set `vars` into corresponding shell variable declarations
@@ -1570,15 +1570,14 @@ rec {
   */
   toSentenceCase =
     str:
-    lib.throwIfNot (isString str)
-      "toSentenceCase does only accepts string values, but got ${typeOf str}"
-      (
-        let
-          firstChar = substring 0 1 str;
-          rest = substring 1 (stringLength str) str;
-        in
-        addContextFrom str (toUpper firstChar + toLower rest)
-      );
+    if !isString str then
+      throw "toSentenceCase does only accepts string values, but got ${typeOf str}"
+    else
+      let
+        firstChar = substring 0 1 str;
+        rest = substring 1 (stringLength str) str;
+      in
+      addContextFrom str (toUpper firstChar + toLower rest);
 
   /**
     Converts a string to camelCase. Handles snake_case, PascalCase,
@@ -1614,7 +1613,9 @@ rec {
   */
   toCamelCase =
     str:
-    lib.throwIfNot (isString str) "toCamelCase does only accepts string values, but got ${typeOf str}" (
+    if !isString str then
+      throw "toCamelCase does only accepts string values, but got ${typeOf str}"
+    else
       let
         separators = splitStringBy (
           prev: curr:
@@ -1634,8 +1635,7 @@ rec {
         first = if length parts > 0 then toLower (head parts) else "";
         rest = if length parts > 1 then map toSentenceCase (tail parts) else [ ];
       in
-      concatStrings (map (addContextFrom str) ([ first ] ++ rest))
-    );
+      concatStrings (map (addContextFrom str) ([ first ] ++ rest));
 
   /**
     Appends string context from string like object `src` to `target`.
