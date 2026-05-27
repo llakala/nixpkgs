@@ -187,9 +187,6 @@ fix (self: {
   loongarch64 = firstComponent.loongarch64;
   js = firstComponent.javascript;
 
-  bigEndian = filterDoubles predicates.isBigEndian;
-  littleEndian = filterDoubles predicates.isLittleEndian;
-
   cygwin = secondComponent.cygwin;
   darwin = secondComponent.darwin;
   freebsd = secondComponent.freebsd;

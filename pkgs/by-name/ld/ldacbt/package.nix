@@ -56,7 +56,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/open-vela/external_libldac";
     license = lib.licenses.asl20;
     # libldac code detects & #error's out on non-LE byte order
-    platforms = lib.platforms.littleEndian;
+    platforms = [ lib.systems.inspect.patterns.isLittleEndian ];
     maintainers = with lib.maintainers; [ qweered ];
   };
 })
