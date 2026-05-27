@@ -1,9 +1,19 @@
 { lib }:
 let
   inherit (lib)
+    attrNames
+    concatMap
+    elemAt
+    fix
+    groupBy
+    head
     lists
+    split
     splitString
+    stringLength
+    substring
     ;
+
   inherit (lib.systems) parse;
   inherit (parse)
     mkSystemFromSkeleton
@@ -125,6 +135,18 @@ let
     "x86_64-uefi"
   ];
 
+  splitOnDash = split "-";
+  firstComponent = groupBy (str: head (splitOnDash str)) all;
+  # elemAt x 2 gives us the element after the -, without needing to filter
+  secondComponent = groupBy (str: elemAt (splitOnDash str) 2) all;
+
+  systemsWithPrefix =
+    prefix: component:
+    let
+      getPrefix = substring 0 (stringLength prefix);
+    in
+    concatMap (name: if getPrefix name == prefix then component.${name} else [ ]) (attrNames component);
+
   uncheckedSystemFromString =
     let
       systemType = {
@@ -132,48 +154,45 @@ let
       };
     in
     s: mkSystemFromSkeleton (mkSkeletonFromList (splitString "-" s)) // systemType;
-
   allParsed = map uncheckedSystemFromString all;
-
   filterDoubles = f: map doubleFromSystem (lists.filter f allParsed);
-
 in
-{
+fix (self: {
   inherit all;
 
   none = [ ];
 
-  arm = filterDoubles predicates.isAarch32;
-  armv7 = filterDoubles predicates.isArmv7;
-  aarch = filterDoubles predicates.isAarch;
-  aarch64 = filterDoubles predicates.isAarch64;
-  x86 = filterDoubles predicates.isx86;
-  i686 = filterDoubles predicates.isi686;
-  x86_64 = filterDoubles predicates.isx86_64;
-  microblaze = filterDoubles predicates.isMicroBlaze;
-  mips = filterDoubles predicates.isMips;
-  mmix = filterDoubles predicates.isMmix;
-  power = filterDoubles predicates.isPower;
-  riscv = filterDoubles predicates.isRiscV;
-  riscv32 = filterDoubles predicates.isRiscV32;
-  riscv64 = filterDoubles predicates.isRiscV64;
-  rx = filterDoubles predicates.isRx;
-  vc4 = filterDoubles predicates.isVc4;
-  or1k = filterDoubles predicates.isOr1k;
-  m68k = filterDoubles predicates.isM68k;
-  arc = filterDoubles predicates.isArc;
-  sh4 = filterDoubles predicates.isSh4;
-  s390 = filterDoubles predicates.isS390;
-  s390x = filterDoubles predicates.isS390x;
-  loongarch64 = filterDoubles predicates.isLoongArch64;
-  js = filterDoubles predicates.isJavaScript;
+  arm = systemsWithPrefix "arm" firstComponent;
+  armv7 = systemsWithPrefix "armv7" firstComponent;
+  aarch = self.arm ++ self.aarch64;
+  aarch64 = firstComponent.aarch64;
+  x86 = self.i686 ++ self.x86_64;
+  i686 = firstComponent.i686;
+  x86_64 = firstComponent.x86_64;
+  microblaze = firstComponent.microblaze;
+  mips = systemsWithPrefix "mips" firstComponent;
+  mmix = firstComponent.mmix;
+  power = systemsWithPrefix "powerpc" firstComponent;
+  riscv = self.riscv32 ++ self.riscv64;
+  riscv32 = firstComponent.riscv32;
+  riscv64 = firstComponent.riscv64;
+  rx = firstComponent.rx;
+  vc4 = firstComponent.vc4;
+  or1k = firstComponent.or1k;
+  m68k = firstComponent.m68k;
+  arc = firstComponent.arc;
+  sh4 = firstComponent.sh4;
+  s390 = firstComponent.s390 ++ self.s390x;
+  s390x = firstComponent.s390x;
+  loongarch64 = firstComponent.loongarch64;
+  js = firstComponent.javascript;
 
   bigEndian = filterDoubles predicates.isBigEndian;
   littleEndian = filterDoubles predicates.isLittleEndian;
 
-  cygwin = filterDoubles predicates.isCygwin;
-  darwin = filterDoubles predicates.isDarwin;
-  freebsd = filterDoubles predicates.isFreeBSD;
+  cygwin = secondComponent.cygwin;
+  darwin = secondComponent.darwin;
+  freebsd = secondComponent.freebsd;
   # Should be better, but MinGW is unclear.
   gnu =
     filterDoubles (matchAttrs {
@@ -204,16 +223,22 @@ in
       kernel = parse.kernels.linux;
       abi = parse.abis.gnuabielfv2;
     });
-  illumos = filterDoubles predicates.isSunOS;
-  linux = filterDoubles predicates.isLinux;
-  netbsd = filterDoubles predicates.isNetBSD;
-  openbsd = filterDoubles predicates.isOpenBSD;
-  unix = filterDoubles predicates.isUnix;
-  wasi = filterDoubles predicates.isWasi;
-  redox = filterDoubles predicates.isRedox;
-  windows = filterDoubles predicates.isWindows;
-  genode = filterDoubles predicates.isGenode;
-  uefi = filterDoubles predicates.isUefi;
+  illumos = secondComponent.solaris;
+  linux = secondComponent.linux;
+  netbsd = secondComponent.netbsd;
+  openbsd = secondComponent.openbsd;
+  unix =
+    (self.netbsd ++ self.openbsd ++ self.freebsd)
+    ++ self.darwin
+    ++ self.linux
+    ++ self.illumos
+    ++ self.cygwin
+    ++ self.redox;
+  wasi = firstComponent.wasm32 ++ firstComponent.wasm64;
+  redox = secondComponent.redox;
+  windows = secondComponent.windows;
+  genode = secondComponent.genode;
+  uefi = secondComponent.uefi;
 
-  embedded = filterDoubles predicates.isNone;
-}
+  embedded = secondComponent.none;
+})
