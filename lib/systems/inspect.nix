@@ -27,12 +27,19 @@ let
     execFormats
     ;
 
-  # Copied in from lib.attrsets, but with:
+  removeAssertions = flip removeAttrs [ "assertions" ];
+  abis = mapAttrs (
+    _: abi: if abi ? assertions then removeAssertions abi else abi
+  ) lib.systems.parse.abis;
+in
+
+rec {
+  # Copied in from matchAttrs in lib.attrsets, but with:
   # - the initial isAttrs assertion removed, since this function is only ever
   # called with attrsets
   # - isAttrs only performed on one side when recursing, since our input data
   # will always share a structure
-  matchAttrs =
+  matchPattern =
     pattern: attrs:
     all (
       # Compare equality between `pattern` & `attrs`.
@@ -46,17 +53,10 @@ let
         in
         # Simple equality check is primarily for non-attrsets, but we run it
         # on attrsets too, since it may let us avoid recursing
-        lhs == rhs || isAttrs lhs && matchAttrs lhs rhs
+        lhs == rhs || isAttrs lhs && matchPattern lhs rhs
       )
     ) (attrNames pattern);
 
-  removeAssertions = flip removeAttrs [ "assertions" ];
-  abis = mapAttrs (
-    _: abi: if abi ? assertions then removeAssertions abi else abi
-  ) lib.systems.parse.abis;
-in
-
-rec {
   # these patterns are to be matched against {host,build,target}Platform.parsed
   patterns = rec {
     # The patterns below are lists in sum-of-products form.
@@ -519,11 +519,12 @@ rec {
     ) pat1;
 
   matchAnyPattern =
+    pattern:
     let
-      # same as matchAttrs definition at the top of the file, but:
+      # same as matchPattern definition at the top of the file, but:
       # - pattern names are cached and reused for multiple attrset calls
       # - avoid running isAttrs since all patterns are nested attrsets
-      matchPattern =
+      matchPattern' =
         pattern:
         let
           names = attrNames pattern;
@@ -537,19 +538,18 @@ rec {
               lhs = pattern.${attr};
               rhs = attrs.${attr};
             in
-            lhs == rhs || matchAttrs lhs rhs
+            lhs == rhs || matchPattern lhs rhs
           )
         ) names;
 
     in
-    pattern:
     if isList pattern then
       let
-        cachedPatterns = map matchPattern pattern;
+        cachedPatterns = map matchPattern' pattern;
       in
       attrs: any (pattern: pattern attrs) cachedPatterns
     else
-      matchPattern pattern;
+      matchPattern' pattern;
 
   predicates = mapAttrs (_: matchAnyPattern) patterns;
 
