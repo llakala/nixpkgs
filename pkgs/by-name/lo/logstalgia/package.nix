@@ -85,7 +85,7 @@ stdenv.mkDerivation (finalAttrs: {
       a Miscellaneous section.
     '';
 
-    platforms = lib.platforms.gnu ++ lib.platforms.linux ++ lib.platforms.darwin;
+    platforms = lib.platforms.linux ++ lib.platforms.darwin;
     maintainers = with lib.maintainers; [ pSub ];
     mainProgram = "logstalgia";
   };

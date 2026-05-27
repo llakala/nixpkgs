@@ -88,7 +88,7 @@ stdenv.mkDerivation {
     maintainers = with lib.maintainers; [
       artturin
     ];
-    platforms = lib.platforms.gnu ++ lib.platforms.linux;
+    platforms = lib.platforms.linux;
     mainProgram = "viewnior";
   };
 }

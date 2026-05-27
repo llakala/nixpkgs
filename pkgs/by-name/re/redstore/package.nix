@@ -54,7 +54,7 @@ stdenv.mkDerivation (finalAttrs: {
     mainProgram = "redstore";
     homepage = "https://www.aelius.com/njh/redstore/";
     maintainers = [ lib.maintainers.raskin ];
-    platforms = with lib.platforms; linux ++ freebsd ++ gnu;
+    platforms = with lib.platforms; linux ++ freebsd;
     license = lib.licenses.gpl3Plus;
   };
 })

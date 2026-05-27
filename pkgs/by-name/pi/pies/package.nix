@@ -57,7 +57,7 @@ stdenv.mkDerivation (finalAttrs: {
     '';
     homepage = "https://www.gnu.org/software/pies/";
     license = lib.licenses.gpl3Plus;
-    platforms = lib.platforms.gnu ++ lib.platforms.linux;
+    platforms = lib.platforms.linux;
     broken = stdenv.hostPlatform.system == "aarch64-linux";
     maintainers = [ ];
   };

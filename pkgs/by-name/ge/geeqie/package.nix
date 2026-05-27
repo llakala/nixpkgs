@@ -180,6 +180,6 @@ stdenv.mkDerivation (finalAttrs: {
       pSub
       markus1189
     ];
-    platforms = lib.platforms.gnu ++ lib.platforms.linux;
+    platforms = lib.platforms.linux;
   };
 })

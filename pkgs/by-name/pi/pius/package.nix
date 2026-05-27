@@ -43,7 +43,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
 
     license = lib.licenses.gpl2Only;
 
-    platforms = lib.platforms.gnu ++ lib.platforms.linux;
+    platforms = lib.platforms.linux;
     maintainers = [ ];
   };
 })

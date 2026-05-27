@@ -52,7 +52,7 @@ stdenv.mkDerivation {
     homepage = "https://github.com/ddennedy/dvgrab"; # Formerly http://www.kinodv.org/
 
     license = lib.licenses.gpl2Plus;
-    platforms = lib.platforms.gnu ++ lib.platforms.linux;
+    platforms = lib.platforms.linux;
     mainProgram = "dvgrab";
   };
 }
