@@ -7,14 +7,15 @@
 
 let
   inherit (lib)
-    matchAttrs
     any
     all
+    elem
     isDerivation
     getBin
     assertMsg
     ;
   inherit (lib.attrsets) mapAttrs' filterAttrs;
+  inherit (lib.systems.inspect) matchPattern;
   inherit (builtins)
     isString
     match
@@ -327,7 +328,7 @@ rec {
       if isString elem then
         platform ? system && elem == platform.system
       else
-        matchAttrs (
+        matchPattern (
           # Normalize platform attrset.
           if elem ? parsed then elem else { parsed = elem; }
         ) platform
@@ -366,8 +367,15 @@ rec {
   */
   availableOn =
     platform: pkg:
-    ((!pkg ? meta.platforms) || any (platformMatch platform) pkg.meta.platforms)
-    && ((!pkg ? meta.badPlatforms) || !(any (platformMatch platform) pkg.meta.badPlatforms));
+    (
+      (!pkg ? meta.platforms)
+      || elem platform.system pkg.meta.platforms
+      || any (platformMatch platform) pkg.meta.platforms
+    )
+    && (
+      (!pkg ? meta.badPlatforms)
+      || !(any (platformMatch platform) pkg.meta.badPlatforms)
+    );
 
   /**
     Mapping of SPDX ID to the attributes in lib.licenses.
