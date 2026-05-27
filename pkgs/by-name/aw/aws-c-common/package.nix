@@ -58,7 +58,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.asl20;
     platforms = lib.platforms.unix;
     # https://github.com/awslabs/aws-c-common/issues/1175
-    badPlatforms = lib.platforms.bigEndian;
+    badPlatforms = [ lib.systems.inspect.patterns.isBigEndian ];
     maintainers = with lib.maintainers; [
       r-burns
     ];

@@ -79,7 +79,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/open-vela/external_libldac";
     license = lib.licenses.asl20;
     # LDAC bitstream format assumes LE; source has endian checks
-    platforms = lib.platforms.littleEndian;
+    badPlatforms = [ lib.systems.inspect.patterns.isLittleEndian ];
     maintainers = with lib.maintainers; [ qweered ];
   };
 })

@@ -74,7 +74,7 @@ buildPythonPackage rec {
     license = lib.licenses.bsd3;
     maintainers = [ ];
     # "The Skia team is not endian-savvy enough to support big-endian CPUs."
-    badPlatforms = lib.platforms.bigEndian;
+    badPlatforms = [ lib.systems.inspect.patterns.isBigEndian ];
     # ERROR at //gn/BUILDCONFIG.gn:87:14: Script returned non-zero exit code.
     broken = isPyPy;
   };

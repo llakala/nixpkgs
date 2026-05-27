@@ -44,7 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
     maintainers = with lib.maintainers; [ fgaz ];
     # From HOW-TO-COMPILE.txt:
     # > This code is NOT big-endian compatible
-    platforms = lib.platforms.littleEndian;
+    platforms = [ lib.systems.inspect.patterns.isLittleEndian ];
     mainProgram = "pt2-clone";
   };
 })
