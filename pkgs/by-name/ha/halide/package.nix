@@ -155,10 +155,8 @@ stdenv.mkDerivation (finalAttrs: {
       twesterhout
     ];
     broken = !stdenv.buildPlatform.canExecute stdenv.hostPlatform;
-    badPlatforms = [
-      # Build fails on darwin:
-      # FAILED: [code=133] test/autoschedulers/anderson2021/anderson2021_demo.h
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Build fails on darwin:
+    # FAILED: [code=133] test/autoschedulers/anderson2021/anderson2021_demo.h
+    badPlatforms = lib.platforms.darwin;
   };
 })

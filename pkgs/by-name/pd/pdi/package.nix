@@ -95,9 +95,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.bsd3;
     mainProgram = "pdirun";
     maintainers = with lib.maintainers; [ GaetanLepage ];
-    badPlatforms = [
-      # fatal error: 'link.h' file not found
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # fatal error: 'link.h' file not found
+    badPlatforms = lib.platforms.darwin;
   };
 })

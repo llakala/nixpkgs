@@ -58,9 +58,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.cecill-c;
     maintainers = [ lib.maintainers.bzizou ];
     mainProgram = "hp2p.exe";
-    badPlatforms = [
-      # hp2p_algo_cpp.cpp:38:10: error: no member named 'random_shuffle' in namespace 'std'
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # hp2p_algo_cpp.cpp:38:10: error: no member named 'random_shuffle' in namespace 'std'
+    badPlatforms = lib.platforms.darwin;
   };
 })

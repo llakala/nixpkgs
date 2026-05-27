@@ -39,9 +39,7 @@ flutter329.buildFlutterApplication rec {
     license = lib.licenses.gpl3Only;
     maintainers = with lib.maintainers; [ genga898 ];
     mainProgram = "pied";
-    badPlatforms = [
-      # Silently fails in dartConfigHook
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Silently fails in dartConfigHook
+    badPlatforms = lib.platforms.darwin;
   };
 }

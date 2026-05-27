@@ -136,9 +136,7 @@ buildPythonPackage (finalAttrs: {
     changelog = "https://github.com/pfnet/pytorch-pfn-extras/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ samuela ];
-    badPlatforms = [
-      # test_profile_report is broken on darwin
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # test_profile_report is broken on darwin
+    badPlatforms = lib.platforms.darwin;
   };
 })

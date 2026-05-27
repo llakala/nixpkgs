@@ -67,9 +67,7 @@ stdenv.mkDerivation (finalAttrs: {
     '';
     license = lib.licenses.zlib;
     platforms = lib.platforms.unix;
-    badPlatforms = [
-      # error: implicit instantiation of undefined template 'std::char_traits<unsigned int>'
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # error: implicit instantiation of undefined template 'std::char_traits<unsigned int>'
+    badPlatforms = lib.platforms.darwin;
   };
 })

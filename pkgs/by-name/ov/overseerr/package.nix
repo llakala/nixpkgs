@@ -59,10 +59,8 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   meta = {
-    badPlatforms = [
-      # FileNotFoundError: [Errno 2] No such file or directory: 'xcodebuild'
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # FileNotFoundError: [Errno 2] No such file or directory: 'xcodebuild'
+    badPlatforms = lib.platforms.darwin;
     changelog = "https://github.com/sct/overseerr/releases/tag/v${finalAttrs.version}";
     description = "Request management and media discovery tool for the Plex ecosystem";
     homepage = "https://github.com/sct/overseerr";

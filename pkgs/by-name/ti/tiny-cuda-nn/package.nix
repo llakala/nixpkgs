@@ -168,10 +168,8 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.bsd3;
     maintainers = with lib.maintainers; [ connorbaker ];
     platforms = lib.platforms.linux;
-    badPlatforms = [
-      # g++: error: unrecognized command-line option '-mf16c'
-      lib.systems.inspect.patterns.isAarch64
-    ];
+    # g++: error: unrecognized command-line option '-mf16c'
+    badPlatforms = lib.platforms.aarch64;
     # Requires torch.cuda._is_compiled() == True to build
     broken = !config.cudaSupport;
   };

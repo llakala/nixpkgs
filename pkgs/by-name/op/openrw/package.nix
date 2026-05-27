@@ -79,9 +79,7 @@ stdenv.mkDerivation {
     maintainers = with lib.maintainers; [ kragniz ];
     platforms = lib.platforms.all;
     mainProgram = "rwgame";
-    badPlatforms = [
-      # error: implicit instantiation of undefined template 'std::char_traits<unsigned short>'
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # error: implicit instantiation of undefined template 'std::char_traits<unsigned short>'
+    badPlatforms = lib.platforms.darwin;
   };
 }

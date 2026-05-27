@@ -149,9 +149,7 @@ buildBazelPackage {
     license = lib.licenses.bsd2;
     maintainers = with lib.maintainers; [ nicolas-guichard ];
     mainProgram = "livegrep";
-    badPlatforms = [
-      # Error in fail: Unable to find a CC toolchain using toolchain resolution
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Error in fail: Unable to find a CC toolchain using toolchain resolution
+    badPlatforms = lib.platforms.darwin;
   };
 }

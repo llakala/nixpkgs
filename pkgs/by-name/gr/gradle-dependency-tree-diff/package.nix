@@ -60,9 +60,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.asl20;
     maintainers = [ lib.maintainers.progrm_jarvis ];
     inherit (jre_headless.meta) platforms;
-    badPlatforms = [
-      # Currently fails to build on Darwin due to `Could not connect to the Gradle daemon.` error
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Currently fails to build on Darwin due to `Could not connect to the Gradle daemon.` error
+    badPlatforms = lib.platforms.darwin;
   };
 })

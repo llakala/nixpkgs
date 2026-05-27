@@ -101,6 +101,6 @@ stdenv.mkDerivation (finalAttrs: {
     ];
     license = lib.licenses.gpl3Plus;
     platforms = lib.platforms.linux;
-    badPlatforms = [ lib.systems.inspect.patterns.isAarch ];
+    badPlatforms = lib.platforms.aarch;
   };
 })

@@ -119,10 +119,8 @@ buildPythonPackage rec {
     changelog = "https://github.com/Farama-Foundation/Arcade-Learning-Environment/releases/tag/v${version}";
     license = lib.licenses.gpl2;
     maintainers = with lib.maintainers; [ billhuang ];
-    badPlatforms = [
-      # FAILED: src/ale/libale.a
-      # /bin/sh: CMAKE_CXX_COMPILER_AR-NOTFOUND: command not found
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # FAILED: src/ale/libale.a
+    # /bin/sh: CMAKE_CXX_COMPILER_AR-NOTFOUND: command not found
+    badPlatforms = lib.platforms.darwin;
   };
 }

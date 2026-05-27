@@ -77,9 +77,7 @@ buildPythonPackage rec {
     changelog = "https://github.com/pytorch/torchsnapshot/releases/tag/${version}";
     license = lib.licenses.bsd3;
     maintainers = with lib.maintainers; [ GaetanLepage ];
-    badPlatforms = [
-      # test suite gets stuck and eventually times out with: "torch.distributed.DistNetworkError: The client socket has timed out after"
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # test suite gets stuck and eventually times out with: "torch.distributed.DistNetworkError: The client socket has timed out after"
+    badPlatforms = lib.platforms.darwin;
   };
 }

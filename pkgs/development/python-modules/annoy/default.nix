@@ -57,9 +57,7 @@ buildPythonPackage rec {
     changelog = "https://github.com/spotify/annoy/releases/tag/v${version}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ timokau ];
-    badPlatforms = [
-      # Several tests fail with AssertionError
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Several tests fail with AssertionError
+    badPlatforms = lib.platforms.darwin;
   };
 }

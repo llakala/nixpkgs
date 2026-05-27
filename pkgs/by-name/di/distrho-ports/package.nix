@@ -137,6 +137,6 @@ stdenv.mkDerivation {
       mit
     ];
     maintainers = with lib.maintainers; [ bandithedoge ];
-    platforms = lib.systems.inspect.patternLogicalAnd lib.systems.inspect.patterns.isLinux lib.systems.inspect.patterns.isx86;
+    platforms = [ "x86_64-linux" ];
   };
 }

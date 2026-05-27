@@ -90,14 +90,13 @@ buildPythonPackage (finalAttrs: {
     changelog = "https://github.com/qutip/qutip/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.bsd3;
     maintainers = [ ];
-    badPlatforms = [
+    badPlatforms =
       # Tests fail at ~80%
       # ../tests/test_animation.py::test_result_state Fatal Python error: Aborted
-      lib.systems.inspect.patterns.isDarwin
-
-      # Several tests fail with a segfault
-      # ../tests/test_random.py::test_rand_super_bcsz[int-CSR-choi-None-rep(1)] Fatal Python error: Aborted
-      "aarch64-linux"
-    ];
+      lib.platforms.darwin ++ [
+        # Several tests fail with a segfault
+        # ../tests/test_random.py::test_rand_super_bcsz[int-CSR-choi-None-rep(1)] Fatal Python error: Aborted
+        "aarch64-linux"
+      ];
   };
 })
