@@ -249,8 +249,8 @@ buildPythonPackage.override { inherit (torch) stdenv; } (finalAttrs: {
     badPlatforms = [
       # Many tests segfault. Supporting this platform will need additional work
       "aarch64-linux"
-      # Compilation errors on Darwin
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    ]
+    # Compilation errors on Darwin
+    ++ lib.platforms.darwin;
   };
 })

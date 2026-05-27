@@ -65,9 +65,7 @@ buildPythonPackage rec {
     changelog = "https://github.com/onnx/tensorflow-onnx/releases/tag/v${version}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ happysalada ];
-    badPlatforms = [
-      # Segmentation fault on darwin
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Segmentation fault on darwin
+    badPlatforms = lib.platforms.darwin;
   };
 }

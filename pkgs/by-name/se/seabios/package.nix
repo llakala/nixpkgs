@@ -109,6 +109,6 @@ stdenv.mkDerivation (finalAttrs: {
     license = with lib.licenses; [ lgpl3Plus ];
     maintainers = with lib.maintainers; [ sigmasquadron ];
     platforms = lib.systems.inspect.patternLogicalAnd lib.systems.inspect.patterns.isUnix lib.systems.inspect.patterns.isx86;
-    badPlatforms = [ lib.systems.inspect.patterns.isDarwin ];
+    badPlatforms = lib.platforms.darwin;
   };
 })

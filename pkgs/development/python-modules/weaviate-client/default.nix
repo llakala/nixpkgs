@@ -110,9 +110,7 @@ buildPythonPackage rec {
     changelog = "https://github.com/weaviate/weaviate-python-client/releases/tag/${src.tag}";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ happysalada ];
-    badPlatforms = [
       # weaviate.exceptions.WeaviateGRPCUnavailableError
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    badPlatforms = lib.platforms.darwin;
   };
 }

@@ -27,6 +27,6 @@ mkAppleDerivation {
 
   meta = {
     description = "Common startup stubs for Darwin";
-    badPlatforms = [ lib.systems.inspect.patterns.isAarch ];
+    badPlatforms = lib.platforms.aarch;
   };
 }

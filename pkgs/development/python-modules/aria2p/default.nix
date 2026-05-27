@@ -89,8 +89,6 @@ buildPythonPackage rec {
     mainProgram = "aria2p";
     license = lib.licenses.isc;
     maintainers = with lib.maintainers; [ koral ];
-    badPlatforms = [
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    badPlatforms = lib.platforms.darwin;
   };
 }

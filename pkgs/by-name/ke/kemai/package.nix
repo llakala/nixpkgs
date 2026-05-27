@@ -70,7 +70,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ poelzi ];
     platforms = lib.platforms.unix;
-    badPlatforms = [ lib.systems.inspect.patterns.isDarwin ];
+    badPlatforms = lib.platforms.darwin;
     mainProgram = "Kemai";
   };
 })

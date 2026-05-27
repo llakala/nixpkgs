@@ -93,10 +93,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/darbyjohnston/feather-tk";
     license = lib.licenses.bsd3;
     maintainers = with lib.maintainers; [ liberodark ];
-    platforms = lib.platforms.linux ++ lib.platforms.darwin;
-    badPlatforms = [
-      # Broken on darwin with latest SDK, see https://github.com/darbyjohnston/feather-tk/issues/1
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Broken on darwin with latest SDK, see https://github.com/darbyjohnston/feather-tk/issues/1
+    platforms = lib.platforms.linux;
   };
 })

@@ -107,9 +107,7 @@ buildPythonPackage (finalAttrs: {
     mainProgram = "skytemple_export_maps";
     license = lib.licenses.gpl3Plus;
     maintainers = with lib.maintainers; [ marius851000 ];
-    badPlatforms = [
-      # pyobjc is missing
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # pyobjc is missing
+    badPlatforms = lib.platforms.darwin;
   };
 })

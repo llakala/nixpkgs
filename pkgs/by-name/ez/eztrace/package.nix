@@ -94,10 +94,8 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.cecill-b;
     maintainers = [ lib.maintainers.xokdvium ];
     mainProgram = "eztrace";
-    badPlatforms = [
-      # Undefined symbols for architecture x86_64:
-      #        >   "___cyg_profile_func_enter", referenced from:
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # Undefined symbols for architecture x86_64:
+    #        >   "___cyg_profile_func_enter", referenced from:
+    badPlatforms = lib.platforms.darwin;
   };
 })

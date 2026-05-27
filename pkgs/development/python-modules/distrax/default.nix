@@ -131,9 +131,7 @@ buildPythonPackage (finalAttrs: {
     changelog = "https://github.com/google-deepmind/distrax/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ onny ];
-    badPlatforms = [
-      # SystemError: nanobind::detail::nb_func_error_except(): exception could not be translated!
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # SystemError: nanobind::detail::nb_func_error_except(): exception could not be translated!
+    badPlatforms = lib.platforms.darwin;
   };
 })

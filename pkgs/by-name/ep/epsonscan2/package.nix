@@ -173,7 +173,7 @@ stdenv.mkDerivation {
       ```
     '';
     homepage = "https://support.epson.net/linux/en/epsonscan2.php";
-    platforms = lib.systems.inspect.patternLogicalAnd lib.systems.inspect.patterns.isLinux lib.systems.inspect.patterns.isx86_64;
+    platforms = [ "x86_64-linux" ];
     sourceProvenance =
       with lib.sourceTypes;
       [ fromSource ] ++ lib.optionals withNonFreePlugins [ binaryNativeCode ];

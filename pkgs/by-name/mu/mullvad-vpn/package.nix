@@ -176,7 +176,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.gpl3Only;
     mainProgram = "mullvad-vpn";
     platforms = lib.platforms.unix;
-    badPlatforms = [ lib.systems.inspect.patterns.isDarwin ];
+    badPlatforms = lib.platforms.darwin;
     maintainers = with lib.maintainers; [
       jackr
       airone01

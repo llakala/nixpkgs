@@ -65,6 +65,6 @@ python3Packages.buildPythonApplication (finalAttrs: {
     ];
     mainProgram = "nagstamon.py";
     # NameError: name 'bdist_rpm_options' is not defined. Did you mean: 'bdist_mac_options'?
-    badPlatforms = [ lib.systems.inspect.patterns.isDarwin ];
+    badPlatforms = lib.platforms.darwin;
   };
 })

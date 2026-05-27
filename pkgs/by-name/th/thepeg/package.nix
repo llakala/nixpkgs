@@ -57,9 +57,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.gpl3Only;
     maintainers = with lib.maintainers; [ veprbl ];
     platforms = lib.platforms.unix;
-    badPlatforms = [
-      # ../include/ThePEG/Config/std.h:101:12: error: no member named 'mem_fun' in namespace 'std'; did you mean 'mem_fn'?
-      lib.systems.inspect.patterns.isDarwin
-    ];
+    # ../include/ThePEG/Config/std.h:101:12: error: no member named 'mem_fun' in namespace 'std'; did you mean 'mem_fn'?
+    badPlatforms = lib.platforms.darwin;
   };
 })
