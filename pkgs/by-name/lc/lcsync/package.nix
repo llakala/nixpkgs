@@ -41,6 +41,6 @@ stdenv.mkDerivation (finalAttrs: {
       jasonodoom
       jleightcap
     ];
-    platforms = lib.platforms.gnu;
+    platforms = lib.systems.inspect.patterns.isGnu;
   };
 })
