@@ -7,21 +7,10 @@ let
     fix
     groupBy
     head
-    lists
     split
-    splitString
     stringLength
     substring
     ;
-
-  inherit (lib.systems) parse;
-  inherit (parse)
-    mkSystemFromSkeleton
-    mkSkeletonFromList
-    doubleFromSystem
-    ;
-  inherit (lib.systems.inspect) predicates;
-  inherit (lib.attrsets) matchAttrs;
 
   all = [
     # our primary systems. at the top of the list for fastest matching
@@ -146,16 +135,6 @@ let
       getPrefix = substring 0 (stringLength prefix);
     in
     concatMap (name: if getPrefix name == prefix then component.${name} else [ ]) (attrNames component);
-
-  uncheckedSystemFromString =
-    let
-      systemType = {
-        _type = "system";
-      };
-    in
-    s: mkSystemFromSkeleton (mkSkeletonFromList (splitString "-" s)) // systemType;
-  allParsed = map uncheckedSystemFromString all;
-  filterDoubles = f: map doubleFromSystem (lists.filter f allParsed);
 in
 fix (self: {
   inherit all;
@@ -190,36 +169,6 @@ fix (self: {
   cygwin = secondComponent.cygwin;
   darwin = secondComponent.darwin;
   freebsd = secondComponent.freebsd;
-  # Should be better, but MinGW is unclear.
-  gnu =
-    filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnu;
-    })
-    ++ filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnueabi;
-    })
-    ++ filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnueabihf;
-    })
-    ++ filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnuabin32;
-    })
-    ++ filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnuabi64;
-    })
-    ++ filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnuabielfv1;
-    })
-    ++ filterDoubles (matchAttrs {
-      kernel = parse.kernels.linux;
-      abi = parse.abis.gnuabielfv2;
-    });
   illumos = secondComponent.solaris;
   linux = secondComponent.linux;
   netbsd = secondComponent.netbsd;

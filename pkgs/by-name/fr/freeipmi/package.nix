@@ -74,6 +74,6 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.gpl3Plus;
 
     maintainers = with lib.maintainers; [ raskin ];
-    platforms = lib.platforms.gnu ++ lib.platforms.unix;
+    platforms = with lib.systems.inspect.patterns; isGnu ++ [ isUnix ];
   };
 })

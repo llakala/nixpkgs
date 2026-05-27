@@ -54,7 +54,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://www.amris.jp/tsja/index.html";
     maintainers = with lib.maintainers; [ chayleaf ];
     # GNU-specific linker options are used
-    platforms = lib.platforms.gnu;
+    platforms = lib.systems.inspect.patterns.isGnu;
     license = lib.licenses.gpl2Only;
   };
 })

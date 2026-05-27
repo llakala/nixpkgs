@@ -36,6 +36,6 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.gpl2Plus;
     mainProgram = "hostname";
     maintainers = with lib.maintainers; [ posch ];
-    platforms = lib.platforms.gnu;
+    platforms = lib.systems.inspect.patterns.isGnu;
   };
 })

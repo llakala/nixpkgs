@@ -40,6 +40,6 @@ stdenv.mkDerivation (finalAttrs: {
       jleightcap
     ];
     teams = with lib.teams; [ ngi ];
-    platforms = lib.platforms.gnu;
+    platforms = lib.systems.inspect.patterns.isGnu;
   };
 })
