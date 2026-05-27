@@ -40,6 +40,6 @@ stdenv.mkDerivation (finalAttrs: {
     mainProgram = "scantailor";
     license = lib.licenses.gpl3Plus;
     maintainers = [ ];
-    platforms = with lib.platforms; gnu ++ linux ++ darwin;
+    platforms = with lib.platforms; linux ++ darwin;
   };
 })

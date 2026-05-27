@@ -769,7 +769,7 @@ stdenv.mkDerivation rec {
       else if xenPvhSupport then
         lib.attrNames xenPvhSystemsBuild
       else
-        lib.platforms.gnu ++ lib.platforms.linux;
+        lib.platforms.linux;
 
     maintainers = [ ];
   };

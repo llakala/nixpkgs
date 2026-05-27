@@ -87,6 +87,6 @@ stdenv.mkDerivation rec {
       lassulus
       pSub
     ];
-    platforms = lib.platforms.gnu ++ lib.platforms.linux; # arbitrary choice
+    platforms = lib.platforms.linux; # arbitrary choice
   };
 }
