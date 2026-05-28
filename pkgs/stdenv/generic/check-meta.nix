@@ -4,7 +4,6 @@
 {
   lib,
   config,
-  hostPlatform,
 }:
 
 let
@@ -122,6 +121,7 @@ let
 
   # Logical inversion of meta.availableOn for hostPlatform
   hasUnsupportedPlatform =
+    hostPlatform:
     let
       inherit (hostPlatform) system;
       # in almost all cases, meta.platforms is a simple list of strings, and we
@@ -416,6 +416,10 @@ let
   # !!! reason strings are hardcoded into OfBorg, make sure to keep them in sync
   # Along with a boolean flag for each reason
   checkValidity =
+    hostPlatform:
+    let
+      hasUnsupportedPlatform' = hasUnsupportedPlatform hostPlatform;
+    in
     attrs:
     if !attrs ? meta then
       null
@@ -458,7 +462,7 @@ let
         msg = "contains elements not built from source (‘${showSourceType attrs.meta.sourceProvenance}’)";
         remediation = remediate_allowlist "NonSource" (remediate_predicate "allowNonSourcePredicate" attrs);
       }
-    else if hasUnsupportedPlatform attrs && !allowUnsupportedSystem then
+    else if hasUnsupportedPlatform' attrs && !allowUnsupportedSystem then
       let
         toPretty' = toPretty {
           allowPrettyValues = true;
@@ -521,6 +525,7 @@ let
   #   meta = checkMeta.commonMeta { inherit validity attrs pos references; };
   #   validity = checkMeta.assertValidity { inherit meta attrs; };
   commonMeta =
+    hostPlatform:
     {
       validity,
       attrs,
@@ -705,9 +710,13 @@ let
     builtins.seq (foldl' giveWarning null warnings) withError;
 
   assertValidity =
+    hostPlatform:
+    let
+      checkValidity' = checkValidity hostPlatform;
+    in
     { meta, attrs }:
     let
-      invalid = checkValidity attrs;
+      invalid = checkValidity' attrs;
       problems = checkProblems attrs;
     in
     if isNull invalid then
