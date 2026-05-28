@@ -886,24 +886,24 @@ let
               token: if lib.hasInfix " " token then "[${lib.replaceStrings [ "]" ] [ "\\]" ] token}]" else token;
             formatRules =
               type:
-              lib.pipe cfg.rules.${type} [
-                lib.attrValues
-                (lib.filter (rule: rule.enable))
-                (lib.sort (
-                  a: b:
-                  if a.order != b.order then
-                    a.order < b.order
-                  else
-                    throw "security.pam.services.${name}.rules.${type}: rules '${a.name}' and '${b.name}' cannot have the same order value (${toString a.order})"
-                ))
-                (map (
-                  rule:
-                  "${type} ${rule.control} ${rule.modulePath}${
-                    if rule.args == [ ] then "" else " " + lib.concatStringsSep " " (map formatModuleArgument rule.args)
-                  } # ${rule.name} (order ${toString rule.order})"
-                ))
-                (lib.concatStringsSep "\n")
-              ];
+              lib.concatStringsSep "\n" (
+                lib.map
+                  (
+                    rule:
+                    "${type} ${rule.control} ${rule.modulePath}${
+                      if rule.args == [ ] then "" else " " + lib.concatStringsSep " " (map formatModuleArgument rule.args)
+                    } # ${rule.name} (order ${toString rule.order})"
+                  )
+                  (
+                    lib.sort (
+                      a: b:
+                      if a.order != b.order then
+                        a.order < b.order
+                      else
+                        throw "security.pam.services.${name}.rules.${type}: rules '${a.name}' and '${b.name}' cannot have the same order value (${toString a.order})"
+                    ) (lib.filter (rule: rule.enable) (lib.attrValues cfg.rules.${type}))
+                  )
+              );
           in
           lib.mkDefault ''
             # Account management.
