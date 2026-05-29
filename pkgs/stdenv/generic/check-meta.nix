@@ -145,22 +145,27 @@ let
   # Defaults to allow all names defined in config.allowUnfreePackages
   allowUnfreePredicate =
     let
-      listPredicate = pkg: builtins.elem (lib.getName pkg) (config.allowUnfreePackages or [ ]);
+      listPredicate = pkg: elem (lib.getName pkg) config.allowUnfreePackages;
 
       # Be robust against misconfigured allowUnfreePredicate values such as null
       explicitPredicate =
-        let
-          raw = config.allowUnfreePredicate or null;
-        in
-        if builtins.isFunction raw then raw else (_: false);
+        if builtins.isFunction config.allowUnfreePredicate then config.allowUnfreePredicate else (_: false);
     in
-    pkg: (listPredicate pkg) || (explicitPredicate pkg);
+    if config ? allowUnfreePredicate then
+      if config ? allowUnfreePackages then
+        pkg: (listPredicate pkg) || (explicitPredicate pkg)
+      else
+        explicitPredicate
+    else if config ? allowUnfreePackages then
+      listPredicate
+    else
+      pkg: false;
 
   # Check whether unfree packages are allowed and if not, whether the
   # package has an unfree license and is not explicitly allowed by the
   # `allowUnfreePredicate` function.
   hasDeniedUnfreeLicense =
-    attrs: hasUnfreeLicense attrs && !allowUnfree && !allowUnfreePredicate attrs;
+    if allowUnfree then attrs: false else attrs: hasUnfreeLicense attrs && !allowUnfreePredicate attrs;
 
   allowInsecureDefaultPredicate =
     x: elem (getNameWithVersion x) (config.permittedInsecurePackages or [ ]);
