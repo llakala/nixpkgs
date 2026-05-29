@@ -10,19 +10,20 @@ let
   inherit (lib)
     all
     attrValues
+    concatMap
     concatMapStrings
     concatStrings
     filter
     findFirst
+    foldl'
     getName
-    length
-    concatMap
-    mutuallyExclusive
-    optional
     isAttrs
     isString
+    length
+    mutuallyExclusive
+    optional
+    unsafeGetAttrPos
     warn
-    foldl'
     ;
 
   inherit (lib.lists)
@@ -554,9 +555,9 @@ let
     }:
     let
       outputs = attrs.outputs or defaultOutputs;
-      hasOutput = out: builtins.elem out outputs;
-      maintainersPosition = builtins.unsafeGetAttrPos "maintainers" (attrs.meta or { });
-      teamsPosition = builtins.unsafeGetAttrPos "teams" (attrs.meta or { });
+      hasOutput = out: elem out outputs;
+      maintainersPosition = unsafeGetAttrPos "maintainers" (attrs.meta or { });
+      teamsPosition = unsafeGetAttrPos "teams" (attrs.meta or { });
     in
     {
       # `name` derivation attribute includes cross-compilation cruft,
