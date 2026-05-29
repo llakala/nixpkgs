@@ -101,11 +101,14 @@ let
     config.allowUnsupportedSystem || getEnv "NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM" == "1";
 
   isUnfree =
+    let
+      inherit (lib.licenses) isFree;
+    in
     licenses:
-    if isAttrs licenses && licenses ? "licenseType" then
-      !(lib.licenses.isFree licenses)
+    if licenses ? "licenseType" then
+      !isFree licenses
     else if isAttrs licenses then
-      !(licenses.free or true)
+      !licenses.free or false
     # TODO: Returning false in the case of a string is a bug that should be fixed.
     # In a previous implementation of this function the function body
     # was `licenses: lib.lists.any (l: !l.free or true) licenses;`
@@ -113,7 +116,7 @@ let
     else if isString licenses then
       false
     else
-      any (l: !(l.free or true)) licenses;
+      any (l: !l.free or false) licenses;
 
   hasUnfreeLicense = attrs: attrs ? meta.license && isUnfree attrs.meta.license;
 
