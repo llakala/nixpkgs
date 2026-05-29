@@ -129,9 +129,12 @@ let
       # intensive platformMatch if necessary
       anyHostPlatform = list: elem system list || any (platformMatch hostPlatform) list;
     in
-    pkg:
-    pkg ? meta.platforms && !(anyHostPlatform pkg.meta.platforms)
-    || pkg ? meta.badPlatforms && anyHostPlatform pkg.meta.badPlatforms;
+    if allowUnsupportedSystem then
+      pkg: false
+    else
+      pkg:
+      pkg ? meta.platforms && !(anyHostPlatform pkg.meta.platforms)
+      || pkg ? meta.badPlatforms && anyHostPlatform pkg.meta.badPlatforms;
 
   isMarkedInsecure =
     attrs: attrs ? meta.knownVulnerabilities && attrs.meta.knownVulnerabilities != [ ];
@@ -475,7 +478,7 @@ let
         msg = "contains elements not built from source (‘${showSourceType attrs.meta.sourceProvenance}’)";
         remediation = remediate_allowlist "NonSource" (remediate_predicate "allowNonSourcePredicate" attrs);
       }
-    else if hasUnsupportedPlatform' attrs && !allowUnsupportedSystem then
+    else if hasUnsupportedPlatform' attrs then
       let
         toPretty' = toPretty {
           allowPrettyValues = true;
