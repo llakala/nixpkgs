@@ -118,7 +118,7 @@ let
     '' payload.elemType;
 
   checkDefsForError =
-    check: loc: defs:
+    check: defs:
     if all (def: check def.value) defs then
       null
     else
@@ -783,7 +783,7 @@ rec {
             );
           in
           {
-            headError = checkDefsForError check loc defs;
+            headError = checkDefsForError check defs;
             value = map (x: x.optionalValue.value or x.mergedValue) evals;
             valueMeta.list = map (v: v.checkedAndMerged.valueMeta) evals;
           };
@@ -954,7 +954,7 @@ rec {
             attrListValue = map (e: { ${e.key} = e.eval.optionalValue.value or e.eval.mergedValue; }) evals;
           in
           {
-            headError = checkDefsForError check loc defs;
+            headError = checkDefsForError check defs;
             value = if asAttrs then zipAttrsWith mergeAttrValues attrListValue else attrListValue;
             valueMeta.attrList = map (e: e.eval.checkedAndMerged.valueMeta) evals;
             /**
@@ -1065,7 +1065,7 @@ rec {
                 );
           in
           {
-            headError = checkDefsForError check loc defs;
+            headError = checkDefsForError check defs;
             value = mapAttrs (
               n: v:
               if lazy then
@@ -1281,7 +1281,7 @@ rec {
             else
               {
                 value = elemType.merge loc defs;
-                headError = checkDefsForError elemType.check loc defs;
+                headError = checkDefsForError elemType.check defs;
                 valueMeta = { };
               }
           else
@@ -1524,7 +1524,7 @@ rec {
             };
           in
           {
-            headError = checkDefsForError check loc defs;
+            headError = checkDefsForError check defs;
             value = configuration.config;
             valueMeta = { inherit configuration; };
           };
@@ -1731,7 +1731,7 @@ rec {
               else
                 {
                   value = t1.merge loc defs;
-                  headError = checkDefsForError t1.check loc defs;
+                  headError = checkDefsForError t1.check defs;
                   valueMeta = { };
                 };
             t2CheckedAndMerged =
@@ -1740,7 +1740,7 @@ rec {
               else
                 {
                   value = t2.merge loc defs;
-                  headError = checkDefsForError t2.check loc defs;
+                  headError = checkDefsForError t2.check defs;
                   valueMeta = { };
                 };
 
@@ -1851,7 +1851,7 @@ rec {
             {
               value = finalType.merge loc finalDefs;
               valueMeta = { };
-              headError = checkDefsForError check loc defs;
+              headError = checkDefsForError check defs;
             };
       };
       emptyValue = finalType.emptyValue;
@@ -1891,7 +1891,7 @@ rec {
             { loc, defs }@args:
             let
               orig = checkV2MergeCoherence loc elemType (elemType.merge.v2 args);
-              headError' = if orig.headError != null then orig.headError else checkDefsForError check loc defs;
+              headError' = if orig.headError != null then orig.headError else checkDefsForError check defs;
             in
             orig
             // {
