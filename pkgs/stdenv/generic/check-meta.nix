@@ -133,7 +133,8 @@ let
     pkg ? meta.platforms && !(anyHostPlatform pkg.meta.platforms)
     || pkg ? meta.badPlatforms && anyHostPlatform pkg.meta.badPlatforms;
 
-  isMarkedInsecure = attrs: (attrs.meta.knownVulnerabilities or [ ]) != [ ];
+  isMarkedInsecure =
+    attrs: attrs ? meta.knownVulnerabilities && attrs.meta.knownVulnerabilities != [ ];
 
   # Allow granular checks to allow only some unfree packages
   # Example:
@@ -167,14 +168,21 @@ let
   hasDeniedUnfreeLicense =
     if allowUnfree then attrs: false else attrs: hasUnfreeLicense attrs && !allowUnfreePredicate attrs;
 
-  allowInsecureDefaultPredicate =
-    x: elem (getNameWithVersion x) (config.permittedInsecurePackages or [ ]);
-  allowInsecurePredicate = config.allowInsecurePredicate or allowInsecureDefaultPredicate;
+  allowInsecurePredicate =
+    if config ? allowInsecurePredicate then
+      config.allowInsecurePredicate
+    else if config ? permittedInsecurePackages then
+      attrs: elem (getNameWithVersion attrs) config.permittedInsecurePackages
+    else
+      attrs: false;
 
   allowInsecure = getEnv "NIXPKGS_ALLOW_INSECURE" == "1";
 
   hasDisallowedInsecure =
-    attrs: isMarkedInsecure attrs && !allowInsecure && !allowInsecurePredicate attrs;
+    if allowInsecure then
+      attrs: false
+    else
+      attrs: isMarkedInsecure attrs && !allowInsecurePredicate attrs;
 
   # Allow granular checks to allow only some non-source-built packages
   # Example:
