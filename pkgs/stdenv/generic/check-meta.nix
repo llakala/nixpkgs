@@ -39,13 +39,9 @@ let
     cpeFullVersionWithVendor
     ;
 
-  inherit (lib.generators)
-    toPretty
-    ;
-
-  inherit (builtins)
-    getEnv
-    ;
+  inherit (lib.generators) toPretty;
+  inherit (lib.licenses) isFree;
+  inherit (builtins) getEnv;
 
   inherit (import ./problems.nix { inherit lib; })
     problemsType
@@ -104,7 +100,7 @@ let
   isUnfree =
     licenses:
     if isAttrs licenses && licenses ? "licenseType" then
-      !(lib.licenses.isFree licenses)
+      !isFree licenses
     else if isAttrs licenses then
       !(licenses.free or true)
     # TODO: Returning false in the case of a string is a bug that should be fixed.
