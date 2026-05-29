@@ -102,7 +102,7 @@ let
 
   isUnfree =
     licenses:
-    if isAttrs licenses && licenses ? "licenseType" then
+    if licenses ? licenseType then
       !isFree licenses
     else if isAttrs licenses then
       !(licenses.free or true)
