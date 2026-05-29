@@ -544,6 +544,7 @@ let
     hostPlatform:
     let
       hasUnsupportedPlatform' = hasUnsupportedPlatform hostPlatform;
+      defaultOutputs = [ "out" ];
     in
     {
       validity,
@@ -552,7 +553,7 @@ let
       references ? [ ],
     }:
     let
-      outputs = attrs.outputs or [ "out" ];
+      outputs = attrs.outputs or defaultOutputs;
       hasOutput = out: builtins.elem out outputs;
       maintainersPosition = builtins.unsafeGetAttrPos "maintainers" (attrs.meta or { });
       teamsPosition = builtins.unsafeGetAttrPos "teams" (attrs.meta or { });
