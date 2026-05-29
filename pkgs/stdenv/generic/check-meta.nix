@@ -732,6 +732,10 @@ let
     hostPlatform:
     let
       checkValidity' = checkValidity hostPlatform;
+      validResult = {
+        valid = "yes";
+        handled = true;
+      };
     in
     { meta, attrs }:
     let
@@ -740,10 +744,7 @@ let
     in
     if isNull invalid then
       if isNull problems then
-        {
-          valid = "yes";
-          handled = true;
-        }
+        validResult
       else
         {
           valid = if isNull problems.error then "warn" else "no";
