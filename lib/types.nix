@@ -36,7 +36,6 @@ let
     imap1
     last
     length
-    partition
     tail
     ;
   inherit (lib.attrsets)
@@ -1275,29 +1274,20 @@ rec {
           if (headError.causedByMixedNulls or false) then throw headError.message else value;
         v2 =
           { loc, defs }:
-          let
-            nulls = partition (def: def.value == null) defs;
-            checkedAndMerged =
-              if elemType.merge ? v2 then
-                checkV2MergeCoherence loc elemType (
-                  elemType.merge.v2 {
-                    inherit loc;
-                    defs = nulls.wrong;
-                  }
-                )
-              else
-                {
-                  value = elemType.merge loc nulls.wrong;
-                  headError = checkDefsForError elemType.check loc nulls.wrong;
-                  valueMeta = { };
-                };
-          in
-          if nulls.right == [ ] then
-            checkedAndMerged
+          if all (def: def.value != null) defs then
+            # all values are not null
+            if elemType.merge ? v2 then
+              checkV2MergeCoherence loc elemType (elemType.merge.v2 { inherit loc defs; })
+            else
+              {
+                value = elemType.merge loc defs;
+                headError = checkDefsForError elemType.check loc defs;
+                valueMeta = { };
+              }
           else
             {
               headError =
-                if nulls.wrong == [ ] then
+                if length defs == 1 || all (def: def.value == null) defs then
                   null
                 else
                   {
@@ -1305,7 +1295,7 @@ rec {
                     causedByMixedNulls = true;
                   };
               value = null;
-              valueMeta = optionalAttrs (nulls.wrong != [ ]) checkedAndMerged.valueMeta;
+              valueMeta = { };
             };
       };
       emptyValue = {
