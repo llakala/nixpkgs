@@ -1272,7 +1272,7 @@ rec {
           let
             inherit (self.v2 { inherit loc defs; }) headError value;
           in
-          throwIf (headError.causedByMixedNulls or false) headError.message value;
+          if (headError.causedByMixedNulls or false) then throw headError.message else value;
         v2 =
           { loc, defs }:
           let
