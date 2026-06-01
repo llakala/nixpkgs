@@ -14,6 +14,7 @@ let
   inherit (lib.attrsets) matchAttrs;
 
   all = [
+    "x86_64-linux"
     # Cygwin
     "i686-cygwin"
     "x86_64-cygwin"
@@ -62,7 +63,6 @@ let
     "riscv64-linux"
     "s390-linux"
     "s390x-linux"
-    "x86_64-linux"
 
     # MMIXware
     "mmix-mmixware"
