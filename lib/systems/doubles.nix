@@ -38,6 +38,7 @@ let
     "javascript-ghcjs"
 
     # Linux
+    "x86_64-linux"
     "aarch64-linux"
     "arc-linux"
     "armv5tel-linux"
@@ -61,7 +62,6 @@ let
     "riscv64-linux"
     "s390-linux"
     "s390x-linux"
-    "x86_64-linux"
 
     # MMIXware
     "mmix-mmixware"
