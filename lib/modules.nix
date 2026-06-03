@@ -1025,10 +1025,7 @@ let
       (
         res: opt:
         let
-          t = res.type;
-          t' = opt.options.type;
-          mergedType = t.typeMerge t'.functor;
-          typesMergeable = mergedType != null;
+          mergedType = res.type.typeMerge opt.options.type.functor;
 
           # TODO: Remove this when all downstream reliances of internals: 'functor.wrapped' are sufficiently migrated.
           # A function that adds the deprecated wrapped message to a type.
@@ -1046,7 +1043,7 @@ let
           typeSet =
             if opt.options ? type then
               if res ? type then
-                if typesMergeable then
+                if mergedType != null then
                   {
                     type =
                       if mergedType ? functor.wrappedDeprecationMessage then
