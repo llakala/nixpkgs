@@ -1021,7 +1021,7 @@ let
     : 2\. Function argument
   */
   mergeOptionDecls =
-    loc: opts:
+    loc:
     foldl'
       (
         res: opt:
@@ -1108,8 +1108,7 @@ let
         declarations = [ ];
         declarationPositions = [ ];
         options = [ ];
-      }
-      opts;
+      };
 
   /**
     Merge all the definitions of an option to produce the final
