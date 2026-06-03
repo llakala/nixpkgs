@@ -880,13 +880,12 @@ let
           loc = prefix ++ [ name ];
           defns = pushedDownDefinitionsByName.${name} or [ ];
           defns' = rawDefinitionsByName.${name} or [ ];
-          optionDecls = filter (
+          isOptionDecl =
             m:
             m.options ? _type
-            && (m.options._type == "option" || throwDeclarationTypeError loc m.options._type m._file)
-          ) decls;
+            && (m.options._type == "option" || throwDeclarationTypeError loc m.options._type m._file);
         in
-        if length optionDecls == length decls then
+        if all isOptionDecl decls then
           let
             opt = fixupOptionType loc (mergeOptionDecls loc decls);
           in
@@ -894,7 +893,19 @@ let
             matchedOptions = evalOptionValue loc opt defns';
             unmatchedDefns = [ ];
           }
-        else if optionDecls != [ ] then
+        # this may look like duplicate computations are performed, but:
+        # 1. in most cases, `all isOptionDecl decls` passes (87.4% of the time
+        # on my bench)
+        # 2. if that doesn't pass, then it's very likely that there's only one
+        # decl and we short-circuit (11.6%)
+        # 3. in this remaining 1%, we have to loop again. to see if some (but
+        # not all) of the decls are options
+        # 4. we only pass the `any` and have to filter in 1 of the 65644 total
+        # instances.
+        else if length decls > 1 && any isOptionDecl decls then
+          let
+            optionDecls = filter isOptionDecl decls;
+          in
           if
             all (x: x.options.type.name or null == "submodule") optionDecls
           # Raw options can only be merged into submodules. Merging into
