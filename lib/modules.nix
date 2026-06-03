@@ -1039,31 +1039,6 @@ let
               };
             };
 
-          typeSet =
-            if opt.options ? type then
-              if res ? type then
-                let
-                  mergedType = res.type.typeMerge opt.options.type.functor;
-                in
-                if mergedType != null then
-                  {
-                    type =
-                      if mergedType ? functor.wrappedDeprecationMessage then
-                        addDeprecatedWrapped mergedType
-                      else
-                        mergedType;
-                  }
-                else
-                  # Keep in sync with the same error below!
-                  throw
-                    "The option `${showOption loc}' in `${opt._file}' is already declared in ${showFiles res.declarations}."
-              else if opt.options.type ? functor.wrappedDeprecationMessage then
-                { type = addDeprecatedWrapped opt.options.type; }
-              else
-                { }
-            else
-              { };
-
           bothHave = k: opt.options ? ${k} && res ? ${k};
         in
         if bothHave "default" || bothHave "example" || bothHave "description" || bothHave "apply" then
@@ -1101,8 +1076,31 @@ let
                   ]
               );
             options = submodules;
+
+            ${
+              if opt.options ? type && (res ? type || opt.options.type ? functor.wrappedDeprecationMessage) then
+                "type"
+              else
+                null
+            } =
+              (
+                if res ? type then
+                  let
+                    mergedType = res.type.typeMerge opt.options.type.functor;
+                  in
+                  if mergedType != null then
+                    if mergedType ? functor.wrappedDeprecationMessage then
+                      addDeprecatedWrapped mergedType
+                    else
+                      mergedType
+                  else
+                    # Keep in sync with the same error below!
+                    throw
+                      "The option `${showOption loc}' in `${opt._file}' is already declared in ${showFiles res.declarations}."
+                else
+                  addDeprecatedWrapped opt.options.type
+              );
           }
-          // typeSet
       )
       {
         inherit loc;
