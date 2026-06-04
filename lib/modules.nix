@@ -609,6 +609,8 @@ let
           in
           # even though isDisabled expects a structured module, it just wants to
           # read its key - and non-structured modules have those too
+          builtins.deepSeq disabled
+          builtins.trace disabled
           filter (v: !isDisabled modulesPath disabled v) modules;
 
       toGraph =
