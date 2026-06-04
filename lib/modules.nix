@@ -520,6 +520,11 @@ let
               ...
             ];
           }
+
+        This structured representation is only recommended for cases in which
+        introspection is required (like the .graph attribute).
+        `collectNonDisabledModules` generates the flat list of modules directly,
+        and is faster as a result.
       */
       collectStructuredModules =
         let
@@ -557,20 +562,54 @@ let
           ) initialModules
         );
 
-      # filterModules :: String -> { disabled, modules } -> [ Module ]
-      #
-      # Filters a structure as emitted by collectStructuredModules by removing all disabled
-      # modules recursively. It returns the final list of unique-by-key modules
-      filterModules =
-        modulesPath:
-        { disabled, modules }:
+      /**
+        Collects all modules recursively, but returns the flat list of modules
+        themselves, rather than an intermediate `[ StructuredModule ]`
+        representation. This provides less introspection for how modules are
+        imported, which makes it unsuitable for graph calculation, but speeds up
+        performance for the main path, since it can rely exclusively on
+        genericClosure.
+
+        [
+          <module for key1>
+          <module for key2>
+          <module for key1-1>
+          <module for key1-2>
+        ]
+      */
+      collectNonDisabledModules =
+        modulesPath: initialModules: args:
         let
-          keyFilter = filter (attrs: !isDisabled modulesPath disabled attrs);
+          loadModules =
+            parentFile: parentKey:
+            imap1 (n: x: checkModule (loadModule args parentFile "${parentKey}:anon-${toString n}" x));
+          modules = genericClosure {
+            startSet = loadModules unknownModule "" initialModules;
+            operator = module: loadModules module._file module.key module.imports;
+          };
+
         in
-        map (attrs: attrs.module) (genericClosure {
-          startSet = keyFilter modules;
-          operator = attrs: keyFilter attrs.modules;
-        });
+        if all (module: module.disabledModules == [ ]) modules then
+          modules
+        else
+          let
+            disabled = concatMap (
+              module:
+              if module.disabledModules != [ ] then
+                [
+                  {
+                    file = module._file;
+                    disabled = module.disabledModules;
+                  }
+                ]
+              else
+                [ ]
+            ) modules;
+
+          in
+          # even though isDisabled expects a structured module, it just wants to
+          # read its key - and non-structured modules have those too
+          filter (isDisabled modulesPath disabled) modules;
 
       toGraph =
         modulesPath:
@@ -588,10 +627,7 @@ let
         map toModuleGraph (filter (x: x.key != "lib/modules.nix") modules);
     in
     modulesPath: initialModules: args: {
-      modules = filterModules modulesPath (collectStructuredModules unknownModule "" initialModules args);
-      # Intentionally not shared with `modules` above: this allows
-      # the return value of `collectStructuredModules`
-      # to be garbage collected after `filterModules` returns.
+      modules = collectNonDisabledModules modulesPath initialModules args;
       graph = toGraph modulesPath (collectStructuredModules unknownModule "" initialModules args);
     };
 
