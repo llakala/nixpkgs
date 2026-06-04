@@ -109,13 +109,11 @@ let
     }:
     let
       withWarnings =
-        x:
         warnIf (evalModulesArgs ? args)
           "The args argument to evalModules is deprecated. Please set config._module.args instead."
           warnIf
           (evalModulesArgs ? check)
-          "The check argument to evalModules is deprecated. Please set config._module.check instead."
-          x;
+          "The check argument to evalModules is deprecated. Please set config._module.check instead.";
 
       legacyModules =
         optional (evalModulesArgs ? args) {
