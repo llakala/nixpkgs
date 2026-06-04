@@ -256,8 +256,7 @@ let
       # This function takes an empty attrset as an argument.
       # It could theoretically be replaced with its body,
       # but such a binding is avoided to allow for earlier grabage collection.
-      doCollect =
-        { }:
+      collection =
         collectModules class (specialArgs.modulesPath or "") (regularModules ++ [ internalModule ]) (
           {
             inherit
@@ -272,7 +271,7 @@ let
           // specialArgs
         );
 
-      merged = mergeModules prefix (reverseList (doCollect { }).modules);
+      merged = mergeModules prefix (reverseList collection.modules);
 
       options = merged.matchedOptions;
 
@@ -401,7 +400,7 @@ let
         options = checked options;
         config = checked (removeAttrs config [ "_module" ]);
         _module = checked (config._module);
-        inherit (doCollect { }) graph;
+        inherit (collection) graph;
         inherit extendModules type class;
       };
     in
