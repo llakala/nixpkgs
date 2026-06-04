@@ -579,10 +579,9 @@ let
                 operator = attrs: attrs.modules;
               }
             else
-              {
-                startSet = keyFilter modules;
-                operator = attrs: keyFilter attrs.modules;
-              }
+            builtins.deepSeq disabled
+            builtins.trace disabled
+              5
           )
         );
 
