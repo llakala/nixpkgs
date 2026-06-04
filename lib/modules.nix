@@ -609,7 +609,9 @@ let
           in
           # even though isDisabled expects a structured module, it just wants to
           # read its key - and non-structured modules have those too
-          filter (v: !isDisabled modulesPath disabled v) modules;
+          filter (
+            m: if isDisabled modulesPath disabled m then builtins.trace "filtering ${m.key}" true else false
+          ) modules;
 
       toGraph =
         modulesPath:
