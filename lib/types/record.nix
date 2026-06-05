@@ -46,6 +46,7 @@ let
     }@args:
     let
       checkedFields = mapAttrs checkField fields;
+      fieldNames = attrNames checkedFields;
       freeformType = if args ? freeformType then checkFreeformType args.freeformType else null;
     in
     mkOptionType {
@@ -84,7 +85,7 @@ let
               }
             )
           ) checkedFields;
-          extraData = removeAttrs data (attrNames checkedFields);
+          extraData = removeAttrs data fieldNames;
           extraValues = mapAttrs (
             name: defs:
             builtins.addErrorContext "while evaluating freeform value `${name}' of option `${showOption loc}'" (
