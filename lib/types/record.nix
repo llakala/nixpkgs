@@ -46,7 +46,6 @@ let
     }@args:
     let
       checkedFields = mapAttrs checkField fields;
-      fieldNames = attrNames checkedFields;
       freeformType = if args ? freeformType then checkFreeformType args.freeformType else null;
     in
     mkOptionType {
@@ -85,7 +84,7 @@ let
               }
             )
           ) checkedFields;
-          extraData = removeAttrs data fieldNames;
+          extraData = removeAttrs data (attrNames checkedFields);
           checkedExtraDefs =
             if extraData == { } then
               fieldValues
