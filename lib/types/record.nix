@@ -3,13 +3,13 @@
 let
   inherit (lib)
     mapAttrs
-    concatMapAttrs
+    listToAttrs
+    concatMap
     zipAttrs
     removeAttrs
     attrNames
     showOption
     optional
-    optionalAttrs
     mergeDefinitions
     mkOptionType
     isAttrs
@@ -47,6 +47,7 @@ let
     let
       checkedFields = mapAttrs checkField fields;
       freeformType = if args ? freeformType then checkFreeformType args.freeformType else null;
+      fieldNames = attrNames checkedFields;
     in
     mkOptionType {
       name = "record";
@@ -66,25 +67,29 @@ let
               }) def.value
             ) defs
           );
-          fieldValues = concatMapAttrs (
-            fieldName: field:
-            let
-              mergedOption = mergeDefinitions (loc ++ [ fieldName ]) field.type (
-                data.${fieldName} or [ ]
-                ++ optional (field ? default) {
-                  value = lib.mkOptionDefault field.default;
-                  file = "the default value of field ${showOption loc}";
+          fieldValues = listToAttrs (
+            concatMap (
+              fieldName:
+              let
+                field = checkedFields.${fieldName};
+                mergedOption = mergeDefinitions (loc ++ [ fieldName ]) field.type (
+                  data.${fieldName} or [ ]
+                  ++ optional (field ? default) {
+                    value = lib.mkOptionDefault field.default;
+                    file = "the default value of field ${showOption loc}";
+                  }
+                );
+                isRequired = !field.optional or false;
+              in
+              builtins.addErrorContext "while evaluating the field `${fieldName}' of option `${showOption loc}'" (
+                optional (isRequired || mergedOption.isDefined) {
+                  name = fieldName;
+                  value = mergedOption.mergedValue;
                 }
-              );
-              isRequired = !field.optional or false;
-            in
-            builtins.addErrorContext "while evaluating the field `${fieldName}' of option `${showOption loc}'" (
-              optionalAttrs (isRequired || mergedOption.isDefined) {
-                ${fieldName} = mergedOption.mergedValue;
-              }
-            )
-          ) checkedFields;
-          extraData = removeAttrs data (attrNames checkedFields);
+              )
+            ) fieldNames
+          );
+          extraData = removeAttrs data fieldNames;
           checkedExtraDefs =
             if extraData == { } then
               fieldValues
