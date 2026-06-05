@@ -24,10 +24,6 @@ let
     ;
 
   record =
-    {
-      fields ? { },
-      freeformType ? null,
-    }@args:
     let
       checkField =
         name: field:
@@ -37,14 +33,18 @@ let
           throw "Record field `${escapeNixIdentifier name}` is optional, but a `default` is provided."
         else
           field;
-
       checkFreeformType =
         type:
         if type._type or null == "option-type" then
           type
         else
           throw "Record freeformType must be declared with `mkOptionType`.";
-
+    in
+    {
+      fields ? { },
+      freeformType ? null,
+    }@args:
+    let
       checkedFields = mapAttrs checkField fields;
       freeformType = if args ? freeformType then checkFreeformType args.freeformType else null;
     in
