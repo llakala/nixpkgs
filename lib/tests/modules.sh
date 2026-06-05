@@ -9,6 +9,9 @@
 # or:
 # [nixpkgs]$ nix-build lib/tests/release.nix
 
+n=1
+file=~/Documents/repos/nixpkgs/after
+
 set -o errexit -o noclobber -o nounset -o pipefail
 shopt -s failglob inherit_errexit
 
@@ -59,7 +62,9 @@ evalConfig() {
     local attr=$1
     shift
     local script="import ./default.nix { modules = [ $* ];}"
-    local-nix-instantiate -E "$script" -A "$attr"
+    local file=$file-$n.json
+    NIX_SHOW_STATS=1 local-nix-instantiate -E "$script" -A "$attr" &> $file
+    n=$((n + 1))
 }
 
 reportFailure() {
@@ -74,7 +79,7 @@ reportFailure() {
 checkConfigOutput() {
     local outputContains=$1
     shift
-    if evalConfig "$@" 2>/dev/null | grep -E --silent "$outputContains" ; then
+    if evalConfig "$@" | grep -E --silent "$outputContains" ; then
         ((++pass))
     else
         logStartFailure
