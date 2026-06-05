@@ -305,7 +305,7 @@ let
           recursiveUpdate freeformConfig declaredConfig;
 
       checkUnmatched =
-        if config._module.check && config._module.freeformType == null && merged.unmatchedDefns != [ ] then
+        if merged.unmatchedDefns != [ ] && config._module.check && config._module.freeformType == null then
           let
             firstDef = head merged.unmatchedDefns;
             baseMsg =
