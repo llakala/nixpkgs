@@ -151,6 +151,10 @@ let
             # a `_module.args.pkgs = import (fetchTarball { ... }) {}` won't
             # start a download when `pkgs` wasn't evaluated.
             type = types.lazyAttrsOf types.raw;
+            default = {
+              inherit extendModules;
+              moduleType = type;
+            };
             # Only render documentation once at the root of the option tree,
             # not for all individual submodules.
             # Allow merging option decls to make this internal regardless.
@@ -237,19 +241,12 @@ let
           _module.specialArgs = mkOption {
             readOnly = true;
             internal = true;
+            default = specialArgs;
             description = ''
               Externally provided module arguments that can't be modified from
               within a configuration, but can be used in module imports.
             '';
           };
-        };
-
-        config = {
-          _module.args = {
-            inherit extendModules;
-            moduleType = type;
-          };
-          _module.specialArgs = specialArgs;
         };
       };
 
