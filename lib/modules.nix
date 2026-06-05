@@ -7,6 +7,7 @@ let
     any
     attrByPath
     attrNames
+    attrValues
     catAttrs
     concatLists
     concatMap
@@ -802,6 +803,18 @@ let
     );
 
   mergeModules' =
+    let
+      prefixWithOptionName =
+        name:
+        map (
+          def:
+          def
+          // {
+            # Set this so we know when the definition first left unmatched territory
+            prefix = [ name ] ++ (def.prefix or [ ]);
+          }
+        );
+    in
     prefix: modules: configs:
     let
       # an attrset 'name' => list of submodules that declare ‘name’.
@@ -956,9 +969,9 @@ let
       # an attrset 'name' => list of unmatched definitions for 'name'
       unmatchedDefnsByName =
         # Propagate all unmatched definitions from nested option sets
-        mapAttrs (n: v: v.unmatchedDefns) resultsByName
+        mapAttrs (name: result: prefixWithOptionName name result.unmatchedDefns) resultsByName
         # Plus the definitions for the current prefix that don't have a matching option
-        // removeAttrs rawDefinitionsByName (attrNames matchedOptions);
+        // mapAttrs prefixWithOptionName (removeAttrs rawDefinitionsByName (attrNames matchedOptions));
     in
     {
       inherit matchedOptions;
@@ -970,19 +983,7 @@ let
           # we short circuit and avoid evaluating more _options_ than necessary.
           [ ]
         else
-          concatLists (
-            mapAttrsToList (
-              name: defs:
-              map (
-                def:
-                def
-                // {
-                  # Set this so we know when the definition first left unmatched territory
-                  prefix = [ name ] ++ (def.prefix or [ ]);
-                }
-              ) defs
-            ) unmatchedDefnsByName
-          );
+          concatLists (attrValues unmatchedDefnsByName);
     };
 
   throwDeclarationTypeError =
