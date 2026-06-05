@@ -86,12 +86,6 @@ let
             )
           ) checkedFields;
           extraData = removeAttrs data fieldNames;
-          extraValues = mapAttrs (
-            name: defs:
-            builtins.addErrorContext "while evaluating freeform value `${name}' of option `${showOption loc}'" (
-              (mergeDefinitions (loc ++ [ name ]) freeformType defs).mergedValue
-            )
-          ) extraData;
           checkedExtraDefs =
             if extraData == { } then
               fieldValues
@@ -100,7 +94,18 @@ let
                 A definition for option `${showOption loc}' has an unknown fields:
                 ${lib.concatMapAttrsStringSep "\n" (name: defs: "`${name}'${showDefs defs}") extraData}'';
         in
-        if freeformType == null then checkedExtraDefs else fieldValues // extraValues;
+        if freeformType == null then
+          checkedExtraDefs
+        else
+          let
+            extraValues = mapAttrs (
+              name: defs:
+              builtins.addErrorContext "while evaluating freeform value `${name}' of option `${showOption loc}'" (
+                (mergeDefinitions (loc ++ [ name ]) freeformType defs).mergedValue
+              )
+            ) extraData;
+          in
+          fieldValues // extraValues;
       nestedTypes = lib.optionalAttrs (freeformType != null) {
         inherit freeformType;
       };
