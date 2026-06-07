@@ -23,6 +23,7 @@ let
     pipe
     singleton
     strings
+    toJSON
     toPretty
     types
     versionAtLeast
@@ -145,7 +146,7 @@ optionalAttrs allowAliases aliases
           runCommand name
             {
               nativeBuildInputs = [ jq ];
-              value = builtins.toJSON value;
+              value = toJSON value;
               preferLocalBuild = true;
               __structuredAttrs = true;
             }
@@ -170,7 +171,7 @@ optionalAttrs allowAliases aliases
           runCommand name
             {
               nativeBuildInputs = [ remarshal_0_17 ];
-              value = builtins.toJSON value;
+              value = toJSON value;
               preferLocalBuild = true;
               __structuredAttrs = true;
             }
@@ -195,7 +196,7 @@ optionalAttrs allowAliases aliases
           runCommand name
             {
               nativeBuildInputs = [ remarshal ];
-              value = builtins.toJSON value;
+              value = toJSON value;
               preferLocalBuild = true;
               __structuredAttrs = true;
             }
@@ -476,7 +477,7 @@ optionalAttrs allowAliases aliases
           runCommand name
             {
               nativeBuildInputs = [ json2x ];
-              value = builtins.toJSON value;
+              value = toJSON value;
               preferLocalBuild = true;
               __structuredAttrs = true;
             }
@@ -510,7 +511,7 @@ optionalAttrs allowAliases aliases
           runCommand name
             {
               nativeBuildInputs = [ json2cdn ];
-              value = builtins.toJSON value;
+              value = toJSON value;
               preferLocalBuild = true;
               __structuredAttrs = true;
             }
@@ -943,8 +944,8 @@ optionalAttrs allowAliases aliases
                 python3
                 black
               ];
-              imports = builtins.toJSON (value._imports or [ ]);
-              value = builtins.toJSON (removeAttrs value [ "_imports" ]);
+              imports = toJSON (value._imports or [ ]);
+              value = toJSON (removeAttrs value [ "_imports" ]);
               pythonGen = pkgs.writeText "pythonGen" ''
                 import json
                 import os
@@ -1016,7 +1017,7 @@ optionalAttrs allowAliases aliases
                   python3Packages.xmltodict
                   libxml2Python
                 ];
-                value = builtins.toJSON value;
+                value = toJSON value;
                 pythonGen = pkgs.writeText "pythonGen" ''
                   import json
                   import os
