@@ -555,9 +555,6 @@ optionalAttrs allowAliases aliases
     [Tuple]: <https://hexdocs.pm/elixir/Tuple.html>
   */
   elixirConf =
-    {
-      elixir ? pkgs.elixir,
-    }:
     let
       toElixir =
         value:
@@ -638,6 +635,9 @@ optionalAttrs allowAliases aliases
           ${concatStringsSep "\n" rootConfigs}
         '';
     in
+    {
+      elixir ? pkgs.elixir,
+    }:
     {
       type =
         let
