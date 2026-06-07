@@ -499,8 +499,7 @@ optionalAttrs allowAliases aliases
   */
   cdn =
     { }:
-    json { }
-    // {
+    {
       type = serializableValueWith { typeName = "CDN"; };
 
       generate =
