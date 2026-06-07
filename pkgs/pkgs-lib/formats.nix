@@ -1067,7 +1067,6 @@ optionalAttrs allowAliases aliases
     };
 
   hcl1 =
-    args:
     let
       # Helper function to recursively transform values for HCL1 canonicalization
       # Rule: If an attribute value is an attribute set, wrap it in a list
@@ -1083,6 +1082,7 @@ optionalAttrs allowAliases aliases
           value;
       jsonFormat = json { };
     in
+    args:
     jsonFormat
     // {
       generate = name: value: jsonFormat.generate name (mapAttrs (_: transform) value);
