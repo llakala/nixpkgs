@@ -258,6 +258,11 @@ optionalAttrs allowAliases aliases
             mapAttrs (key: val: if isList val then listToValue val else val)
           else
             id;
+
+        ignoredArgs = [
+          "listToValue"
+          "atomsCoercedToLists"
+        ];
       in
       {
         ini =
@@ -289,12 +294,7 @@ optionalAttrs allowAliases aliases
               name: value:
               pipe value [
                 (mapAttrs (_: maybeToList listToValue))
-                (toINI (
-                  removeAttrs args [
-                    "listToValue"
-                    "atomsCoercedToLists"
-                  ]
-                ))
+                (toINI (removeAttrs args ignoredArgs))
                 (pkgs.writeText name)
               ];
           };
@@ -343,15 +343,10 @@ optionalAttrs allowAliases aliases
                 ...
               }:
               pkgs.writeText name (
-                toINIWithGlobalSection
-                  (removeAttrs args [
-                    "listToValue"
-                    "atomsCoercedToLists"
-                  ])
-                  {
-                    globalSection = maybeToList listToValue globalSection;
-                    sections = mapAttrs (_: maybeToList listToValue) sections;
-                  }
+                toINIWithGlobalSection (removeAttrs args ignoredArgs) {
+                  globalSection = maybeToList listToValue globalSection;
+                  sections = mapAttrs (_: maybeToList listToValue) sections;
+                }
               );
           };
 
