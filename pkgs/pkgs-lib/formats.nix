@@ -360,7 +360,7 @@ optionalAttrs allowAliases aliases
           {
             listsAsDuplicateKeys ? false,
             ...
-          }@args:
+          }:
           let
             atom = iniAtom {
               inherit listsAsDuplicateKeys;
