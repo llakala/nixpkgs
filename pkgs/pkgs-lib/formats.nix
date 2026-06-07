@@ -83,6 +83,8 @@ let
   };
 
   json2x = pkgs.buildPackages.callPackage ./formats/json2x/package.nix { };
+
+  inherit (pkgs) callPackage;
 in
 optionalAttrs allowAliases aliases
 // rec {
@@ -137,7 +139,7 @@ optionalAttrs allowAliases aliases
 
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           { runCommand, jq }:
           runCommand name
             {
@@ -162,7 +164,7 @@ optionalAttrs allowAliases aliases
     {
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           { runCommand, remarshal_0_17 }:
           runCommand name
             {
@@ -187,7 +189,7 @@ optionalAttrs allowAliases aliases
     {
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           { runCommand, remarshal }:
           runCommand name
             {
@@ -467,7 +469,7 @@ optionalAttrs allowAliases aliases
 
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           { runCommand, remarshal }:
           runCommand name
             {
@@ -502,7 +504,7 @@ optionalAttrs allowAliases aliases
 
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           { runCommand, json2cdn }:
           runCommand name
             {
@@ -785,7 +787,7 @@ optionalAttrs allowAliases aliases
         if asBindings then attrsOf valueType else valueType;
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           { runCommand, stylua }:
           runCommand name
             {
@@ -928,7 +930,7 @@ optionalAttrs allowAliases aliases
 
       generate =
         name: value:
-        pkgs.callPackage (
+        callPackage (
           {
             runCommand,
             python3,
@@ -1001,7 +1003,7 @@ optionalAttrs allowAliases aliases
 
         generate =
           name: value:
-          pkgs.callPackage (
+          callPackage (
             {
               runCommand,
               libxml2Python,
