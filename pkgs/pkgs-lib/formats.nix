@@ -138,22 +138,22 @@ optionalAttrs allowAliases aliases
       type = types.json;
 
       generate =
+        let
+          inherit (pkgs) runCommand jq;
+        in
         name: value:
-        callPackage (
-          { runCommand, jq }:
-          runCommand name
-            {
-              nativeBuildInputs = [ jq ];
-              value = builtins.toJSON value;
-              preferLocalBuild = true;
-              __structuredAttrs = true;
-            }
-            ''
-              valuePath="$TMPDIR/value"
-              printf "%s" "$value" > "$valuePath"
-              jq . "$valuePath" > $out
-            ''
-        ) { };
+        runCommand name
+          {
+            nativeBuildInputs = [ jq ];
+            value = builtins.toJSON value;
+            preferLocalBuild = true;
+            __structuredAttrs = true;
+          }
+          ''
+            valuePath="$TMPDIR/value"
+            printf "%s" "$value" > "$valuePath"
+            jq . "$valuePath" > $out
+          '';
 
     };
 
@@ -163,22 +163,22 @@ optionalAttrs allowAliases aliases
     { }:
     {
       generate =
+        let
+          inherit (pkgs) runCommand remarshal_0_17;
+        in
         name: value:
-        callPackage (
-          { runCommand, remarshal_0_17 }:
-          runCommand name
-            {
-              nativeBuildInputs = [ remarshal_0_17 ];
-              value = builtins.toJSON value;
-              preferLocalBuild = true;
-              __structuredAttrs = true;
-            }
-            ''
-              valuePath="$TMPDIR/value"
-              printf "%s" "$value" > "$valuePath"
-              json2yaml "$valuePath" "$out"
-            ''
-        ) { };
+        runCommand name
+          {
+            nativeBuildInputs = [ remarshal_0_17 ];
+            value = builtins.toJSON value;
+            preferLocalBuild = true;
+            __structuredAttrs = true;
+          }
+          ''
+            valuePath="$TMPDIR/value"
+            printf "%s" "$value" > "$valuePath"
+            json2yaml "$valuePath" "$out"
+          '';
 
       type = serializableValueWith { typeName = "YAML 1.1"; };
 
@@ -188,22 +188,22 @@ optionalAttrs allowAliases aliases
     { }:
     {
       generate =
+        let
+          inherit (pkgs) runCommand remarshal;
+        in
         name: value:
-        callPackage (
-          { runCommand, remarshal }:
-          runCommand name
-            {
-              nativeBuildInputs = [ remarshal ];
-              value = builtins.toJSON value;
-              preferLocalBuild = true;
-              __structuredAttrs = true;
-            }
-            ''
-              valuePath="$TMPDIR/value"
-              printf "%s" "$value" > "$valuePath"
-              json2yaml "$valuePath" "$out"
-            ''
-        ) { };
+        runCommand name
+          {
+            nativeBuildInputs = [ remarshal ];
+            value = builtins.toJSON value;
+            preferLocalBuild = true;
+            __structuredAttrs = true;
+          }
+          ''
+            valuePath="$TMPDIR/value"
+            printf "%s" "$value" > "$valuePath"
+            json2yaml "$valuePath" "$out"
+          '';
 
       type = serializableValueWith { typeName = "YAML 1.2"; };
 
@@ -469,22 +469,22 @@ optionalAttrs allowAliases aliases
       type = types.toml;
 
       generate =
+        let
+          inherit (pkgs) runCommand;
+        in
         name: value:
-        callPackage (
-          { runCommand }:
-          runCommand name
-            {
-              nativeBuildInputs = [ json2x ];
-              value = builtins.toJSON value;
-              preferLocalBuild = true;
-              __structuredAttrs = true;
-            }
-            ''
-              valuePath="$TMPDIR/value"
-              printf "%s" "$value" > "$valuePath"
-              json2x toml "$valuePath" "$out"
-            ''
-        ) { };
+        runCommand name
+          {
+            nativeBuildInputs = [ json2x ];
+            value = builtins.toJSON value;
+            preferLocalBuild = true;
+            __structuredAttrs = true;
+          }
+          ''
+            valuePath="$TMPDIR/value"
+            printf "%s" "$value" > "$valuePath"
+            json2x toml "$valuePath" "$out"
+          '';
 
     };
 
@@ -503,6 +503,9 @@ optionalAttrs allowAliases aliases
       type = serializableValueWith { typeName = "CDN"; };
 
       generate =
+        let
+          inherit (pkgs) runCommand json2cdn;
+        in
         name: value:
         callPackage (
           { runCommand, json2cdn }:
