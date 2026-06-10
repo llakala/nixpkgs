@@ -133,12 +133,19 @@ let
 
   # Get list of required Python modules given a list of derivations.
   requiredPythonModules =
-    drvs:
     let
-      modules = lib.filter hasPythonModule drvs;
+      withKey = pkg: {
+        key = pkg.outPath;
+        value = pkg;
+      };
+      collect = e: if e ? requiredPythonModules then map withKey e.requiredPythonModules else [ ];
     in
-    lib.unique (
-      [ python ] ++ modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules)
+    drvs:
+    lib.map (e: e.value) (
+      builtins.genericClosure {
+        startSet = map withKey ([ python ] ++ lib.filter hasPythonModule drvs);
+        operator = collect;
+      }
     );
 
   # Create a PYTHONPATH from a list of derivations. This function recurses into the items to find derivations
