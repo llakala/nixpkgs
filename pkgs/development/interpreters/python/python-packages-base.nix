@@ -136,10 +136,9 @@ let
     drvs:
     let
       modules = lib.filter hasPythonModule drvs;
+      final = modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules);
     in
-    lib.unique (
-      [ python ] ++ modules ++ lib.concatLists (lib.catAttrs "requiredPythonModules" modules)
-    );
+    if builtins.any (pkg: pkg.outPath == python.outPath) final then final else [ python ] ++ final;
 
   # Create a PYTHONPATH from a list of derivations. This function recurses into the items to find derivations
   # providing Python modules.
