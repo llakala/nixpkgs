@@ -199,11 +199,11 @@ lib.extendMkDerivation {
 
     let
       getFinalPassthru =
-        let
-          pos = unsafeGetAttrPos "passthru" finalAttrs;
-        in
         attrName:
         finalAttrs.passthru.${attrName} or (throw (
+          let
+            pos = unsafeGetAttrPos "passthru" finalAttrs;
+          in
           ''
             ${finalAttrs.name}: passthru.${attrName} missing after overrideAttrs overriding.
           ''
@@ -320,30 +320,38 @@ lib.extendMkDerivation {
       ++ optionals (hasSuffix "zip" (finalAttrs.src.name or "")) [
         unzip
       ]
-      ++ optionals (format' == "setuptools") [
-        setuptoolsBuildHook
-      ]
-      ++ optionals (format' == "pyproject") [
-        (
-          if isBootstrapPackage then
-            pypaBuildHook.override {
-              inherit (python.pythonOnBuildForHost.pkgs.bootstrap) build;
-              wheel = null;
-            }
-          else
-            pypaBuildHook
-        )
-        runtimeDepsCheckHook
-      ]
-      ++ optionals (format' == "wheel") [
-        wheelUnpackHook
-        runtimeDepsCheckHook
-      ]
-      ++ optionals (format' == "egg") [
-        eggUnpackHook
-        eggBuildHook
-        eggInstallHook
-      ]
+      ++ (
+        if format' == "setuptools" then
+          [
+            setuptoolsBuildHook
+          ]
+        else if format' == "pyproject" then
+          [
+            (
+              if isBootstrapPackage then
+                pypaBuildHook.override {
+                  inherit (python.pythonOnBuildForHost.pkgs.bootstrap) build;
+                  wheel = null;
+                }
+              else
+                pypaBuildHook
+            )
+            runtimeDepsCheckHook
+          ]
+        else if format' == "wheel" then
+          [
+            wheelUnpackHook
+            runtimeDepsCheckHook
+          ]
+        else if format' == "egg" then
+          [
+            eggUnpackHook
+            eggBuildHook
+            eggInstallHook
+          ]
+        else
+          [ ]
+      )
       ++ optionals (format' != "other") [
         (
           if isBootstrapInstallPackage then
