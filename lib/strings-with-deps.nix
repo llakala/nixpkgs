@@ -154,12 +154,9 @@ rec {
           else
             f (
               done
-              // listToAttrs [
-                {
-                  name = entry;
-                  value = 1;
-                }
-              ]
+              // {
+                ${entry} = 1;
+              }
             ) ([ predefined.${entry} ] ++ tail todo);
     in
     (f { } arg).result;
