@@ -12,25 +12,31 @@ let
 
   addAttributeName = mapAttrs (
     a: v:
-    v
-    // (lib.optionalAttrs (v.text != "") {
-      text = ''
-        #### Activation script snippet ${a}:
-        _localstatus=0
-        ${v.text}
-        if (( _localstatus > 0 )); then
-          printf "Activation script snippet '%s' failed (%s)\n" "${a}" "$_localstatus"
-        fi
-      '';
-    })
+    if v.text == "" then
+      v
+    else
+      v
+      // {
+        text = ''
+          #### Activation script snippet ${a}:
+          _localstatus=0
+          ${v.text}
+          if (( _localstatus > 0 )); then
+            printf "Activation script snippet '%s' failed (%s)\n" "${a}" "$_localstatus"
+          fi
+        '';
+      }
   );
 
   systemActivationScript =
+    let
+      noDryActivation = {
+        supportsDryActivation = false;
+      };
+    in
     set: onlyDry:
     let
-      set' = mapAttrs (
-        _: v: if isString v then (noDepEntry v) // { supportsDryActivation = false; } else v
-      ) set;
+      set' = mapAttrs (_: v: if isString v then (noDepEntry v) // noDryActivation else v) set;
       withHeadlines = addAttributeName set';
       # When building a dry activation script, this replaces all activation scripts
       # that do not support dry mode with a comment that does nothing. Filtering these
