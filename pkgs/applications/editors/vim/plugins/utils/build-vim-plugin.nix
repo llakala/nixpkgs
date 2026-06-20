@@ -38,6 +38,9 @@
             postInstall
             ;
 
+          preferLocalBuild = true;
+          allowSubstitutes = false;
+
           installPhase = ''
             runHook preInstall
 
