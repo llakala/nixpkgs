@@ -211,10 +211,10 @@ let
   # Make sure that we are not shadowing something from all-packages.nix.
   checkInPkgs =
     n: alias:
-    if builtins.hasAttr n super then abort "Alias ${n} is still in all-packages.nix" else alias;
+    if super ? ${n} then abort "Alias ${n} is still in all-packages.nix" else alias;
 
   mapAliases =
-    aliases: lib.mapAttrs (n: alias: removeRecurseForDerivations (checkInPkgs n alias)) aliases;
+    lib.mapAttrs (n: alias: removeRecurseForDerivations (checkInPkgs n alias));
 
   plasma5Throws = mapAliases (lib.genAttrs deprecatedPlasma5Packages makePlasma5Throw);
 
