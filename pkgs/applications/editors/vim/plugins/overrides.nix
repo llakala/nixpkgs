@@ -143,13 +143,11 @@ let
   assertNoAdditions =
     overrides:
     let
-      prevNames = lib.attrNames super;
-      definedNames = lib.attrNames overrides;
-      addedNames = lib.subtractLists prevNames definedNames;
+      addedAttributes = lib.intersectAttrs super overrides;
     in
-    lib.throwIfNot (addedNames == [ ])
+    lib.throwIfNot (addedAttributes == { })
       "vimPlugins: the following attributes should not be defined in overrides.nix:${
-        lib.concatMapStrings (name: "\n- ${name}") addedNames
+        lib.concatMapStrings (name: "\n- ${name}") (builtins.attrNames addedAttributes)
       }"
       overrides;
 in
