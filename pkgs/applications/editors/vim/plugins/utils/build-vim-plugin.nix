@@ -4,6 +4,11 @@
   rtpPath,
   toVimPlugin,
 }:
+let
+  defaultMeta = {
+    platforms = lib.platforms.all;
+  };
+in
 
 {
   addRtp = drv: lib.warn "`addRtp` is deprecated, does nothing." drv;
@@ -51,10 +56,7 @@
             runHook postInstall
           '';
 
-          meta = {
-            platforms = lib.platforms.all;
-          }
-          // meta;
+          meta = defaultMeta // meta;
         }
       );
     in
