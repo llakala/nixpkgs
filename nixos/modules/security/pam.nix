@@ -122,13 +122,13 @@ let
               inherit name;
               # Formats an attrset of settings as args for use as `module-arguments`.
               args = lib.concatLists (
-                lib.flip lib.mapAttrsToList config.settings (
+                lib.mapAttrsToList (
                   name: value:
                   if lib.isBool value then
                     lib.optional value name
                   else
                     lib.optional (value != null) "${name}=${toString value}"
-                )
+                ) config.settings
               );
             };
           }
