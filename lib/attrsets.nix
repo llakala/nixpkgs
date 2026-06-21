@@ -90,17 +90,13 @@ rec {
       lenAttrPath = length attrPath;
       attrByPath' =
         n: s:
-        (
-          if n == lenAttrPath then
-            s
-          else
-            (
-              let
-                attr = elemAt attrPath n;
-              in
-              if s ? ${attr} then attrByPath' (n + 1) s.${attr} else default
-            )
-        );
+        if n == lenAttrPath then
+          s
+        else
+          let
+            attr = elemAt attrPath n;
+          in
+          if s ? ${attr} then attrByPath' (n + 1) s.${attr} else default;
     in
     attrByPath' 0 set;
 
