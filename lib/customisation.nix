@@ -413,10 +413,11 @@ rec {
     }:
     let
       strict = derivationStrict drvAttrs;
+      onlyOutputIsOut = !drvAttrs ? outputs || outputs == defaultOutputs;
       commonAttrs =
         drvAttrs
         // (
-          if !drvAttrs ? outputs || outputs == defaultOutputs then
+          if onlyOutputIsOut then
             {
               out = mkOutput "out";
             }
@@ -439,7 +440,7 @@ rec {
             strict.drvPath;
           outPath =
             assert condition;
-            strict.${head outputs};
+            if onlyOutputIsOut then strict.out else strict.${head outputs};
         };
 
       mkOutput =
