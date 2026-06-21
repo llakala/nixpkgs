@@ -539,7 +539,10 @@ let
         doCheck = doCheck';
         doInstallCheck = doInstallCheck';
         buildInputs' =
-          buildInputs ++ optionals doCheck checkInputs ++ optionals doInstallCheck installCheckInputs;
+          if doCheck then
+            buildInputs ++ checkInputs ++ optionals doInstallCheck installCheckInputs
+          else
+            buildInputs ++ optionals doInstallCheck installCheckInputs;
         nativeBuildInputs' =
           nativeBuildInputs
           ++ optional separateDebugInfo' ../../build-support/setup-hooks/separate-debug-info.sh
