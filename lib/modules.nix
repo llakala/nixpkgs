@@ -450,7 +450,7 @@ let
           throw "Module imports can't be nested lists. Perhaps you meant to remove one level of lists? Definitions: ${showDefs defs}"
         else
           unifyModuleSyntax (toString m) (toString m) (
-            applyModuleArgsIfFunction (toString m) (import m) args
+            (f: if isFunction f then applyModuleArgs (toString m) f args else f) (import m)
           );
 
       checkModule =
