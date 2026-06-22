@@ -546,11 +546,17 @@ rec {
     }:
     let
       go =
-        indent: v:
         let
           introSpace = if multiline then "\n${indent}  " else " ";
           outroSpace = if multiline then "\n${indent}" else " ";
+          escapeSingleline = escape [
+            "\\"
+            "\""
+            "\${"
+          ];
+          escapeMultiline = replaceStrings [ "\${" "''" ] [ "''\${" "'''" ];
         in
+        indent: v:
         if isInt v then
           toString v
         # toString loses precision on floats, so we use toJSON instead. This isn't perfect
@@ -561,12 +567,6 @@ rec {
         else if isString v then
           let
             lines = filter (v: !isList v) (split "\n" v);
-            escapeSingleline = escape [
-              "\\"
-              "\""
-              "\${"
-            ];
-            escapeMultiline = replaceStrings [ "\${" "''" ] [ "''\${" "'''" ];
             singlelineResult = "\"" + concatStringsSep "\\n" (map escapeSingleline lines) + "\"";
             multilineResult =
               let
