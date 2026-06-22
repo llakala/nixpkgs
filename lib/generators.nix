@@ -246,6 +246,12 @@ rec {
     :::
   */
   toINI =
+    let
+      # map function to string for each key val
+      mapAttrsToStringsSep =
+        sep: mapFn: attrs:
+        concatStringsSep sep (mapAttrsToList mapFn attrs);
+    in
     {
       mkSectionName ? (name: escape [ "[" "]" ] name),
       mkKeyValue ? mkKeyValueDefault { } "=",
@@ -253,10 +259,6 @@ rec {
     }:
     attrsOfAttrs:
     let
-      # map function to string for each key val
-      mapAttrsToStringsSep =
-        sep: mapFn: attrs:
-        concatStringsSep sep (mapAttrsToList mapFn attrs);
       mkSection =
         sectName: sectValues:
         ''
