@@ -94,11 +94,11 @@ rec {
     : 2\. Function argument
   */
   mkValueStringDefault =
-    { }:
-    v:
     let
       err = t: v: abort ("generators.mkValueStringDefault: " + "${t} not supported: ${toPretty { } v}");
     in
+    { }:
+    v:
     if isInt v then
       toString v
     else if isDerivation v then
