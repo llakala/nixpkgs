@@ -163,8 +163,11 @@ rec {
     : 4\. Function argument
   */
   mkKeyValueDefault =
+    let
+      default = mkValueStringDefault { };
+    in
     {
-      mkValueString ? mkValueStringDefault { },
+      mkValueString ? default,
     }:
     sep: k: v:
     "${escape [ sep ] k}${sep}${mkValueString v}";
@@ -188,8 +191,11 @@ rec {
       : Initial indentation level
   */
   toKeyValue =
+    let
+      default = mkKeyValueDefault { } "=";
+    in
     {
-      mkKeyValue ? mkKeyValueDefault { } "=",
+      mkKeyValue ? default,
       listsAsDuplicateKeys ? false,
       indent ? "",
     }:
@@ -246,8 +252,11 @@ rec {
     :::
   */
   toINI =
+    let
+      escapeBrackets = escape [ "[" "]" ];
+    in
     {
-      mkSectionName ? (name: escape [ "[" "]" ] name),
+      mkSectionName ? escapeBrackets,
       mkKeyValue ? mkKeyValueDefault { } "=",
       listsAsDuplicateKeys ? false,
     }:
