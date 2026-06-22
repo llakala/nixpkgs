@@ -101,33 +101,33 @@ rec {
     in
     if isInt v then
       toString v
-    # convert derivations to store paths
     else if isDerivation v then
+      # convert derivations to store paths
       toString v
-    # we default to not quoting strings
     else if isString v then
+      # we default to not quoting strings
+      # toString returns "1", which is not a good default
       v
-    # isString returns "1", which is not a good default
     else if true == v then
+      # here it returns to "", which is even less of a good default
       "true"
-    # here it returns to "", which is even less of a good default
     else if false == v then
       "false"
     else if null == v then
       "null"
-    # if you have lists you probably want to replace this
     else if isList v then
+      # if you have lists you probably want to replace this
       err "lists" v
-    # same as for lists, might want to replace
     else if isAttrs v then
+      # same as for lists, might want to replace
       err "attrsets" v
-    # functions can’t be printed of course
     else if isFunction v then
+      # functions can’t be printed of course
       err "functions" v
-    # Floats currently can't be converted to precise strings,
-    # condition warning on nix version once this isn't a problem anymore
-    # See https://github.com/NixOS/nix/pull/3480
     else if isFloat v then
+      # Floats currently can't be converted to precise strings,
+      # condition warning on nix version once this isn't a problem anymore
+      # See https://github.com/NixOS/nix/pull/3480
       floatToString v
     else
       err "this value is" (toString v);
