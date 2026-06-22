@@ -480,11 +480,6 @@ rec {
     : The value to be evaluated recursively
   */
   withRecursion =
-    {
-      depthLimit,
-      throwOnDepthLimit ? true,
-    }:
-    assert isInt depthLimit;
     let
       specialAttrs = [
         "__functor"
@@ -493,6 +488,13 @@ rec {
         "__pretty"
       ];
       stepIntoAttr = evalNext: name: if elem name specialAttrs then id else evalNext;
+    in
+    {
+      depthLimit,
+      throwOnDepthLimit ? true,
+    }:
+    assert isInt depthLimit;
+    let
       transform =
         depth:
         if depthLimit != null && depth > depthLimit then
