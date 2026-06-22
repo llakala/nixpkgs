@@ -197,7 +197,7 @@ rec {
       mkLine = k: v: indent + mkKeyValue k v + "\n";
       mkLines =
         if listsAsDuplicateKeys then
-          k: v: map (mkLine k) (if isList v then v else [ v ])
+          k: v: if isList v then map (mkLine k) v else mkLine k v
         else
           k: v: [ (mkLine k v) ];
     in
