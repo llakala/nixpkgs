@@ -826,6 +826,16 @@ rec {
     :::
   */
   toLua =
+    let
+      # https://en.wikibooks.org/wiki/Lua_Programming/variable#Variable_names
+      matchVarName = match "[[:alpha:]_][[:alnum:]_]*(\\.[[:alpha:]_][[:alnum:]_]*)*";
+      isLuaInline =
+        {
+          _type ? null,
+          ...
+        }:
+        _type == "lua-inline";
+    in
     {
       multiline ? true,
       indent ? "",
@@ -841,19 +851,11 @@ rec {
         asBindings = false;
       };
       concatItems = concatStringsSep ",${introSpace}";
-      isLuaInline =
-        {
-          _type ? null,
-          ...
-        }:
-        _type == "lua-inline";
 
       generatedBindings =
         assert assertMsg (badVarNames == [ ]) "Bad Lua var names: ${toPretty { } badVarNames}";
         concatStrings (mapAttrsToList (key: value: "${indent}${key} = ${toLua innerArgs value}\n") v);
 
-      # https://en.wikibooks.org/wiki/Lua_Programming/variable#Variable_names
-      matchVarName = match "[[:alpha:]_][[:alnum:]_]*(\\.[[:alpha:]_][[:alnum:]_]*)*";
       badVarNames = filter (name: matchVarName name == null) (attrNames v);
     in
     if asBindings then
