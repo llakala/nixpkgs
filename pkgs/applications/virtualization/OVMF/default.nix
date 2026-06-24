@@ -57,6 +57,7 @@
     .${stdenv.hostPlatform.parsed.cpu.name}
       or (throw "Unsupported OVMF `fwPrefix` on ${stdenv.hostPlatform.parsed.cpu.name}"),
   metaPlatforms ? lib.subtractLists lib.platforms.i686 edk2.meta.platforms,
+  CuboCore
 }:
 
 let
@@ -116,6 +117,7 @@ edk2.mkDerivation projectDscPath (finalAttrs: {
     util-linux
     nasm
     acpica-tools
+    CuboCore.coregarage
   ]
   ++ lib.optionals stdenv.cc.isClang [
     llvmPackages.bintools
