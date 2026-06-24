@@ -74,13 +74,15 @@ rec {
         gnugrep
         gnused
       ];
-  nix-prefetch-git = mkPrefetchScript "git" ../../../build-support/fetchgit/nix-prefetch-git [
-    findutils
-    gawk
-    git
-    git-lfs
-    gnused
-  ];
+  nix-prefetch-git = mkPrefetchScript "git" ../../../build-support/fetchgit/nix-prefetch-git (
+    lib.filter (x: x != null) [
+      findutils
+      gawk
+      git
+      git-lfs
+      gnused
+    ]
+  );
   nix-prefetch-hg = mkPrefetchScript "hg" ../../../build-support/fetchhg/nix-prefetch-hg [
     mercurial
   ];
