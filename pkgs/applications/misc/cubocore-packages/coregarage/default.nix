@@ -39,6 +39,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Settings manager for the C Suite";
     mainProgram = "coregarage";
+    problems.removal.message = "some message";
     homepage = "https://gitlab.com/cubocore/coreapps/coregarage";
     license = lib.licenses.gpl3Plus;
     maintainers = [ ];
