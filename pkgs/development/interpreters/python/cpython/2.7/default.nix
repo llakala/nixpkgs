@@ -264,7 +264,7 @@ let
   strictDeps = true;
   buildInputs =
     lib.optional (stdenv ? cc && stdenv.cc.libc != null) stdenv.cc.libc
-    ++ [
+    ++ lib.filter (v: v != null) [
       bzip2
       openssl
       zlib

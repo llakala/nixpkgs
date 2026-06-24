@@ -565,7 +565,7 @@ rec {
   makeSearchPath =
     subDir: paths:
     concatStringsSep ":" (
-      concatMap (path: if path != null then [ (path + "/" + subDir) ] else [ ]) paths
+      map (path: path + "/" + subDir) paths
     );
 
   /**
@@ -608,10 +608,7 @@ rec {
     let
       getOutput' = lib.getOutput output;
     in
-    subDir: pkgs:
-    concatStringsSep ":" (
-      concatMap (path: if path != null then [ (getOutput' path + "/" + subDir) ] else [ ]) pkgs
-    );
+    subDir: pkgs: concatStringsSep ":" (map (path: getOutput' path + "/" + subDir) pkgs);
 
   /**
     Construct a library search path (such as RPATH) containing the
