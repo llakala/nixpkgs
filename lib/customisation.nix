@@ -413,53 +413,57 @@ rec {
     }:
     let
       strict = derivationStrict drvAttrs;
-      commonAttrs =
-        drvAttrs
-        // (
-          if !drvAttrs ? outputs || outputs == defaultOutputs then
-            {
-              out = mkOutput "out";
-            }
-          else
-            listToAttrs (
-              map (name: {
-                inherit name;
-                value = mkOutput name;
-              }) outputs
-            )
-        )
-        // passthru
-        // {
-          type = "derivation";
-          inherit drvAttrs;
-          outputName = head outputs;
-          all = map mkOutput outputs;
-          drvPath =
-            assert condition;
-            strict.drvPath;
-          outPath =
-            assert condition;
-            strict.${head outputs};
-        };
-
-      mkOutput =
-        outputName:
-        commonAttrs
-        // {
-          inherit outputName;
-          outputSpecified = true;
-          outPath =
-            assert condition;
-            strict.${outputName};
-          # TODO: give the derivation control over the outputs.
-          #       `overrideAttrs` may not be the only attribute that needs
-          #       updating when switching outputs.
-          # TODO: also add overrideAttrs when overrideAttrs is not custom, e.g. when not splicing.
-          ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
-            f: (passthru.overrideAttrs f).${outputName};
-        };
+      final =
+        if !drvAttrs ? outputs || outputs == defaultOutputs then
+          drvAttrs
+          // passthru
+          // {
+            type = "derivation";
+            inherit drvAttrs;
+            drvPath =
+              assert condition;
+              strict.drvPath;
+            out = final // {
+              outputSpecified = true;
+              ${if passthru ? overrideAttrs then "overrideAttrs" else null} = f: (passthru.overrideAttrs f).out;
+            };
+            outputName = "out";
+            all = [ final.out ];
+            outPath =
+              assert condition;
+              strict.out;
+          }
+        else
+          drvAttrs
+          // listToAttrs (
+            map (outputName: {
+              name = outputName;
+              value = final // {
+                inherit outputName;
+                outputSpecified = true;
+                outPath =
+                  assert condition;
+                  strict.${outputName};
+                ${if passthru ? overrideAttrs then "overrideAttrs" else null} =
+                  f: (passthru.overrideAttrs f).${outputName};
+              };
+            }) outputs
+          )
+          // passthru
+          // {
+            type = "derivation";
+            inherit drvAttrs;
+            drvPath =
+              assert condition;
+              strict.drvPath;
+            outputName = head outputs;
+            all = map (name: final.${name}) outputs;
+            outPath =
+              assert condition;
+              strict.${head outputs};
+          };
     in
-    commonAttrs;
+    final;
 
   /**
     Add attributes to each output of a derivation without changing
