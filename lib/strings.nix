@@ -604,14 +604,8 @@ rec {
     :::
   */
   makeSearchPathOutput =
-    output:
-    let
-      getOutput' = lib.getOutput output;
-    in
-    subDir: pkgs:
-    concatStringsSep ":" (
-      concatMap (path: if path != null then [ (getOutput' path + "/" + subDir) ] else [ ]) pkgs
-    );
+    output: subDir: pkgs:
+    makeSearchPath subDir (map (lib.getOutput output) pkgs);
 
   /**
     Construct a library search path (such as RPATH) containing the
