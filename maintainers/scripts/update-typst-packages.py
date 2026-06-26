@@ -57,7 +57,11 @@ class TypstPackage:
             sanitized = sanitize_license_string(self.license, exception_list)
             licensing = le.get_spdx_licensing()
             parsed = licensing.parse(sanitized, validate=True)
-            return [s.key for s in licensing.license_symbols(parsed)]
+            symbols = licensing.license_symbols(parsed)
+            if len(symbols) == 1:
+                return symbols[0].key
+            else:
+                return [s.key for s in symbols]
         except le.ExpressionError as e:
             print(
                 f'Failed to parse license string "{self.license}" because of {str(e)}'
