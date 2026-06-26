@@ -86,7 +86,7 @@ $a}
       s/"opl"/"opubl"/g
       s/"pd"/"publicDomain"/g
 
-      s/^catalogue-license (.*)/  license = [ \1 ];/p
+      s/^catalogue-license (.*)/  license = \1;/p
     }
 
     s/^.*$//
