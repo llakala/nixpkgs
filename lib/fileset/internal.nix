@@ -631,7 +631,7 @@ rec {
       fromDirEntry =
         path: pathString: type:
         # The filter needs to run on the path as a string
-        if !sourceFilter pathString type then
+        if sourceFilter != null && !sourceFilter pathString type then
           null
         else if type == "directory" then
           fromDir path pathString
