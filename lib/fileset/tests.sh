@@ -440,7 +440,7 @@ expectEqual '{
 #### Resulting store path ####
 
 # The store path name should be "source"
-expectEqual 'toSource { root = ./.; fileset = ./.; }' 'sources.cleanSourceWith { name = "source"; src = ./.; }'
+expectEqual 'toSource { root = ./.; fileset = ./.; }' 'sources.cleanSourceWith { name = "source"; src = ./.; filter = _: _: true; }'
 
 # We should be able to import an empty directory and end up with an empty result
 tree=(
