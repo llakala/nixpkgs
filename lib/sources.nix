@@ -41,6 +41,12 @@ let
     : 2\. Function argument
   */
   cleanSourceFilter =
+    let
+      hasHomeDirSuffix = lib.hasSuffix "~";
+      hasObjectSuffix = lib.hasSuffix ".o";
+      hasSharedObjectSuffix = lib.hasSuffix ".so";
+      hasResultPrefix = lib.hasPrefix "result";
+    in
     name: type:
     let
       baseName = baseNameOf name;
@@ -62,17 +68,15 @@ let
       )
       ||
         # Filter out editor backup / swap files.
-        lib.hasSuffix "~" baseName
+        hasHomeDirSuffix baseName
       || match "^\\.sw[a-z]$" baseName != null
       || match "^\\..*\\.sw[a-z]$" baseName != null
-      ||
-
-        # Filter out generates files.
-        lib.hasSuffix ".o" baseName
-      || lib.hasSuffix ".so" baseName
+      # Filter out generated files.
+      || hasObjectSuffix baseName
+      || hasSharedObjectSuffix baseName
       ||
         # Filter out nix-build result symlinks
-        (type == "symlink" && lib.hasPrefix "result" baseName)
+        (type == "symlink" && hasResultPrefix baseName)
       ||
         # Filter out sockets and other types of files we can't have in the store.
         (type == "unknown")
