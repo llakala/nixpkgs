@@ -109,11 +109,12 @@ let
 
     baseOptionsJSON =
       let
+        hasNixSuffix = hasSuffix ".nix";
         filter = builtins.filterSource (
           n: t:
           cleanSourceFilter n t
           && (t == "directory" -> baseNameOf n != "tests")
-          && (t == "file" -> hasSuffix ".nix" n)
+          && (t == "file" -> hasNixSuffix n)
         );
         prefixRegex =
           "^"
@@ -127,7 +128,7 @@ let
             builtins.match prefixRegex n != null
             && cleanSourceFilter n t
             && (t == "directory" -> baseNameOf n != "tests")
-            && (t == "file" -> hasSuffix ".nix" n);
+            && (t == "file" -> hasNixSuffix n);
         };
       in
       pkgs.runCommand "lazy-options.json"
