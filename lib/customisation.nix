@@ -414,33 +414,43 @@ rec {
     let
       strict = derivationStrict drvAttrs;
       commonAttrs =
-        drvAttrs
-        // (
-          if !drvAttrs ? outputs || outputs == defaultOutputs then
-            {
-              out = mkOutput "out";
-            }
-          else
-            listToAttrs (
-              map (name: {
-                inherit name;
-                value = mkOutput name;
-              }) outputs
-            )
-        )
-        // passthru
-        // {
-          type = "derivation";
-          inherit drvAttrs;
-          outputName = head outputs;
-          all = map mkOutput outputs;
-          drvPath =
-            assert condition;
-            strict.drvPath;
-          outPath =
-            assert condition;
-            strict.${head outputs};
-        };
+        if !drvAttrs ? outputs || outputs == defaultOutputs then
+          drvAttrs
+          // passthru
+          // {
+            type = "derivation";
+            inherit drvAttrs;
+            drvPath =
+              assert condition;
+              strict.drvPath;
+            outputName = "out";
+            all = [ commonAttrs.out ];
+            out = mkOutput "out";
+            outPath =
+              assert condition;
+              strict.out;
+          }
+        else
+          drvAttrs
+          // listToAttrs (
+            map (name: {
+              inherit name;
+              value = mkOutput name;
+            }) outputs
+          )
+          // passthru
+          // {
+            type = "derivation";
+            inherit drvAttrs;
+            drvPath =
+              assert condition;
+              strict.drvPath;
+            outputName = head outputs;
+            all = map (name: commonAttrs.${name}) outputs;
+            outPath =
+              assert condition;
+              strict.${head outputs};
+          };
 
       mkOutput =
         outputName:
