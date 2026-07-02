@@ -13,7 +13,6 @@ let
     isList
     isDerivation
     all
-    any
     attrNames
     attrValues
     concatMap
@@ -23,6 +22,9 @@ let
     concatMapStringsSep
     isFloat
     elem
+    foldl'
+    head
+    tail
     mapAttrs
     ;
   isTypeDef = t: isAttrs t && t ? name && isString t.name && t ? verify && isFunction t.verify;
@@ -145,7 +147,11 @@ lib.fix (self: {
     in
     {
       name = "union<${concatStringsSep "," (map (t: t.name) types)}>";
-      verify = v: any (func: func v) funcs;
+      # Composed once at construction to avoid a closure allocation and an `any` primop call per verification.
+      verify = foldl' (
+        acc: f: v:
+        acc v || f v
+      ) (head funcs) (tail funcs);
     };
 
   intersection =
@@ -157,7 +163,11 @@ lib.fix (self: {
     in
     {
       name = "intersection<${concatStringsSep "," (map (t: t.name) types)}>";
-      verify = v: all (func: func v) funcs;
+      # See the union verify comment above.
+      verify = foldl' (
+        acc: f: v:
+        acc v && f v
+      ) (head funcs) (tail funcs);
     };
 
   not =
