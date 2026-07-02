@@ -415,7 +415,7 @@ let
 
     checkMeta = mkOption {
       type = types.bool;
-      default = false;
+      default = true;
       description = ''
         Whether to check that the `meta` attribute of derivations are correct during evaluation time.
       '';

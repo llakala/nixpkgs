@@ -107,7 +107,7 @@ in
       revision = mkOption {
         internal = true;
         type = types.nullOr types.str;
-        default = trivial.revisionWithDefault null;
+        default = null;
         description = "The Git revision from which this NixOS configuration was built.";
       };
 
