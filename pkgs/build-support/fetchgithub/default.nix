@@ -68,7 +68,10 @@ decorate (
     useFetchGit =
       lib.mapAttrs (
         name: nonNullDefault:
-        if args ? ${name} && (useFetchGitArgsDefaultNullable ? ${name} -> args.${name} != null) then
+        # if the name is nullable and the value is null, fallback to
+        # nonNullDefault. if the name isn't nullable, perform the normal
+        # equality check
+        if args ? ${name} && (if !useFetchGitArgsDefaultNullable ? ${name} then true else args.${name} != null) then
           args.${name}
         else
           nonNullDefault
