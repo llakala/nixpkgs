@@ -203,7 +203,11 @@ jobs:
           MATRIX_SYSTEM: ${{ matrix.system }}
           MATRIX_VERSION: ${{ matrix.version || 'nixVersions.latest' }}
         run: |
-          nix-build nixpkgs/untrusted/ci --arg nixpkgs ./nixpkgs/untrusted-pinned -A eval.singleSystem \
+          sudo sysctl kernel.perf_event_paranoid=1
+
+          perf stat \
+            --event instructions:u --field-separator , --output merged-perf \
+            nix-build nixpkgs/untrusted/ci --arg nixpkgs ./nixpkgs/untrusted-pinned -A eval.singleSystem \
             --argstr evalSystem "$MATRIX_SYSTEM" \
             --arg chunkSize 8000 \
             --argstr nixPath "$MATRIX_VERSION" \
@@ -232,7 +236,9 @@ jobs:
 
           # Either fetches from Cachix or runs Eval itself. The fallback is required
           # for pull requests into wip-branches without merge queue.
-          nix-build "$TARGET_DRV" --out-link target
+          perf stat \
+            --event instructions:u --field-separator , --output target-perf \
+            nix-build "$TARGET_DRV" --out-link target
 
       - name: Compare outpaths against the target branch
         env:
@@ -240,7 +246,9 @@ jobs:
         run: |
           nix-build nixpkgs/untrusted/ci --arg nixpkgs ./nixpkgs/untrusted-pinned -A eval.diff \
             --arg beforeDir ./target \
+            --arg beforePerfFile ./target-perf \
             --arg afterDir ./merged \
+            --arg afterPerfFile ./merged-perf \
             --argstr evalSystem "$MATRIX_SYSTEM" \
             --out-link diff
 

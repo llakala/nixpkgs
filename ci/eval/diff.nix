@@ -8,6 +8,8 @@
   beforeDir,
   afterDir,
   evalSystem,
+  beforePerfFile ? null,
+  afterPerfFile ? null,
 }:
 
 let
@@ -103,6 +105,9 @@ runCommand "diff" { } ''
 
   cp -r --no-preserve=mode ${before} $out/before
   cp -r --no-preserve=mode ${after} $out/after
+  ${if beforePerfFile == null then "" else "cp ${beforePerfFile} $out/perf-before"}
+  ${if afterPerfFile == null then "" else "cp ${afterPerfFile} $out/perf-after"}
+
   # JSON files will be processed above explicitly, so avoid copying over
   # the source files to keep the artifacts smaller.
   find $out/before $out/after -iname '*.json' -delete

@@ -264,6 +264,18 @@ runCommand "compare"
       echo
     } >> $out/step-summary.md
 
+    # compare the number of userspace instructions before and after
+    # this is only passed in CI, so only print it if the files exists
+    if [[ -f ${combined}/before/perf-stats && -f ${combined}/after/perf-stats ]]; then
+      local perf_before=$(cat ${combined}/before/perf-stats | tail -n 1 | cut -d, -f1)
+      local perf_after=$(cat ${combined}/after/perf-stats | tail -n 1 | cut -d, -f1)
+      percentage_diff=$(echo "$perf_before" "$perf_after" | awk '{print ($1-$2)/$1*100}' | xargs printf "%+.2f%%")
+      {
+        echo "Percentage difference in instruction count: $percentage_diff"
+        echo
+      } >> $out/step-summary.md
+    fi
+
     cmp-stats --explain ${combined}/before/stats ${combined}/after/stats >> $out/step-summary.md
 
     jq -r '.[]' "${touchedFilesJson}" > ./touched-files

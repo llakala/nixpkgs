@@ -280,11 +280,13 @@ let
         for d in ${diffDir}/before/*; do
           cp -r "$d"/stats-by-chunk $out/before/stats/$(basename "$d")
         done
+        cp ${diffDir}/perf-before $out/before/perf-stats
 
         mkdir -p $out/after/stats
         for d in ${diffDir}/after/*; do
           cp -r "$d"/stats-by-chunk $out/after/stats/$(basename "$d")
         done
+        cp ${diffDir}/perf-after $out/after/perf-stats
       '';
 
   compare = callPackage ./compare { };

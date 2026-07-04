@@ -10,6 +10,10 @@ from scipy.stats import ttest_rel
 from tabulate import tabulate
 from typing import Final
 
+# These are nondeterministic and vary greatly between runs. Instead, we use perf
+# outside of this script to get a better measurement
+ignored_keys = ["cpuTime", "time"]
+
 
 def flatten_data(json_data: dict) -> dict:
     """
@@ -35,8 +39,7 @@ def flatten_data(json_data: dict) -> dict:
     """
     flat_metrics = {}
     for key, value in json_data.items():
-        # This key is duplicated as `time.cpu`; we keep that copy.
-        if key == "cpuTime":
+        if key in ignored_keys:
             continue
 
         if isinstance(value, (int, float)):
