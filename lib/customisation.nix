@@ -115,7 +115,7 @@ rec {
     injects `override` attribute which can be used to override arguments of
     the function.
 
-    Please refer to  documentation on [`<pkg>.overrideDerivation`](#sec-pkg-overrideDerivation) to learn about `overrideDerivation` and caveats
+    Please refer to documentation on [`<pkg>.overrideDerivation`](#sec-pkg-overrideDerivation) to learn about `overrideDerivation` and caveats
     related to its use.
 
     # Inputs
@@ -150,55 +150,6 @@ rec {
   */
   makeOverridable =
     f:
-    let
-      # Creates a functor with the same arguments as f
-      mirrorArgs = mirrorFunctionArgs f;
-
-      f' =
-        origArgs:
-        let
-          result = f origArgs;
-
-          # Re-call the function but with different arguments
-          overrideArgs = mirrorArgs (
-            /**
-                    Change the arguments with which a certain function is called.
-
-              In some cases, you may find a list of possible attributes to pass in this function's `__functionArgs` attribute, but it will not be complete for an original function like `args@{foo, ...}: ...`, which accepts arbitrary attributes.
-
-              This function was provided by `lib.makeOverridable`.
-            */
-            newArgs: makeOverridable f (origArgs // (if isFunction newArgs then newArgs origArgs else newArgs))
-          );
-        in
-        if isAttrs result then
-          result
-          // {
-            override = overrideArgs;
-            overrideDerivation =
-              fdrv: makeOverridable (mirrorArgs (args: overrideDerivation (f args) fdrv)) origArgs;
-            ${if result ? overrideAttrs then "overrideAttrs" else null} =
-              /**
-                Override the attributes that were passed to `mkDerivation` in order to generate this derivation.
-
-                This function is provided by `lib.makeOverridable`, and indirectly by `callPackage` among others, in order to make the combination of `override` and `overrideAttrs` work.
-                Specifically, it re-adds the `override` attribute to the result of `overrideAttrs`.
-
-                The real implementation of `overrideAttrs` is provided by `stdenv.mkDerivation`.
-              */
-              # NOTE: part of the above documentation had to be duplicated in `mkDerivation`'s `overrideAttrs`.
-              #       design/tech debt issue: https://github.com/NixOS/nixpkgs/issues/273815
-              fdrv: makeOverridable (mirrorArgs (args: (f args).overrideAttrs fdrv)) origArgs;
-          }
-        else if isFunction result then
-          # Transform the result into a functor while propagating its arguments
-          setFunctionArgs result (functionArgs result)
-          // {
-            override = overrideArgs;
-          }
-        else
-          result;
-    in
     # Recover overrider and additional attributes for f
     # When f is a callable attribute set,
     # it may contain its own `f.override` and additional attributes.
@@ -206,14 +157,86 @@ rec {
     if isAttrs f then
       # Preserve additional attributes for f
       f
-      // (mirrorArgs f')
+      // _makeOverridableFunction f
       # Decorate f.override if presented
       // {
         ${if f ? override then "override" else null} = fdrv: makeOverridable (f.override fdrv);
       }
 
     else
-      mirrorArgs f';
+      _makeOverridableFunction f;
+
+  /**
+    Implementation detail of the more generic `lib.customisation.makeOverridable`.
+
+    This is generally not recommended for external usage, as it doesn't work
+    when the provided function is a functor. This is used internally inside
+    `lib.customisation.callPackageWith`, as package definitions are never
+    functors.
+
+    # Inputs
+
+    `f`
+
+    : 1\. Function argument
+
+    # Type
+
+    ```
+    makeOverridable :: (AttrSet -> a) -> AttrSet -> a
+    ```
+  */
+  _makeOverridableFunction =
+    f:
+    let
+      # Creates a functor with the same arguments as f
+      mirrorArgs = mirrorFunctionArgs f;
+    in
+    mirrorArgs (
+      origArgs:
+      let
+        result = f origArgs;
+
+        # Re-call the function but with different arguments
+        overrideArgs = mirrorArgs (
+          /**
+            Change the arguments with which a certain function is called.
+
+            In some cases, you may find a list of possible attributes to pass in this function's `__functionArgs` attribute, but it will not be complete for an original function like `args@{foo, ...}: ...`, which accepts arbitrary attributes.
+
+            This function was provided by `lib.makeOverridable`.
+          */
+          newArgs: _makeOverridableFunction f (origArgs // (if isFunction newArgs then newArgs origArgs else newArgs))
+        );
+      in
+      if isAttrs result then
+        result
+        // {
+          override = overrideArgs;
+          overrideDerivation =
+            fdrv: makeOverridable (mirrorArgs (args: overrideDerivation (f args) fdrv)) origArgs;
+          ${if result ? overrideAttrs then "overrideAttrs" else null} =
+            /**
+              Override the attributes that were passed to `mkDerivation` in order to generate this derivation.
+
+              This function is provided by `lib.makeOverridable`, and indirectly by `callPackage` among others, in order to make the combination of `override` and `overrideAttrs` work.
+              Specifically, it re-adds the `override` attribute to the result of `overrideAttrs`.
+
+              The real implementation of `overrideAttrs` is provided by `stdenv.mkDerivation`.
+            */
+            # NOTE: part of the above documentation had to be duplicated in `mkDerivation`'s `overrideAttrs`.
+            #       design/tech debt issue: https://github.com/NixOS/nixpkgs/issues/273815
+            fdrv: makeOverridable (mirrorArgs (args: (f args).overrideAttrs fdrv)) origArgs;
+        }
+      else if isFunction result then
+        # Transform the result into a functor while propagating its arguments
+        setFunctionArgs result (functionArgs result)
+        // {
+          override = overrideArgs;
+        }
+      else
+        result
+    );
 
   /**
     Call the package function in the file `fn` with the required
@@ -319,7 +342,7 @@ rec {
     in
     # if nonempty, check if the function has defaults for those other args
     if unpassedArgs == { } || all (value: value) (attrValues unpassedArgs) then
-      makeOverridable f allArgs
+      _makeOverridableFunction f allArgs
     else
       # Only show the error for the first missing argument
       # This needs to be an abort so it can't be caught with `builtins.tryEval`,
