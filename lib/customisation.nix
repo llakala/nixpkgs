@@ -31,6 +31,7 @@ let
     deepSeq
     extends
     id
+    warn
     ;
   inherit (lib.strings) levenshtein levenshteinAtMost;
 
@@ -326,6 +327,7 @@ rec {
           loc' = if loc != null then loc.file + ":" + toString loc.line else "<unknown location>";
         in
         "lib.customisation.callPackageWith: Function called without required argument \"${arg}\" at ${loc'}${prettySuggestions (getSuggestions arg)}";
+      inherit (builtins) functionArgs;
     in
     autoArgs: fn: args:
     let
