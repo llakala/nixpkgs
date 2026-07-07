@@ -605,10 +605,8 @@ rec {
     let
       getOutput' = lib.getOutput output;
     in
-    subDir: pkgs:
-    concatStringsSep ":" (
-      concatMap (path: if path != null then [ (getOutput' path + "/" + subDir) ] else [ ]) pkgs
-    );
+    subDir: paths:
+    concatStringsSep ":" (map (path: getOutput' (path + "/" + subDir)) (filter (x: x != null) paths));
 
   /**
     Construct a library search path (such as RPATH) containing the
