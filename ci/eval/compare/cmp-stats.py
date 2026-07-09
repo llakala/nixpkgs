@@ -76,6 +76,11 @@ def load_all_metrics(full_path: Path) -> dict:
     metrics = {}
     if full_path.is_dir():
         assert (full_path / "stats").is_dir()
+        if (full_path / "instructions").is_dir():
+            for system_instructions in (full_path / "instructions").iterdir():
+                assert system_instructions.is_file()
+                with system_instructions.open() as f:
+                    # f.readline()
         for system_dir in (full_path / "stats").iterdir():
             assert system_dir.is_dir()
 
