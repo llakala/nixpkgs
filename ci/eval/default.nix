@@ -159,8 +159,9 @@ let
           ++ lib.optionals countInstructions [ perf ]
         );
         env = {
-          inherit evalSystem chunkSize countInstructions;
+          inherit evalSystem chunkSize;
         };
+        inherit countInstructions;
         __structuredAttrs = true;
         unsafeDiscardReferences.out = true;
       }
