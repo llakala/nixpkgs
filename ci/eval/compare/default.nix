@@ -264,7 +264,7 @@ runCommand "compare"
       echo
     } >> $out/step-summary.md
 
-    cmp-stats --explain ${combined}/before/stats ${combined}/after/stats >> $out/step-summary.md
+    cmp-stats --explain ${combined}/before ${combined}/after >> $out/step-summary.md
 
     jq -r '.[]' "${touchedFilesJson}" > ./touched-files
     readarray -t touchedFiles < ./touched-files

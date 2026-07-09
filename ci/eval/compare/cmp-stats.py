@@ -56,14 +56,14 @@ def flatten_data(json_data: dict) -> dict:
     return flat_metrics
 
 
-def load_all_metrics(path: Path) -> dict:
+def load_all_metrics(full_path: Path) -> dict:
     """
     Loads all stats JSON files in the specified file or directory and extracts metrics.
     These stats JSON files are created by Nix when the `NIX_SHOW_STATS` environment variable is set.
 
-    If the provided path is a directory, it must have the structure $path/$system/$stats,
+    If the provided path is a directory, it must have the structure $path/stats/$system/$file,
     where $path is the provided path, $system is some system from `lib.systems.doubles.*`,
-    and $stats is a stats JSON file.
+    and $file is a stats JSON file.
 
     If the provided path is a file, it is a stats JSON file.
 
@@ -74,8 +74,9 @@ def load_all_metrics(path: Path) -> dict:
         dict: Dictionary with filenames as keys and extracted metrics as values.
     """
     metrics = {}
-    if path.is_dir():
-        for system_dir in path.iterdir():
+    if full_path.is_dir():
+        assert (full_path / "stats").is_dir()
+        for system_dir in (full_path / "stats").iterdir():
             assert system_dir.is_dir()
 
             for chunk_output in system_dir.iterdir():
@@ -84,8 +85,8 @@ def load_all_metrics(path: Path) -> dict:
 
                 metrics[f"{system_dir.name}/${chunk_output.name}"] = flatten_data(data)
     else:
-        with path.open() as f:
-            metrics[path.name] = flatten_data(json.load(f))
+        with full_path.open() as f:
+            metrics[full_path.name] = flatten_data(json.load(f))
 
     return metrics
 
