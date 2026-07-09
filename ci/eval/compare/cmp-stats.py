@@ -153,11 +153,7 @@ class PairwiseTestResults:
                 [
                     # The metric acts as its own footnote name
                     metric_table_name(row["metric"], explain),
-                    # Check for no change and NaN in p_value/t_stat
-                    *[
-                        None if np.isnan(val) or np.allclose(val, 0) else val
-                        for val in row[1:]
-                    ],
+                    *[val for val in row[1:]],
                 ]
                 for _, row in self.updated.iterrows()
             ],
@@ -207,12 +203,6 @@ class Comparison:
     mean_after: float
     mean_diff: float
     mean_pct_change: float
-
-
-@dataclass(frozen=True)
-class ComparisonWithPValue(Comparison):
-    p_value: float
-    t_stat: float
 
 
 def metric_sort_key(name: str) -> str:
@@ -270,13 +260,6 @@ def perform_pairwise_tests(
                 mean_diff=np.mean(diff),
                 mean_pct_change=np.mean(pct_change),
             )
-
-            # If there are enough values to perform a t-test, do so.
-            if len(before_vals) > 1:
-                t_stat, p_val = ttest_rel(after_arr, before_arr)
-                result = ComparisonWithPValue(
-                    **asdict(result), p_value=p_val, t_stat=t_stat
-                )
 
             updated.append(result)
 
