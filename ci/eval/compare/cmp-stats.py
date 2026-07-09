@@ -10,6 +10,10 @@ from scipy.stats import ttest_rel
 from tabulate import tabulate
 from typing import Final
 
+# These keys are nondeterministic. For real-time profiling, we use perf with
+# userspace instructions
+ignored_keys = [ "cpuTime", "cpu", "gc" ]
+
 
 def flatten_data(json_data: dict) -> dict:
     """
@@ -35,8 +39,7 @@ def flatten_data(json_data: dict) -> dict:
     """
     flat_metrics = {}
     for key, value in json_data.items():
-        # This key is duplicated as `time.cpu`; we keep that copy.
-        if key == "cpuTime":
+        if key in ignored_keys:
             continue
 
         if isinstance(value, (int, float)):
@@ -213,16 +216,12 @@ class ComparisonWithPValue(Comparison):
 
 
 def metric_sort_key(name: str) -> str:
-    if name in ("time.cpu", "time.gc", "time.gcFraction"):
+    if name.endswith(("bytes", "Bytes")):
         return (1, name)
-    elif name.startswith("gc"):
-        return (2, name)
-    elif name.endswith(("bytes", "Bytes")):
-        return (3, name)
     elif name.startswith("nr") or name.endswith("number"):
-        return (4, name)
+        return (2, name)
     else:
-        return (5, name)
+        return (3, name)
 
 
 def perform_pairwise_tests(
