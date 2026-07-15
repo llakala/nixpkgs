@@ -14,7 +14,6 @@ let
     elem
     filter
     foldl'
-    functionArgs
     getAttrFromPath
     genericClosure
     head
@@ -707,6 +706,10 @@ let
     key: f: args@{ config, ... }: if isFunction f then applyModuleArgs key f args else f;
 
   applyModuleArgs =
+    let
+       # doesn't support functors, but we choose not to support them for performance reasons
+       inherit (builtins) functionArgs;
+    in
     key: f:
     args@{ config, ... }:
     let
