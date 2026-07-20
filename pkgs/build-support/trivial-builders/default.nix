@@ -19,6 +19,7 @@ let
     isList
     foldl'
     ;
+  hasSlashPrefix = hasPrefix "/";
 in
 
 rec {
@@ -132,7 +133,7 @@ rec {
           ;
         destination =
           assert
-            (destination != "" -> (lib.hasPrefix "/" destination && destination != "/"))
+            (destination != "" -> (hasSlashPrefix destination && destination != "/"))
             || throw ''
               destination must be an absolute path, relative to the derivation's out path,
               got '${destination}' instead.
@@ -550,7 +551,7 @@ rec {
         ...
       }:
       assert
-        (stripPrefix != "" -> (hasPrefix "/" stripPrefix && stripPrefix != "/"))
+        (stripPrefix != "" -> (hasSlashPrefix stripPrefix && stripPrefix != "/"))
         || throw ''
           stripPrefix must be either an empty string (disable stripping behavior), or relative path prefixed with /.
 
