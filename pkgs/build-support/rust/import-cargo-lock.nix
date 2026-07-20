@@ -8,6 +8,12 @@
   cargo,
   jq,
 }:
+let
+  hasRegistryPrefix = lib.hasPrefix "registry+";
+  hasSparsePrefix = lib.hasPrefix "sparse+";
+  removeRegistryPrefix = lib.removePrefix "registry+";
+  hasGitPrefix = lib.hasPrefix "git+";
+in
 
 {
   # Cargo lock file
@@ -79,7 +85,7 @@ let
 
   # Map package name + version to git commit SHA for packages with a git source.
   namesGitShas = builtins.listToAttrs (
-    map nameGitSha (builtins.filter (pkg: lib.hasPrefix "git+" pkg.source) depPackages)
+    map nameGitSha (builtins.filter (pkg: hasGitPrefix pkg.source) depPackages)
   );
 
   nameGitSha =
@@ -156,10 +162,10 @@ let
     pkg:
     let
       gitParts = parseGit pkg.source;
-      registryIndexUrl = lib.removePrefix "registry+" pkg.source;
+      registryIndexUrl = removeRegistryPrefix pkg.source;
     in
     if
-      (lib.hasPrefix "registry+" pkg.source || lib.hasPrefix "sparse+" pkg.source)
+      (hasRegistryPrefix pkg.source || hasSparsePrefix pkg.source)
       && builtins.hasAttr registryIndexUrl registries
     then
       let
