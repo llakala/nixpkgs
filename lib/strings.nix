@@ -808,7 +808,7 @@ rec {
   hasPrefix =
     pref:
     let
-      lenPrefix = stringLength pref;
+      getGivenPrefix = substring 0 (stringLength pref);
     in
     if isPath pref then
       # Before 23.05, paths would be copied to the store before converting them
@@ -817,7 +817,8 @@ rec {
         lib.strings.hasPrefix: The first argument (${toString pref}) is a path value, but only strings are supported.
             You might want to use `lib.path.hasPrefix` instead, which correctly supports paths.''
     else
-      str: substring 0 lenPrefix str == pref;
+    builtins.trace "hasPrefix called"
+      (str: getGivenPrefix str == pref);
 
   /**
     Determine whether a string has given suffix.
@@ -862,11 +863,12 @@ rec {
         There is almost certainly a bug in the calling code, since this function always returns `false` in such a case.
         This function also copies the path to the Nix store, which may not be what you want.''
     else
-      content:
+    builtins.trace "hasSuffix called"
+      (content:
       let
         lenContent = stringLength content;
       in
-      lenContent >= lenSuffix && substring (lenContent - lenSuffix) lenContent content == suffix;
+      lenContent >= lenSuffix && substring (lenContent - lenSuffix) lenContent content == suffix);
 
   /**
     Determine whether a string contains the given infix
@@ -905,7 +907,7 @@ rec {
   hasInfix =
     infix:
     let
-      escapedInfix = escapeRegex infix;
+      matchGivenInfix = builtins.match ".*${escapeRegex infix}.*";
     in
     if isPath infix then
       # Before 23.05, paths would be copied to the store before converting them
@@ -915,7 +917,8 @@ rec {
             There is almost certainly a bug in the calling code, since this function always returns `false` in such a case.
             This function also copies the path to the Nix store, which may not be what you want.''
     else
-      content: builtins.match ".*${escapedInfix}.*" "${content}" != null;
+    builtins.trace "hasInfix called"
+      (content: matchGivenInfix "${content}" != null);
 
   /**
     Convert a string `s` to a list of characters (i.e. singleton strings).
@@ -1876,12 +1879,13 @@ rec {
             There is almost certainly a bug in the calling code, since this function never removes any prefix in such a case.
             This function also copies the path to the Nix store, which may not be what you want.''
     else
-      str:
+      builtins.trace "removePrefix called"
+      (str:
       if substring 0 preLen str == prefix then
         # -1 will take the string until the end
         substring preLen (-1) str
       else
-        str;
+        str);
 
   /**
     Returns a string without the specified suffix, if the suffix matches.
@@ -1926,14 +1930,15 @@ rec {
             There is almost certainly a bug in the calling code, since this function never removes any suffix in such a case.
             This function also copies the path to the Nix store, which may not be what you want.''
     else
-      str:
+      builtins.trace "removeSuffix called"
+      (str:
       let
         sLen = stringLength str;
       in
       if sufLen <= sLen && suffix == substring (sLen - sufLen) sufLen str then
-        substring 0 (sLen - sufLen) str
+      substring 0 (sLen - sufLen) str
       else
-        str;
+      str);
 
   /**
     Returns true if string `v1` denotes a version older than `v2`.
