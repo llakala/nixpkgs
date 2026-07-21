@@ -22,8 +22,8 @@ let
   # Here defines fetchFromGitHub arguments that determines useFetchGit,
   # The attribute value is their default values.
   # As fetchFromGitHub prefers fetchzip for hash stability,
-  # `defaultFetchGitArgs` attributes should lead to `useFetchGit = false`.
-  useFetchGitArgsDefault = {
+  # `defaultFetchZipArgs` attributes should lead to `useFetchGit = false`.
+  nonNullableFetchGitArgs = {
     deepClone = false;
     fetchSubmodules = false; # This differs from fetchgit's default
     fetchLFS = false;
@@ -33,14 +33,14 @@ let
     rootDir = "";
     sparseCheckout = null;
   };
-  useFetchGitArgsDefaultNullable = {
+  nullableFetchGitArgs = {
     leaveDotGit = false;
     sparseCheckout = [ ];
   };
 
-  useFetchGitArgsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
+  defaultFetchZipArgs = nonNullableFetchGitArgs // nullableFetchGitArgs;
 
-  overrideFetchGitArgs = overrideExisting (removeAttrs useFetchGitArgsDefault excludedFetchGitNames);
+  overrideFetchGitArgs = overrideExisting (removeAttrs nonNullableFetchGitArgs excludedFetchGitNames);
 
   sourceNameIsSource = config.fetchedSourceNameDefault == "source";
 
@@ -60,9 +60,9 @@ let
   excludedFetchGitNames = [ "forceFetchGit" ];
 
   excludePassthruFetchGitNames = excludedPassthruNames ++ excludedFetchGitNames;
-  excludedPassthruFetchZipNames = excludedPassthruNames ++ attrNames useFetchGitArgsDefault;
+  excludedPassthruFetchZipNames = excludedPassthruNames ++ attrNames nonNullableFetchGitArgs;
 
-  faUseFetchGit = mapAttrs (_: _: true) useFetchGitArgsDefault;
+  faUseFetchGit = mapAttrs (_: _: true) nonNullableFetchGitArgs;
 
   adjustFunctionArgs = f: setFunctionArgs f (faUseFetchGit // functionArgs f);
 
@@ -95,14 +95,12 @@ decorate (
   );
 
   let
-    useFetchGit =
-      mapAttrs (
-        name: nonNullDefault:
-        if args ? ${name} && (useFetchGitArgsDefaultNullable ? ${name} -> args.${name} != null) then
-          args.${name}
-        else
-          nonNullDefault
-      ) useFetchGitArgsDefaultNonNull != useFetchGitArgsDefaultNonNull;
+    useFetchGit = lib.any (
+      arg:
+      defaultFetchZipArgs ? ${arg} # the arg is important for choosing between fetchzip and fetchgit
+      && args.${arg} != defaultFetchZipArgs.${arg} # the arg is different from the fetchzip value
+      && (!nullableFetchGitArgs ? ${arg} || args.${arg} != null) # the arg is non-nullable or non-null
+    ) (lib.attrNames args);
 
     useFetchGitArgsWDPassing = overrideFetchGitArgs args;
 
