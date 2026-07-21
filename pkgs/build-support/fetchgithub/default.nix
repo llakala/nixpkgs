@@ -8,8 +8,8 @@ let
   # Here defines fetchFromGitHub arguments that determines useFetchGit,
   # The attribute value is their default values.
   # As fetchFromGitHub prefers fetchzip for hash stability,
-  # `defaultFetchGitArgs` attributes should lead to `useFetchGit = false`.
-  useFetchGitArgsDefault = {
+  # `defaultFetchZipArgs` should lead to `useFetchGit = false`.
+  nonNullableFetchGitArgs = {
     deepClone = false;
     fetchSubmodules = false; # This differs from fetchgit's default
     fetchLFS = false;
@@ -19,12 +19,12 @@ let
     rootDir = "";
     sparseCheckout = null;
   };
-  useFetchGitArgsDefaultNullable = {
+  nullableFetchGitArgs = {
     leaveDotGit = false;
     sparseCheckout = [ ];
   };
 
-  useFetchGitargsDefaultNonNull = useFetchGitArgsDefault // useFetchGitArgsDefaultNullable;
+  defaultFetchZipArgs = nonNullableFetchGitArgs // nullableFetchGitArgs;
 
   # useFetchGitArgsWD to exclude from automatic passing.
   # Other useFetchGitArgsWD will pass down to fetchgit.
@@ -32,7 +32,7 @@ let
     "forceFetchGit"
   ];
 
-  faUseFetchGit = lib.mapAttrs (_: _: true) useFetchGitArgsDefault;
+  faUseFetchGit = lib.mapAttrs (_: _: true) nonNullableFetchGitArgs;
 
   adjustFunctionArgs = f: lib.setFunctionArgs f (faUseFetchGit // lib.functionArgs f);
 
@@ -65,16 +65,15 @@ decorate (
   );
 
   let
-    useFetchGit =
-      lib.mapAttrs (
-        name: nonNullDefault:
-        if args ? ${name} && (useFetchGitArgsDefaultNullable ? ${name} -> args.${name} != null) then
-          args.${name}
-        else
-          nonNullDefault
-      ) useFetchGitargsDefaultNonNull != useFetchGitargsDefaultNonNull;
+    useFetchGit = lib.any (
+      arg:
+      defaultFetchZipArgs ? ${arg} # the arg is important for choosing between fetchzip and fetchgit
+      && args.${arg} != defaultFetchZipArgs.${arg} # the arg is different from the fetchzip value
+      && nonNullableFetchGitArgs ? ${arg} # the arg is nullable
+      && args.${arg} != null # the arg is non-null while being nullable
+    ) (lib.attrNames args);
 
-    useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs useFetchGitArgsDefault excludeUseFetchGitArgNames) args;
+    useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs nonNullableFetchGitArgs excludeUseFetchGitArgNames) args;
 
     position = (
       if args.meta.description or null != null then
@@ -121,7 +120,12 @@ decorate (
         "githubBase"
         "varPrefix"
       ]
-      ++ (if useFetchGit then excludeUseFetchGitArgNames else lib.attrNames faUseFetchGit)
+      ++ (
+        if useFetchGit then
+          builtins.trace "using fetchGit" excludeUseFetchGitArgNames
+        else
+          builtins.trace "not using fetchGit" lib.attrNames faUseFetchGit
+      )
     );
     varBase = "NIX${lib.optionalString (varPrefix != null) "_${varPrefix}"}_GITHUB_PRIVATE_";
     # We prefer fetchzip in cases we don't need submodules as the hash
