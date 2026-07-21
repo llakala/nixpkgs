@@ -65,17 +65,13 @@ decorate (
   );
 
   let
-    useFetchGit =
-      lib.mapAttrs (
-        name: nonNullDefault:
-        # if the name is nullable and the value is null, fallback to
-        # nonNullDefault. if the name isn't nullable, perform the normal
-        # equality check
-        if args ? ${name} && (if !useFetchGitArgsDefaultNullable ? ${name} then true else args.${name} != null) then
-          args.${name}
-        else
-          nonNullDefault
-      ) useFetchGitargsDefaultNonNull != useFetchGitargsDefaultNonNull;
+    useFetchGit = lib.any (
+      arg:
+      useFetchGitargsDefaultNonNull ? ${arg} # the arg is one of the key values set in fetchzip
+      && args.${arg} != useFetchGitargsDefaultNonNull.${arg} # the arg is different from the fetchzip value
+      && useFetchGitArgsDefaultNullable ? ${arg} # the arg is nullable
+      && args.${arg} != null # the arg is non-null while being nullable
+    ) (lib.attrNames args);
 
     useFetchGitArgsWDPassing = lib.overrideExisting (removeAttrs useFetchGitArgsDefault excludeUseFetchGitArgNames) args;
 
