@@ -52,6 +52,38 @@ rec {
     ) baseDrv;
 
   writeTextFile =
+    let
+      builders = {
+        mkDirExecutable = builtins.toFile ''
+          target=''${out}''${destination}
+          mkdir -p ''${out}''${destinationDir}
+          cp ''${textPath} ''${target}
+          chmod 555 ''${target}
+        '';
+        mkDirNonExecutable = builtins.toFile ''
+          target=''${out}''${destination}
+          mkdir -p ''${out}''${destinationDir}
+          cp ''${textPath} ''${target}
+        '';
+        nonMkDirExecutable = builtins.toFile ''
+          target=''${out}''${destination}
+          cp ''${textPath} ''${target}
+          chmod 555 ''${target}
+        '';
+        nonMkDirNonExecutable = builtins.toFile ''
+          target=''${out}''${destination}
+          cp ''${textPath} ''${target}
+        '';
+      };
+      getWriteTextFileBuilder =
+        mkDir: executable:
+        if mkDir then
+          if executable then builders.mkDirExecutable else builders.mkDirNonExecutable
+        else if executable then
+          builders.nonMkDirExecutable
+        else
+          "";
+    in
     {
       name, # the name of the derivation
       text,
@@ -67,20 +99,7 @@ rec {
         "--verbose"
         "--strict"
         "--file"
-        (builtins.toFile "write-text-file.kaem" (
-          ''
-            target=''${out}''${destination}
-          ''
-          + lib.optionalString (dirOf destination == ".") ''
-            mkdir -p ''${out}''${destinationDir}
-          ''
-          + ''
-            cp ''${textPath} ''${target}
-          ''
-          + lib.optionalString executable ''
-            chmod 555 ''${target}
-          ''
-        ))
+        (getWriteTextFileBuilder (dirOf destination == ".") executable)
       ];
 
       PATH = lib.makeBinPath [ mescc-tools-extra ];
