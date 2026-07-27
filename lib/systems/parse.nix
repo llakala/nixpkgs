@@ -112,7 +112,8 @@ rec {
       in
       v:
       verifyBitWidth v.bits
-      && (if 8 < v.bits then verifySignificantByte v.significantByte else !(v ? significantByte));
+      # bitwidth is 8 at minimum, so != is the same as >
+      && (if v.bits != 8 then verifySignificantByte v.significantByte else !(v ? significantByte));
   };
 
   types.cpuType = enum (attrValues cpuTypes);
