@@ -129,7 +129,7 @@ let
         # Prefer to parse `config` as it is strictly more informative.
         parsed = parse.mkSystemFromString (args.config or allArgs.system);
         # This can be losslessly-extracted from `parsed` iff parsing succeeds.
-        system = parse.doubleFromSystem final.parsed;
+        system = final.parsed.system;
         # TODO: This currently can't be losslessly-extracted from `parsed`, for example
         # because of -mingw32.
         config = parse.tripleFromSystem final.parsed;

@@ -19,6 +19,7 @@
 let
   inherit (import ../meta-types.nix { inherit lib; })
     enum
+    string
     ;
   inherit (lib)
     all
@@ -766,14 +767,16 @@ rec {
         verifyVendor = types.vendor.verify;
         verifyKernel = types.kernel.verify;
         verifyAbi = types.abi.verify;
+        verifySystem = string.verify;
       in
       {
         cpu,
         vendor,
         kernel,
         abi,
+        system
       }:
-      verifyCpu cpu && verifyVendor vendor && verifyKernel kernel && verifyAbi abi;
+      verifyCpu cpu && verifyVendor vendor && verifyKernel kernel && verifyAbi abi && verifySystem system;
   };
 
   isSystem = v: v._type or null == "system";
@@ -929,6 +932,7 @@ rec {
     }@args:
     let
       parsed = {
+        system = doubleFromSystem parsed;
         cpu = getCpu args.cpu;
         vendor =
           if args ? vendor then
