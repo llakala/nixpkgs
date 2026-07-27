@@ -7,6 +7,7 @@ let
     attrNames
     attrValues
     concatMap
+    elem
     filter
     flip
     hasPrefix
@@ -19,6 +20,7 @@ let
 
   inherit (lib.strings) toJSON;
 
+  inherit (lib.systems) doubles;
   inherit (lib.systems.parse)
     kernels
     kernelFamilies
@@ -74,7 +76,7 @@ rec {
     # product.
 
     isi686 = {
-      cpu = cpuTypes.i686;
+      doubles = doubles.i686;
     };
     isx86_32 = {
       cpu = {
@@ -83,15 +85,10 @@ rec {
       };
     };
     isx86_64 = {
-      cpu = {
-        family = "x86";
-        bits = 64;
-      };
+      doubles = doubles.x86_64;
     };
     isPower = {
-      cpu = {
-        family = "power";
-      };
+      doubles = doubles.power;
     };
     isPower64 = {
       cpu = {
@@ -124,9 +121,7 @@ rec {
       }
     ];
     isx86 = {
-      cpu = {
-        family = "x86";
-      };
+      doubles = doubles.x86;
     };
     isAarch32 = {
       cpu = {
@@ -141,25 +136,16 @@ rec {
       }
     ) (filter (cpu: cpu ? arch && hasArmv7Prefix cpu.arch) (attrValues cpuTypes));
     isAarch64 = {
-      cpu = {
-        family = "arm";
-        bits = 64;
-      };
+      doubles = doubles.aarch64;
     };
     isAarch = {
-      cpu = {
-        family = "arm";
-      };
+      doubles = doubles.aarch;
     };
     isMicroBlaze = {
-      cpu = {
-        family = "microblaze";
-      };
+      doubles = doubles.microblaze;
     };
     isMips = {
-      cpu = {
-        family = "mips";
-      };
+      doubles = doubles.mips;
     };
     isMips32 = {
       cpu = {
@@ -197,9 +183,7 @@ rec {
       };
     };
     isRiscV = {
-      cpu = {
-        family = "riscv";
-      };
+      doubles = doubles.riscv;
     };
     isRiscV32 = {
       cpu = {
@@ -208,10 +192,7 @@ rec {
       };
     };
     isRiscV64 = {
-      cpu = {
-        family = "riscv";
-        bits = 64;
-      };
+      doubles = doubles.riscv64;
     };
     isRx = {
       cpu = {
@@ -240,9 +221,7 @@ rec {
       };
     };
     isVc4 = {
-      cpu = {
-        family = "vc4";
-      };
+      doubles = doubles.vc4;
     };
     isAvr = {
       cpu = {
@@ -260,9 +239,7 @@ rec {
       };
     };
     isM68k = {
-      cpu = {
-        family = "m68k";
-      };
+      doubles = doubles.m68k;
     };
     isArc = {
       cpu = {
@@ -270,26 +247,16 @@ rec {
       };
     };
     isSh4 = {
-      cpu = {
-        family = "sh";
-      };
+      doubles = doubles.sh4;
     };
     isS390 = {
-      cpu = {
-        family = "s390";
-      };
+      doubles = doubles.s390;
     };
     isS390x = {
-      cpu = {
-        family = "s390";
-        bits = 64;
-      };
+      doubles = doubles.s390x;
     };
     isLoongArch64 = {
-      cpu = {
-        family = "loongarch";
-        bits = 64;
-      };
+      doubles = doubles.loongarch64;
     };
     isJavaScript = {
       cpu = cpuTypes.javascript;
@@ -342,9 +309,7 @@ rec {
       };
     };
     isDarwin = {
-      kernel = {
-        families = { inherit (kernelFamilies) darwin; };
-      };
+      doubles = doubles.darwin;
     };
     isUnix = [
       isBSD
@@ -362,27 +327,25 @@ rec {
       kernel = kernels.ios;
     };
     isLinux = {
-      kernel = kernels.linux;
+      doubles = doubles.linux;
     };
     isSunOS = {
       kernel = kernels.solaris;
     };
     isFreeBSD = {
-      kernel = {
-        name = "freebsd";
-      };
+      doubles = doubles.freebsd;
     };
     isNetBSD = {
-      kernel = kernels.netbsd;
+      doubles = doubles.netbsd;
     };
     isOpenBSD = {
-      kernel = kernels.openbsd;
+      doubles = doubles.openbsd;
     };
     isWindows = {
-      kernel = kernels.windows;
+      doubles = doubles.windows;
     };
     isCygwin = {
-      kernel = kernels.cygwin;
+      doubles = doubles.cygwin;
     };
     isMinGW = {
       kernel = kernels.windows;
@@ -396,7 +359,7 @@ rec {
       kernel = kernels.wasi;
     };
     isRedox = {
-      kernel = kernels.redox;
+      doubles = doubles.redox;
     };
     isGhcjs = {
       kernel = kernels.ghcjs;
@@ -524,28 +487,29 @@ rec {
       ) pat2
     ) pat1;
 
-  matchAnyPattern =
+  # same as matchAttrsUnchecked definition at the top of the file, but:
+  # - pattern names are cached and reused for multiple attrset calls
+  # - avoid running isAttrs since all patterns are nested attrsets
+  matchPattern =
+    pattern:
     let
-      # same as matchAttrsUnchecked definition at the top of the file, but:
-      # - pattern names are cached and reused for multiple attrset calls
-      # - avoid running isAttrs since all patterns are nested attrsets
-      matchPattern =
-        pattern:
-        let
-          names = attrNames pattern;
-        in
-        attrs:
-        all (
-          attr:
-          attrs ? ${attr}
-          && (
-            let
-              lhs = pattern.${attr};
-              rhs = attrs.${attr};
-            in
-            lhs == rhs || matchAttrsUnchecked lhs rhs
-          )
-        ) names;
+      names = attrNames pattern;
+    in
+    if pattern ? doubles then
+      attrs: elem attrs.system pattern.doubles
+    else
+      attrs:
+      all (
+        attr:
+        attrs ? ${attr}
+        && (
+          let
+            lhs = pattern.${attr};
+            rhs = attrs.${attr};
+          in
+          lhs == rhs || matchAttrsUnchecked lhs rhs
+        )
+      ) names;
 
     in
     pattern:
