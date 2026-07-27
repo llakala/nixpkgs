@@ -7,13 +7,12 @@
 
 let
   inherit (lib)
-    matchAttrs
     any
-    all
     isDerivation
     getBin
     ;
   inherit (lib.attrsets) mapAttrs' filterAttrs;
+  inherit (lib.systems.inspect) matchPattern;
   inherit (builtins)
     isString
     match
@@ -326,7 +325,7 @@ rec {
       if isString elem then
         platform ? system && elem == platform.system
       else
-        matchAttrs (
+        matchPattern (
           # Normalize platform attrset.
           if elem ? parsed then elem else { parsed = elem; }
         ) platform

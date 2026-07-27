@@ -524,30 +524,28 @@ rec {
       ) pat2
     ) pat1;
 
-  matchAnyPattern =
+  # same as matchAttrsUnchecked definition at the top of the file, but:
+  # - pattern names are cached and reused for multiple attrset calls
+  # - avoid running isAttrs since all patterns are nested attrsets
+  matchPattern =
+    pattern:
     let
-      # same as matchAttrsUnchecked definition at the top of the file, but:
-      # - pattern names are cached and reused for multiple attrset calls
-      # - avoid running isAttrs since all patterns are nested attrsets
-      matchPattern =
-        pattern:
-        let
-          names = attrNames pattern;
-        in
-        attrs:
-        all (
-          attr:
-          attrs ? ${attr}
-          && (
-            let
-              lhs = pattern.${attr};
-              rhs = attrs.${attr};
-            in
-            lhs == rhs || matchAttrsUnchecked lhs rhs
-          )
-        ) names;
-
+      names = attrNames pattern;
     in
+    attrs:
+    all (
+      attr:
+      attrs ? ${attr}
+      && (
+        let
+          lhs = pattern.${attr};
+          rhs = attrs.${attr};
+        in
+        lhs == rhs || matchAttrsUnchecked lhs rhs
+      )
+    ) names;
+
+  matchAnyPattern =
     pattern:
     if isList pattern then
       let
