@@ -8,6 +8,7 @@
 }:
 
 let
+  withNormalizedHash = lib.fetchers.withNormalizedHash { };
   urlToName =
     {
       url,
@@ -54,7 +55,7 @@ lib.makeOverridable (
 
     extendDrvArgs =
       finalAttrs:
-      lib.fetchers.withNormalizedHash { } (
+       withNormalizedHash (
         # NOTE Please document parameter additions or changes in
         #   ../../../doc/build-helpers/fetchers.chapter.md
         {
