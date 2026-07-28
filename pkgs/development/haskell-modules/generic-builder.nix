@@ -184,6 +184,8 @@ let
       continue
     fi
   '';
+  normalGhcDb = buildPkgDb ghc "$packageConfDir";
+  nativeGhcDb = buildPkgDb nativeGhc "$setupPackageConfDir";
 
   # This is a script suitable for --test-wrapper of Setup.hs' test command
   # (https://cabal.readthedocs.io/en/3.12/setup-commands.html#cmdoption-runhaskell-Setup.hs-test-test-wrapper).
@@ -288,6 +290,9 @@ let
     # To match LANG for e.g. haddock
     LOCALE_ARCHIVE = "${buildPackages.glibcLocales}/lib/locale/locale-archive";
   };
+
+  ghcAtLeast901 = versionAtLeast ghc.version "9.0.1";
+  ghcAtLeast93 = versionAtLeast ghc.version "9.3";
 in
 {
   pname,
@@ -358,7 +363,7 @@ in
   mainProgram ? null,
   doCoverage ? false,
   doHaddock ? doHaddockDefault,
-  doHaddockInterfaces ? doHaddock && versionAtLeast ghc.version "9.0.1",
+  doHaddockInterfaces ? doHaddock && ghcAtLeast901,
   passthru ? { },
   pkg-configDepends ? [ ],
   libraryPkgconfigDepends ? [ ],
@@ -446,7 +451,7 @@ in
   # GHC >= 9.3 by default. This option allows overriding this behavior manually
   # if mismatching Cabal and GHC versions are used.
   # See also <https://github.com/haskell/cabal/issues/8455>.
-  __propagatePkgConfigDepends ? versionAtLeast ghc.version "9.3",
+  __propagatePkgConfigDepends ? ghcAtLeast93,
   # Propagation can easily lead to the argv limit being exceeded in linker or C
   # compiler invocations. To work around this we can only propagate derivations
   # that are known to provide pkg-config modules, as indicated by the presence
@@ -761,14 +766,14 @@ fix (
       # pkgs* arrays defined in stdenv/setup.hs
       + ''
         for p in "''${pkgsBuildBuild[@]}" "''${pkgsBuildHost[@]}" "''${pkgsBuildTarget[@]}"; do
-          ${buildPkgDb nativeGhc "$setupPackageConfDir"}
+          ${nativeGhcDb}
         done
         ${nativeGhcCommand}-pkg --package-db="$setupPackageConfDir" recache
       ''
       # For normal components
       + ''
         for p in "''${pkgsHostHost[@]}" "''${pkgsHostTarget[@]}"; do
-          ${buildPkgDb ghc "$packageConfDir"}
+          ${normalGhcDb}
           if [ -d "$p/include" ]; then
             appendToVar configureFlags "--extra-include-dirs=$p/include"
           fi
