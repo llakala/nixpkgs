@@ -460,9 +460,8 @@ let
   #
   # Transform a URL (or path, or string) into a clean package name.
   urlToName =
-    url:
     let
-      base = baseNameOf (removeSlashSuffix (last (splitString ":" (toString url))));
+      splitOnColon = split ":";
       # chop away one git or archive-related extension
       removeExt =
         name:
@@ -478,7 +477,7 @@ let
         in
         if stringLength v < stringLength x then shrink f v else x;
     in
-    shrink removeExt base;
+    url: shrink removeExt (baseNameOf (removeSlashSuffix (last (splitOnColon (toString url)))));
 
   # shortRev : (String | Integer) -> String
   #
