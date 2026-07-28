@@ -209,10 +209,38 @@ let
 
     exec "$@"
   '';
+
+  dontStripDefault = stdenv.hostPlatform.isGhcjs;
+
+  enableLibraryProfilingDefault = !stdenv.hostPlatform.isGhcjs;
+
+  profilingDetailDefault = "exported-functions";
+
+  enableSharedLibrariesDefault =
+    !stdenv.hostPlatform.isStatic
+    && (ghc.enableShared or false)
+    && !stdenv.hostPlatform.useAndroidPrebuilt; # TODO: figure out why /build leaks into RPATH
+
+  enableDeadCodeEliminationDefault = (!stdenv.hostPlatform.isDarwin); # TODO: use -dead_strip for darwin
+
+  enbleStaticLibrariesDefault =
+    !(stdenv.hostPlatform.isWindows || stdenv.hostPlatform.isWasm || stdenv.hostPlatform.isGhcjs);
+
+  enableHsc2hsViaAsmDefault = stdenv.hostPlatform.isWindows;
+
+  defaultPlatforms = lib.platforms.all;
+  defaultBadPlatforms = lib.platforms.none;
+
+  doHaddockDefault = !(ghc.isHaLVM or false) && (ghc.hasHaddock or true);
+
+  enableObjectDeterminismDefault = versionAtLeast ghc.version "9.12";
+
+  enableExternalInterpreterDefault =
+    isCross && crossSupport.canProxyTH && crossSupport.needsExternalInterpreterSetup;
 in
 {
   pname,
-  dontStrip ? stdenv.hostPlatform.isGhcjs,
+  dontStrip ? dontStripDefault,
   version,
   revision ? null,
   sha256 ? null,
@@ -245,20 +273,16 @@ in
   doHaddockQuickjump ? doHoogle,
   doInstallIntermediates ? false,
   editedCabalFile ? null,
-  enableLibraryProfiling ? !stdenv.hostPlatform.isGhcjs,
+  enableLibraryProfiling ? enableLibraryProfilingDefault,
   enableExecutableProfiling ? false,
-  profilingDetail ? "exported-functions",
+  profilingDetail ? profilingDetailDefault,
   # TODO enable shared libs for cross-compiling
   enableSharedExecutables ? false,
-  enableSharedLibraries ?
-    !stdenv.hostPlatform.isStatic
-    && (ghc.enableShared or false)
-    && !stdenv.hostPlatform.useAndroidPrebuilt, # TODO: figure out why /build leaks into RPATH
-  enableDeadCodeElimination ? (!stdenv.hostPlatform.isDarwin), # TODO: use -dead_strip for darwin
+  enableSharedLibraries ? enableSharedLibrariesDefault,
+  enableDeadCodeElimination ? enableDeadCodeEliminationDefault,
   # Disabling this for JS prevents this crash: https://gitlab.haskell.org/ghc/ghc/-/issues/23235
-  enableStaticLibraries ?
-    !(stdenv.hostPlatform.isWindows || stdenv.hostPlatform.isWasm || stdenv.hostPlatform.isGhcjs),
-  enableHsc2hsViaAsm ? stdenv.hostPlatform.isWindows,
+  enableStaticLibraries ? enbleStaticLibrariesDefault,
+  enableHsc2hsViaAsm ? enableHsc2hsViaAsmDefault,
   extraLibraries ? [ ],
   librarySystemDepends ? [ ],
   executableSystemDepends ? [ ],
@@ -268,8 +292,8 @@ in
   libraryFrameworkDepends ? [ ],
   executableFrameworkDepends ? [ ],
   homepage ? "https://hackage.haskell.org/package/${pname}",
-  platforms ? lib.platforms.all, # GHC can cross-compile
-  badPlatforms ? lib.platforms.none,
+  platforms ? defaultPlatforms, # GHC can cross-compile
+  badPlatforms ? defaultBadPlatforms,
   hydraPlatforms ? null,
   hyperlinkSource ? true,
   isExecutable ? false,
@@ -282,7 +306,7 @@ in
   changelog ? null,
   mainProgram ? null,
   doCoverage ? false,
-  doHaddock ? !(ghc.isHaLVM or false) && (ghc.hasHaddock or true),
+  doHaddock ? doHaddockDefault,
   doHaddockInterfaces ? doHaddock && versionAtLeast ghc.version "9.0.1",
   passthru ? { },
   pkg-configDepends ? [ ],
@@ -329,7 +353,7 @@ in
   coreSetup ? false, # Use only core packages to build Setup.hs.
   useCpphs ? false,
   hardeningDisable ? null,
-  enableObjectDeterminism ? versionAtLeast ghc.version "9.12",
+  enableObjectDeterminism ? enableObjectDeterminismDefault,
   enableSeparateBinOutput ? false,
   enableSeparateDataOutput ? false,
   enableSeparateDocOutput ? doHaddock,
@@ -378,8 +402,7 @@ in
   # of `meta.pkgConfigModules`. This option defaults to false for now, since
   # this metadata is far from complete in nixpkgs.
   __onlyPropagateKnownPkgConfigModules ? false,
-  enableExternalInterpreter ?
-    isCross && crossSupport.canProxyTH && crossSupport.needsExternalInterpreterSetup,
+  enableExternalInterpreter ? enableExternalInterpreterDefault,
   __darwinAllowLocalNetworking ? false,
 }@args:
 
