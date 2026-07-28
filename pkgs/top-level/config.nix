@@ -102,7 +102,7 @@ let
           "full"
         ]
       );
-      default = "source";
+      default = "versioned";
       description = ''
         This controls the default derivation `name` attribute set by the
         `fetch*` (`fetchzip`, `fetchFromGitHub`, etc) functions.
