@@ -484,16 +484,20 @@ let
   #
   # Given a package revision (like "refs/tags/v12.0"), produce a short revision ("12.0").
   shortRev =
+    let
+      matchHash = match "[a-f0-9]+";
+      matchVersion = match "([A-Za-z]+[-_. ]?)*(v)?([0-9.]+.*)";
+      getRevision = substring 0 7;
+    in
     rev:
     let
       baseRev = baseNameOf (toString rev);
-      matchHash = match "[a-f0-9]+" baseRev;
-      matchVer = match "([A-Za-z]+[-_. ]?)*(v)?([0-9.]+.*)" baseRev;
+      matchedVersion = matchVersion baseRev;
     in
-    if matchHash != null then
-      substring 0 7 baseRev
-    else if matchVer != null then
-      last matchVer
+    if matchHash baseRev != null then
+      getRevision baseRev
+    else if matchedVersion != null then
+      elemAt matchedVersion 2
     else
       baseRev;
 
