@@ -235,8 +235,59 @@ let
 
   enableObjectDeterminismDefault = versionAtLeast ghc.version "9.12";
 
+  defaultMaxBuildCoresString = "16";
+
   enableExternalInterpreterDefault =
     isCross && crossSupport.canProxyTH && crossSupport.needsExternalInterpreterSetup;
+  defaultCrossCobalFlags = [
+    "--with-ghc=${ghcCommand}"
+    "--with-ghc-pkg=${ghc.targetPrefix}ghc-pkg"
+    "--with-gcc=${cc}"
+  ]
+  ++ optionals stdenv.hasCC [
+    "--with-ld=${stdenv.cc.bintools.targetPrefix}ld"
+    "--with-ar=${stdenv.cc.bintools.targetPrefix}ar"
+    # use the one that comes with the cross compiler.
+    "--with-hsc2hs=${ghc.targetPrefix}hsc2hs"
+    "--with-strip=${stdenv.cc.bintools.targetPrefix}strip"
+  ];
+  enableExternalInterpreterFlags = (
+    map (opt: "--ghc-option=${opt}") (
+      [
+        "-fexternal-interpreter"
+        "-pgmi"
+        crossSupport.iservWrapper
+      ]
+      ++ optionals stdenv.hostPlatform.isWindows [
+        "-L${windows.pthreads}/bin"
+        "-L${windows.pthreads}/lib"
+      ]
+    )
+  );
+  # https://github.com/haskell/cabal/issues/2398
+  coreSetupCompileFlagsStr = "-threaded";
+  nonCoreSetupCompileFlagsStr = "-package-db=$setupPackageConfDir" + " " + coreSetupCompileFlagsStr;
+
+  depsBuildBuild = [
+    nativeGhc
+  ]
+  # CC_FOR_BUILD may be necessary if we have no C preprocessor for the host
+  # platform. See crossCabalFlags above for more details.
+  ++ optionals (!stdenv.hasCC) [ buildPackages.stdenv.cc ];
+
+  defaultNativeBuildInputs = [
+    ghc
+    removeReferencesTo
+  ];
+
+  defaultEnv = {
+
+    LANG = "en_US.UTF-8"; # GHC needs the locale configured during the Haddock phase.
+  }
+  // optionalAttrs (stdenv.buildPlatform.libc == "glibc") {
+    # To match LANG for e.g. haddock
+    LOCALE_ARCHIVE = "${buildPackages.glibcLocales}/lib/locale/locale-archive";
+  };
 in
 {
   pname,
@@ -362,7 +413,7 @@ in
   # same package in the (recursive) dependencies of the package being
   # built. Will delay failures, if any, to compile time.
   allowInconsistentDependencies ? false,
-  maxBuildCores ? 16, # more cores usually don't improve performance: https://ghc.haskell.org/trac/ghc/ticket/9221
+  maxBuildCores ? null, # more cores usually don't improve performance: https://ghc.haskell.org/trac/ghc/ticket/9221
   # If set to true, this builds a pre-linked .o file for this Haskell library.
   # This can make it slightly faster to load this library into GHCi, but takes
   # extra disk space and compile time.
@@ -429,37 +480,15 @@ let
     name = "${pname}-${version}-r${revision}.cabal";
   };
 
-  crossCabalFlags = [
-    "--with-ghc=${ghcCommand}"
-    "--with-ghc-pkg=${ghc.targetPrefix}ghc-pkg"
-    "--with-gcc=${cc}"
-  ]
-  ++ optionals stdenv.hasCC [
-    "--with-ld=${stdenv.cc.bintools.targetPrefix}ld"
-    "--with-ar=${stdenv.cc.bintools.targetPrefix}ar"
-    # use the one that comes with the cross compiler.
-    "--with-hsc2hs=${ghc.targetPrefix}hsc2hs"
-    "--with-strip=${stdenv.cc.bintools.targetPrefix}strip"
-  ]
-  ++ optionals (!isHaLVM) [
-    "--hsc2hs-option=--cross-compile"
-    (optionalString enableHsc2hsViaAsm "--hsc2hs-option=--via-asm")
-  ]
-  ++ optional (allPkgconfigDepends != [ ]) "--with-pkg-config=${pkg-config.targetPrefix}pkg-config"
+  crossCabalFlags =
+    defaultCrossCobalFlags
+    ++ optionals (!isHaLVM) [
+      "--hsc2hs-option=--cross-compile"
+      (optionalString enableHsc2hsViaAsm "--hsc2hs-option=--via-asm")
+    ]
+    ++ optional (allPkgconfigDepends != [ ]) "--with-pkg-config=${pkg-config.targetPrefix}pkg-config"
 
-  ++ optionals enableExternalInterpreter (
-    map (opt: "--ghc-option=${opt}") (
-      [
-        "-fexternal-interpreter"
-        "-pgmi"
-        crossSupport.iservWrapper
-      ]
-      ++ optionals stdenv.hostPlatform.isWindows [
-        "-L${windows.pthreads}/bin"
-        "-L${windows.pthreads}/lib"
-      ]
-    )
-  );
+    ++ optionals enableExternalInterpreter enableExternalInterpreterFlags;
 
   defaultConfigureFlags = [
     "--verbose"
@@ -528,12 +557,12 @@ let
     "--ghc-option=-haddock"
   ];
 
+  maxBuildCoresString =
+    if args ? maxBuildCores then toString maxBuildCores else defaultMaxBuildCoresString;
+
   postPhases = optional doInstallIntermediates "installIntermediatesPhase";
 
-  setupCompileFlags = [
-    (optionalString (!coreSetup) "-package-db=$setupPackageConfDir")
-    "-threaded" # https://github.com/haskell/cabal/issues/2398
-  ];
+  setupCompileFlagsStr = if coreSetup then coreSetupCompileFlagsStr else nonCoreSetupCompileFlagsStr;
 
   # Work around a Cabal bug requiring pkg-config --static --libs to work even
   # when linking dynamically, affecting Cabal 3.8 and 3.9.
@@ -587,29 +616,21 @@ let
     ++ optionals doCheck testPkgconfigDepends
     ++ optionals doBenchmark benchmarkPkgconfigDepends;
 
-  depsBuildBuild = [
-    nativeGhc
-  ]
-  # CC_FOR_BUILD may be necessary if we have no C preprocessor for the host
-  # platform. See crossCabalFlags above for more details.
-  ++ optionals (!stdenv.hasCC) [ buildPackages.stdenv.cc ];
   collectedToolDepends =
     buildTools
     ++ libraryToolDepends
     ++ executableToolDepends
     ++ optionals doCheck testToolDepends
     ++ optionals doBenchmark benchmarkToolDepends;
-  nativeBuildInputs = [
-    ghc
-    removeReferencesTo
-  ]
-  ++ optional (allPkgconfigDepends != [ ]) (
-    assert pkg-config != null;
-    pkg-config
-  )
-  ++ setupHaskellDepends
-  ++ collectedToolDepends
-  ++ optional stdenv.hostPlatform.isGhcjs nodejs;
+  nativeBuildInputs =
+    defaultNativeBuildInputs
+    ++ optional (allPkgconfigDepends != [ ]) (
+      assert pkg-config != null;
+      pkg-config
+    )
+    ++ setupHaskellDepends
+    ++ collectedToolDepends
+    ++ optional stdenv.hostPlatform.isGhcjs nodejs;
   propagatedBuildInputs =
     buildDepends ++ libraryHaskellDepends ++ executableHaskellDepends ++ libraryFrameworkDepends;
   otherBuildInputsHaskell =
@@ -650,19 +671,18 @@ let
       "haskellPackages.mkDerivation: testTarget is deprecated. Use testTargets instead"
       (concatStringsSep " " testTargets);
 
-  env' = {
-    LANG = "en_US.UTF-8"; # GHC needs the locale configured during the Haddock phase.
-  }
-  // env
-  # Implicit pointer to integer conversions are errors by default since clang 15.
-  # Works around https://gitlab.haskell.org/ghc/ghc/-/issues/23456. krank:ignore-line
-  # A fix was included in GHC 9.10.* and backported to 9.6.5 and 9.8.2 (but we no longer
-  # ship 9.8.1).
-  // optionalAttrs (versionOlder ghc.version "9.6.5" && stdenv.hasCC && stdenv.cc.isClang) {
-    NIX_CFLAGS_COMPILE =
-      "-Wno-error=int-conversion"
-      + optionalString (env ? NIX_CFLAGS_COMPILE) (" " + env.NIX_CFLAGS_COMPILE);
-  };
+  env' =
+    defaultEnv
+    // env
+    # Implicit pointer to integer conversions are errors by default since clang 15.
+    # Works around https://gitlab.haskell.org/ghc/ghc/-/issues/23456. krank:ignore-line
+    # A fix was included in GHC 9.10.* and backported to 9.6.5 and 9.8.2 (but we no longer
+    # ship 9.8.1).
+    // optionalAttrs (versionOlder ghc.version "9.6.5" && stdenv.hasCC && stdenv.cc.isClang) {
+      NIX_CFLAGS_COMPILE =
+        "-Wno-error=int-conversion"
+        + optionalString (env ? NIX_CFLAGS_COMPILE) (" " + env.NIX_CFLAGS_COMPILE);
+    };
 in
 fix (
   drv:
@@ -697,12 +717,7 @@ fix (
         ++ optionals stdenv.hostPlatform.isGhcjs [ nodejs ];
       propagatedBuildInputs = optionals isLibrary propagatedBuildInputs;
 
-      env =
-        optionalAttrs (stdenv.buildPlatform.libc == "glibc") {
-          # To match LANG for e.g. haddock
-          LOCALE_ARCHIVE = "${buildPackages.glibcLocales}/lib/locale/locale-archive";
-        }
-        // env';
+      env = env';
 
       prePatch =
         optionalString (editedCabalFile != null) ''
@@ -725,7 +740,7 @@ fix (
         + postPatch;
 
       setupCompilerEnvironmentPhase = ''
-        NIX_BUILD_CORES=$(( NIX_BUILD_CORES < ${toString maxBuildCores} ? NIX_BUILD_CORES : ${toString maxBuildCores} ))
+        NIX_BUILD_CORES=$(( NIX_BUILD_CORES < ${maxBuildCoresString} ? NIX_BUILD_CORES : ${maxBuildCoresString} ))
         runHook preSetupCompilerEnvironment
 
         echo "Build with ${ghc}."
@@ -737,7 +752,7 @@ fix (
         packageConfDir="$builddir/package.conf.d"
         mkdir -p $packageConfDir
 
-        setupCompileFlags="${concatStringsSep " " setupCompileFlags}"
+        setupCompileFlags="${setupCompileFlagsStr}"
         configureFlags="${concatStringsSep " " defaultConfigureFlags} $configureFlags"
       ''
       # We build the Setup.hs on the *build* machine, and as such should only add
@@ -891,7 +906,9 @@ fix (
         checkFlagsArray+=(
           "--show-details=streaming"
           "--test-wrapper=${testWrapperScript}"
-          ${escapeShellArgs (map (opt: "--test-option=${opt}") testFlags)}
+          ${optionalString (args ? testFlags) (
+            escapeShellArgs (map (opt: "--test-option=${opt}") testFlags)
+          )}
         )
         export NIX_GHC_PACKAGE_PATH_FOR_TEST="''${NIX_GHC_PACKAGE_PATH_FOR_TEST:-$packageConfDir:}"
         ${setupCommand} test ${testTargetsString} $checkFlags ''${checkFlagsArray:+"''${checkFlagsArray[@]}"}
@@ -1107,10 +1124,6 @@ fix (
               "NIX_${ghcCommandCaps}_DOCDIR" = "${ghcEnv}/share/doc/ghc/html";
               "NIX_${ghcCommandCaps}_LIBDIR" =
                 if ghc.isHaLVM or false then "${ghcEnv}/lib/HaLVM-${ghc.version}" else "${ghcEnv}/${ghcLibdir}";
-            }
-            // optionalAttrs (stdenv.buildPlatform.libc == "glibc") {
-              # To match LANG for e.g. haddock
-              LOCALE_ARCHIVE = "${buildPackages.glibcLocales}/lib/locale/locale-archive";
             }
             // env';
           } "echo $nativeBuildInputs $buildInputs > $out";
