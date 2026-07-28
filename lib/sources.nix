@@ -518,14 +518,14 @@ let
   # See `repoRevToName` below.
   repoRevToNameFull =
     repo: rev: suffix:
-    urlToName repo
+    repo
     + (if rev != null then "-${shortRev rev}" else "")
     + (if suffix != null then "-${suffix}" else "")
     + "-source";
 
   # repoRevToName : String -> (URL | Path | String) -> (String | Integer | null) -> String -> String
   #
-  # Produce derivation.name attribute for a given repository URL/path/name and (optionally) its revision/version tag.
+  # Produce derivation.name attribute for a given repository name and (optionally) its revision/version tag.
   #
   # This is used by fetch(zip|git|FromGitHub|hg|svn|etc) to generate discoverable
   # /nix/store paths.

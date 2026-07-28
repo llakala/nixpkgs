@@ -13,6 +13,9 @@
   unzip,
   glibcLocalesUtf8,
 }:
+let
+  inherit (lib.sources) urlToName;
+in
 
 lib.extendMkDerivation {
   constructDrv = fetchurl;
@@ -30,7 +33,9 @@ lib.extendMkDerivation {
     {
       url ? "",
       urls ? [ ],
-      name ? repoRevToNameMaybe (if url != "" then url else builtins.head urls) null "unpacked",
+      name ? repoRevToNameMaybe (
+        if url != "" then urlToName url else urlToName (builtins.head urls)
+      ) null "unpacked",
       nativeBuildInputs ? [ ],
       postFetch ? "",
       extraPostFetch ? "",

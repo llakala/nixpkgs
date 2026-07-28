@@ -9,7 +9,7 @@ lib.makeOverridable (
     url,
     rev ? null,
     tag ? null,
-    name ? repoRevToNameMaybe url (lib.revOrTag rev tag) "gitiles",
+    name ? repoRevToNameMaybe (lib.sources.urlToName url) (lib.revOrTag rev tag) "gitiles",
     ...
   }@args:
 
