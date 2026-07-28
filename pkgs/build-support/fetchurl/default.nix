@@ -360,9 +360,7 @@ extendMkDerivation {
               url = toString (builtins.head urls_);
               curlOptsRepresentation = lib.generators.toPretty { multiline = false; } curlOpts;
               curlOptsAsStringRepresentation = escapeNixString (toString curlOpts);
-              curlOptsListElementsRepresentation =
-                concatMapStringsSep " " escapeNixString
-                  curlOpts;
+              curlOptsListElementsRepresentation = concatMapStringsSep " " escapeNixString curlOpts;
             in
             ''
               fetchurl for ${url}: curlOpts is a list (${curlOptsRepresentation}), which is not supported anymore.
