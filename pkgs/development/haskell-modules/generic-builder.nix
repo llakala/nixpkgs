@@ -275,7 +275,6 @@ let
     optional
     optionals
     optionalString
-    versionAtLeast
     concatStringsSep
     enableFeature
     optionalAttrs
@@ -862,7 +861,9 @@ lib.fix (
         checkFlagsArray+=(
           "--show-details=streaming"
           "--test-wrapper=${testWrapperScript}"
-          ${lib.escapeShellArgs (map (opt: "--test-option=${opt}") testFlags)}
+          ${
+            if testFlags == [ ] then "" else lib.escapeShellArgs (map (opt: "--test-option=${opt}") testFlags)
+          }
         )
         export NIX_GHC_PACKAGE_PATH_FOR_TEST="''${NIX_GHC_PACKAGE_PATH_FOR_TEST:-$packageConfDir:}"
         ${setupCommand} test ${testTargetsString} $checkFlags ''${checkFlagsArray:+"''${checkFlagsArray[@]}"}
