@@ -856,17 +856,21 @@ lib.fix (
     # - If it is empty, it'll be unset during test suite execution.
     # - Otherwise GHC_PACKAGE_PATH will have the package db used for configuring
     #   plus GHC's core packages.
-    checkPhase = ''
-      runHook preCheck
-      checkFlagsArray+=(
-        "--show-details=streaming"
-        "--test-wrapper=${testWrapperScript}"
-        ${lib.escapeShellArgs (map (opt: "--test-option=${opt}") testFlags)}
-      )
-      export NIX_GHC_PACKAGE_PATH_FOR_TEST="''${NIX_GHC_PACKAGE_PATH_FOR_TEST:-$packageConfDir:}"
-      ${setupCommand} test ${testTargetsString} $checkFlags ''${checkFlagsArray:+"''${checkFlagsArray[@]}"}
-      runHook postCheck
-    '';
+    checkPhase =
+      if !args ? checkPhase then
+        ''
+          runHook preCheck
+          checkFlagsArray+=(
+            "--show-details=streaming"
+            "--test-wrapper=${testWrapperScript}"
+            ${lib.escapeShellArgs (map (opt: "--test-option=${opt}") testFlags)}
+          )
+          export NIX_GHC_PACKAGE_PATH_FOR_TEST="''${NIX_GHC_PACKAGE_PATH_FOR_TEST:-$packageConfDir:}"
+          ${setupCommand} test ${testTargetsString} $checkFlags ''${checkFlagsArray:+"''${checkFlagsArray[@]}"}
+          runHook postCheck
+        ''
+      else
+        checkPhase;
 
     haddockPhase = ''
       runHook preHaddock
@@ -882,60 +886,64 @@ lib.fix (
       runHook postHaddock
     '';
 
-    installPhase = ''
-      runHook preInstall
+    installPhase =
+      if !args ? installPhase then
+        ''
+          runHook preInstall
 
-      ${
-        if !isLibrary && buildTarget == "" then
-          "${setupCommand} install"
-        # ^^ if the project is not a library, and no build target is specified, we can just use "install".
-        else if !isLibrary then
-          "${setupCommand} copy ${buildTarget}"
-        # ^^ if the project is not a library, and we have a build target, then use "copy" to install
-        # just the target specified; "install" will error here, since not all targets have been built.
-        else
-          ''
-            ${setupCommand} copy ${buildTarget}
-            local packageConfDir="$out/${ghcLibdir}/package.conf.d"
-            local packageConfFile="$packageConfDir/${pname}-${version}.conf"
-            mkdir -p "$packageConfDir"
-            ${setupCommand} register --gen-pkg-config=$packageConfFile
-            if [ -d "$packageConfFile" ]; then
-              mv "$packageConfFile/"* "$packageConfDir"
-              rmdir "$packageConfFile"
-            fi
-            for packageConfFile in "$packageConfDir/"*; do
-              local pkgId=$(gawk -f ${unprettyConf} "$packageConfFile" \
-                | grep '^id:' | cut -d' ' -f2)
-              mv "$packageConfFile" "$packageConfDir/$pkgId.conf"
+          ${
+            if !isLibrary && buildTarget == "" then
+              "${setupCommand} install"
+            # ^^ if the project is not a library, and no build target is specified, we can just use "install".
+            else if !isLibrary then
+              "${setupCommand} copy ${buildTarget}"
+            # ^^ if the project is not a library, and we have a build target, then use "copy" to install
+            # just the target specified; "install" will error here, since not all targets have been built.
+            else
+              ''
+                ${setupCommand} copy ${buildTarget}
+                local packageConfDir="$out/${ghcLibdir}/package.conf.d"
+                local packageConfFile="$packageConfDir/${pname}-${version}.conf"
+                mkdir -p "$packageConfDir"
+                ${setupCommand} register --gen-pkg-config=$packageConfFile
+                if [ -d "$packageConfFile" ]; then
+                  mv "$packageConfFile/"* "$packageConfDir"
+                  rmdir "$packageConfFile"
+                fi
+                for packageConfFile in "$packageConfDir/"*; do
+                  local pkgId=$(gawk -f ${unprettyConf} "$packageConfFile" \
+                    | grep '^id:' | cut -d' ' -f2)
+                  mv "$packageConfFile" "$packageConfDir/$pkgId.conf"
+                done
+
+                # delete confdir if there are no libraries
+                find $packageConfDir -maxdepth 0 -empty -delete;
+              ''
+          }
+
+
+          ${optionalString doCoverage "mkdir -p $out/share && cp -r dist/hpc $out/share"}
+
+          ${optionalString jsexe.shouldCopy ''
+            for jsexeDir in dist/build/*/*.jsexe; do
+              bn=$(basename $jsexeDir)
+              exe="''${bn%.jsexe}"
+              cp -r dist/build/$exe/$exe.jsexe ${binDir}
             done
+          ''}
 
-            # delete confdir if there are no libraries
-            find $packageConfDir -maxdepth 0 -empty -delete;
-          ''
-      }
+          ${optionalString enableSeparateDocOutput ''
+            for x in ${docdir "$doc"}"/html/src/"*.html; do
+              remove-references-to -t $out $x
+            done
+            mkdir -p $doc
+          ''}
+          ${optionalString enableSeparateDataOutput "mkdir -p $data"}
 
-
-      ${optionalString doCoverage "mkdir -p $out/share && cp -r dist/hpc $out/share"}
-
-      ${optionalString jsexe.shouldCopy ''
-        for jsexeDir in dist/build/*/*.jsexe; do
-          bn=$(basename $jsexeDir)
-          exe="''${bn%.jsexe}"
-          cp -r dist/build/$exe/$exe.jsexe ${binDir}
-        done
-      ''}
-
-      ${optionalString enableSeparateDocOutput ''
-        for x in ${docdir "$doc"}"/html/src/"*.html; do
-          remove-references-to -t $out $x
-        done
-        mkdir -p $doc
-      ''}
-      ${optionalString enableSeparateDataOutput "mkdir -p $data"}
-
-      runHook postInstall
-    '';
+          runHook postInstall
+        ''
+      else
+        installPhase;
 
     ${if doInstallIntermediates then "installIntermediatesPhase" else null} = ''
       runHook preInstallIntermediates
@@ -1104,32 +1112,33 @@ lib.fix (
       ${if args ? mainProgram then "mainProgram" else null} = args.mainProgram;
     };
 
-    ${if args ? sourceRoot then "sourceRoot" else null} = args.sourceRoot;
-    ${if args ? setSourceRoot then "setSourceRoot" else null} = args.setSourceRoot;
-    ${if args ? preCompileBuildDriver then "preCompileBuildDriver" else null} =
-      args.preCompileBuildDriver;
-    ${if args ? postCompileBuildDriver then "postCompileBuildDriver" else null} =
-      args.postCompileBuildDriver;
-    ${if args ? preUnpack then "preUnpack" else null} = args.preUnpack;
-    ${if args ? postUnpack then "postUnpack" else null} = args.postUnpack;
-    ${if args ? patches then "patches" else null} = args.patches;
-    ${if args ? patchPhase then "patchPhase" else null} = args.patchPhase;
-    ${if args ? preConfigure then "preConfigure" else null} = args.preConfigure;
-    ${if args ? postConfigure then "postConfigure" else null} = args.postConfigure;
-    ${if args ? preBuild then "preBuild" else null} = args.preBuild;
-    ${if args ? postBuild then "postBuild" else null} = args.postBuild;
-    ${if args ? doBenchmark then "doBenchmark" else null} = args.doBenchmark;
-    ${if args ? checkPhase then "checkPhase" else null} = args.checkPhase;
-    ${if args ? preCheck then "preCheck" else null} = args.preCheck;
-    ${if args ? postCheck then "postCheck" else null} = args.postCheck;
-    ${if args ? preHaddock then "preHaddock" else null} = args.preHaddock;
-    ${if args ? postHaddock then "postHaddock" else null} = args.postHaddock;
-    ${if args ? preInstall then "preInstall" else null} = args.preInstall;
-    ${if args ? installPhase then "installPhase" else null} = args.installPhase;
-    ${if args ? postInstall then "postInstall" else null} = args.postInstall;
-    ${if args ? preFixup then "preFixup" else null} = args.preFixup;
-    ${if args ? postFixup then "postFixup" else null} = args.postFixup;
-    ${if args ? dontStrip then "dontStrip" else null} = args.dontStrip;
+    __ignoreNulls = true;
+    # all of these args default to null, and derivations ignore null attributes
+    inherit
+      sourceRoot
+      setSourceRoot
+      preCompileBuildDriver
+      postCompileBuildDriver
+      preUnpack
+      postUnpack
+      patches
+      patchPhase
+      preConfigure
+      postConfigure
+      preBuild
+      postBuild
+      preCheck
+      postCheck
+      preHaddock
+      postHaddock
+      preInstall
+      postInstall
+      preFixup
+      postFixup
+      ;
+
+    ${if args ? doBenchmark then "doBenchmark" else null} = doBenchmark;
+    ${if args ? dontStrip then "dontStrip" else null} = dontStrip;
 
     ${if postPhases != [ ] then "postPhases" else null} = postPhases;
     ${if disallowedRequisites != [ ] || disallowGhcReference then "disallowedRequisites" else null} =
