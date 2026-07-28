@@ -128,10 +128,7 @@ rec {
           let
             args = attrNames derivationArgs;
           in
-          if length args > 0 then
-            unsafeGetAttrPos (head args) derivationArgs
-          else
-            null;
+          if length args > 0 then unsafeGetAttrPos (head args) derivationArgs else null;
         ${if runLocal then "preferLocalBuild" else null} = true;
         ${if runLocal then "allowSubstitutes" else null} = false;
       }
@@ -635,10 +632,7 @@ rec {
           ${postBuild}
         '';
         ${if !args ? meta then "pos" else null} =
-          if args ? pname then
-            unsafeGetAttrPos "pname" args
-          else
-            unsafeGetAttrPos "name" args;
+          if args ? pname then unsafeGetAttrPos "pname" args else unsafeGetAttrPos "name" args;
       };
   };
 
@@ -899,10 +893,9 @@ rec {
       namedOutputPaths = flatten (
         mapAttrsToList (
           name: value:
-          (map (
-            output:
-            filter isList (split "(${storeDir}/[${nixHashChars}]+-${name}-${output})" string)
-          ) (remove "out" value.outputs))
+          (map (output: filter isList (split "(${storeDir}/[${nixHashChars}]+-${name}-${output})" string)) (
+            remove "out" value.outputs
+          ))
         ) packages
       );
       # Only `out` outputs
