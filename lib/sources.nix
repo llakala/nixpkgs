@@ -513,13 +513,11 @@ let
   #
   # See `repoRevToName` below.
   repoRevToNameFull =
-    repo_: rev_: suffix_:
-    let
-      repo = urlToName repo_;
-      rev = if rev_ != null then "-${shortRev rev_}" else "";
-      suffix = if suffix_ != null then "-${suffix_}" else "";
-    in
-    "${repo}${rev}${suffix}-source";
+    repo: rev: suffix:
+    urlToName repo
+    + (if rev != null then "-${shortRev rev}" else "")
+    + (if suffix != null then "-${suffix}" else "")
+    + "-source";
 
   # repoRevToName : String -> (URL | Path | String) -> (String | Integer | null) -> String -> String
   #
