@@ -585,33 +585,30 @@ let
         propagateValue =
           drv: isDerivation drv && (__onlyPropagateKnownPkgConfigModules -> drv ? meta.pkgConfigModules);
 
-        # Take list of derivations and return list of the transitive dependency
-        # closure, only taking into account buildInputs. Loosely based on
-        # closePropagationFast.
-        propagatePlainBuildInputs =
-          drvs:
-          map (i: i.val) (genericClosure {
-            startSet = map (drv: {
-              key = drv.outPath;
-              val = drv;
-            }) (filter propagateValue drvs);
-            operator =
-              { val, ... }:
-              concatMap (
-                drv:
-                if propagateValue drv then
-                  [
-                    {
-                      key = drv.outPath;
-                      val = drv;
-                    }
-                  ]
-                else
-                  [ ]
-              ) (val.buildInputs or [ ] ++ val.propagatedBuildInputs or [ ]);
-          });
       in
-      propagatePlainBuildInputs allPkgconfigDepends'
+      # Take list of derivations and return list of the transitive dependency
+      # closure, only taking into account buildInputs. Loosely based on
+      # closePropagationFast.
+      (map (i: i.val) (genericClosure {
+        startSet = map (drv: {
+          key = drv.outPath;
+          val = drv;
+        }) (filter propagateValue allPkgconfigDepends');
+        operator =
+          { val, ... }:
+          concatMap (
+            drv:
+            if propagateValue drv then
+              [
+                {
+                  key = drv.outPath;
+                  val = drv;
+                }
+              ]
+            else
+              [ ]
+          ) (val.buildInputs or [ ] ++ val.propagatedBuildInputs or [ ]);
+      }))
     else
       allPkgconfigDepends';
   allPkgconfigDepends' =
