@@ -576,6 +576,11 @@ rec {
     :::
   */
   findFirstIndex =
+    let
+      init = {
+        found = false;
+      };
+    in
     pred: default: list:
     let
       # A naive recursive implementation would be much simpler, but
@@ -585,28 +590,21 @@ rec {
       # sacrifice early cutoff, but that appears to be an acceptable cost. A
       # clever scheme with "exponential search" is possible, but appears over-
       # engineered for now. See https://github.com/NixOS/nixpkgs/pull/235267
-
-      # Invariant:
-      # - if index < 0 then el == elemAt list (- index - 1) and all elements before el didn't satisfy pred
-      # - if index >= 0 then pred (elemAt list index) and all elements before (elemAt list index) didn't satisfy pred
-      #
-      # We start with index -1 and the 0'th element of the list, which satisfies the invariant
-      resultIndex = foldl' (
-        index: el:
-        if index < 0 then
-          # No match yet before the current index, we need to check the element
-          if pred el then
-            # We have a match! Turn it into the actual index to prevent future iterations from modifying it
-            -index - 1
-          else
-            # Still no match, update the index to the next element (we're counting down, so minus one)
-            index - 1
+      result = foldl' (
+        acc: i:
+        if !acc.found && pred (elemAt list i) then
+          # We haven't found a match yet, and the current element passes the
+          # predicate!
+          {
+            found = true;
+            value = i;
+          }
         else
-          # There's already a match, propagate the index without evaluating anything
-          index
-      ) (-1) list;
+          # There's already a match, or the current element fails the predicate
+          acc
+      ) init (genList id (length list));
     in
-    if resultIndex < 0 then default else resultIndex;
+    if result.found then result.value else default;
 
   /**
     Find the first element in the list matching the specified
@@ -1825,13 +1823,16 @@ rec {
   commonPrefix =
     list1: list2:
     let
-      # Zip the lists together into a list of booleans whether each element matches
-      matchings = zipListsWith (fst: snd: fst != snd) list1 list2;
+      # Create a list of indices up to the length of the smaller list, since
+      # that's the maximum length that can hypothetically be shared
+      matchings = genList (n: n) (min (length list1) (length list2));
       # Find the first index where the elements don't match,
       # which will then also be the length of the common prefix.
       # If all elements match, we fall back to the length of the zipped list,
       # which is the same as the length of the smaller list.
-      commonPrefixLength = findFirstIndex id (length matchings) matchings;
+      commonPrefixLength = findFirst (
+        n: (elemAt list1 n) != (elemAt list2 n)
+      ) (length matchings) matchings;
     in
     take commonPrefixLength list1;
 
