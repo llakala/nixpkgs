@@ -7,11 +7,11 @@
 
 let
   inherit (lib)
-    matchAttrs
     any
-    all
-    isDerivation
+    elem
     getBin
+    isDerivation
+    matchAttrs
     ;
   inherit (lib.attrsets) mapAttrs' filterAttrs;
   inherit (builtins)
@@ -365,8 +365,16 @@ rec {
   */
   availableOn =
     platform: pkg:
-    ((!pkg ? meta.platforms) || any (platformMatch platform) pkg.meta.platforms)
-    && ((!pkg ? meta.badPlatforms) || !(any (platformMatch platform) pkg.meta.badPlatforms));
+    (
+      (!pkg ? meta.platforms)
+      || elem platform.system pkg.meta.platforms
+      || any (platformMatch platform) pkg.meta.platforms
+    )
+    && (
+      (!pkg ? meta.badPlatforms)
+      || !(elem platform.system pkg.meta.platforms)
+      || !(any (platformMatch platform) pkg.meta.badPlatforms)
+    );
 
   /**
     Mapping of SPDX ID to the attributes in lib.licenses.
