@@ -174,26 +174,23 @@ let
   # Defaults to allow all names defined in config.allowUnfreePackages, and all
   # packages that match the unfree predicate function
   hasDeniedUnfreeLicense =
-    if allowUnfree then
-      _: false
-    else
-      let
-        listPredicate = pkg: elem (getName pkg) config.allowUnfreePackages;
-        definedListPredicate = config.allowUnfreePackages or [ ] != [ ];
+    let
+      listPredicate = pkg: elem (getName pkg) config.allowUnfreePackages;
+      definedListPredicate = config.allowUnfreePackages or [ ] != [ ];
 
-        explicitPredicate = config.allowUnfreePredicate;
-        # Be robust against misconfigured allowUnfreePredicate values such as null
-        definedExplicitPredicate = isFunction (config.allowUnfreePredicate or null);
-      in
-      if definedListPredicate then
-        if definedExplicitPredicate then
-          attrs: hasUnfreeLicense attrs && !(listPredicate attrs || explicitPredicate attrs)
-        else
-          attrs: hasUnfreeLicense attrs && !listPredicate attrs
-      else if definedExplicitPredicate then
-        attrs: hasUnfreeLicense attrs && !explicitPredicate attrs
+      explicitPredicate = config.allowUnfreePredicate;
+      # Be robust against misconfigured allowUnfreePredicate values such as null
+      definedExplicitPredicate = isFunction (config.allowUnfreePredicate or null);
+    in
+    if definedListPredicate then
+      if definedExplicitPredicate then
+        attrs: hasUnfreeLicense attrs && !(listPredicate attrs || explicitPredicate attrs)
       else
-        hasUnfreeLicense;
+        attrs: hasUnfreeLicense attrs && !listPredicate attrs
+    else if definedExplicitPredicate then
+      attrs: hasUnfreeLicense attrs && !explicitPredicate attrs
+    else
+      hasUnfreeLicense;
 
   allowInsecure = getEnv "NIXPKGS_ALLOW_INSECURE" == "1";
 
@@ -469,7 +466,9 @@ let
       }
 
     # --- Put checks that can be ignored here ---
-    else if hasDeniedUnfreeLicense attrs && !(nonEmptyAllowList && hasAllowlistedLicense attrs) then
+    else if
+      hasDeniedUnfreeLicense attrs && !allowUnfree && !(nonEmptyAllowList && hasAllowlistedLicense attrs)
+    then
       {
         reason = "unfree";
         msg = "has an unfree license (‘${showLicense attrs.meta.license}’)";
