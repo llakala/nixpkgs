@@ -148,33 +148,14 @@ let
     else
       drv;
 
-  isSingular = drv: isDerivation drv || drv == null || isString drv || isPath drv;
   makeDependencies =
-    splicedName: commonName: pname: deps:
-    map (
-      drv:
-      # isDerivation is inlined here to avoid the function call in the
-      # common case
-      if drv.type or null == "derivation" || isPath drv || drv == null || isString drv then
-        getDev (drv.__spliced.${splicedName} or drv)
-      else
-        foldl' (
-          index: dep:
-          if isSingular dep then
-            index + 1
-          else
-            throw "Dependency is not of a valid type: element ${toString index} of ${commonName} for package ${pname}"
-            + (
-              if isList dep then
-                ''
-                  was a nested list.
-                  Support for these is removed as of Nixpkgs release 26.11. Dependency lists should instead be
-                  concatenated together using '++' or 'builtins.concatLists'.''
-              else
-                ""
-            )
-        ) 1 deps
-    ) deps;
+    splicedName: commonName: drv:
+    # isDerivation is inlined here to avoid the function call in the
+    # common case
+    if drv.type or null == "derivation" || isPath drv || drv == null || isString drv then
+      getDev (drv.__spliced.${splicedName} or drv)
+    else
+      throw "no";
 
   makeBuildBuild = makeDependencies "buildBuild" "depsBuildBuild";
   makePropagatedBuildBuild = makeDependencies "buildBuild" "depsBuildBuildPropagated";
@@ -557,16 +538,13 @@ let
 
         outputs = outputs';
 
-        pname = "no";
-
-        buildBuildOutputs = if depsBuildBuild == [ ] then [ ] else makeBuildBuild pname depsBuildBuild;
-        buildHostOutputs =
-          if nativeBuildInputs' == [ ] then [ ] else makeBuildHost pname nativeBuildInputs';
-        buildTargetOutputs = if depsBuildTarget == [ ] then [ ] else makeBuildTarget pname depsBuildTarget;
-        hostHostOutputs = if depsHostHost == [ ] then [ ] else makeHostHost pname depsHostHost;
-        hostTargetOutputs = if buildInputs' == [ ] then [ ] else makeHostTarget pname buildInputs';
+        buildBuildOutputs = if depsBuildBuild == [ ] then [ ] else map makeBuildBuild depsBuildBuild;
+        buildHostOutputs = if nativeBuildInputs' == [ ] then [ ] else map makeBuildHost nativeBuildInputs';
+        buildTargetOutputs = if depsBuildTarget == [ ] then [ ] else map makeBuildTarget depsBuildTarget;
+        hostHostOutputs = if depsHostHost == [ ] then [ ] else map makeHostHost depsHostHost;
+        hostTargetOutputs = if buildInputs' == [ ] then [ ] else map makeHostTarget buildInputs';
         targetTargetOutputs =
-          if depsTargetTarget == [ ] then [ ] else makeTargetTarget pname depsTargetTarget;
+          if depsTargetTarget == [ ] then [ ] else map makeTargetTarget depsTargetTarget;
         allDependencies = concatLists [
           buildBuildOutputs
           buildHostOutputs
@@ -580,26 +558,26 @@ let
           if depsBuildBuildPropagated == [ ] then
             [ ]
           else
-            makePropagatedBuildBuild pname depsBuildBuildPropagated;
+            map makePropagatedBuildBuild depsBuildBuildPropagated;
         propagatedBuildHostOutputs =
           if propagatedNativeBuildInputs == [ ] then
             [ ]
           else
-            makePropagatedBuildHost pname propagatedNativeBuildInputs;
+            map makePropagatedBuildHost propagatedNativeBuildInputs;
         propagatedBuildTargetOutputs =
           if depsBuildTargetPropagated == [ ] then
             [ ]
           else
-            makePropagatedBuildTarget pname depsBuildTargetPropagated;
+            makePropagatedBuildTarget map depsBuildTargetPropagated;
         propagatedHostHostOutputs =
-          if depsHostHostPropagated == [ ] then [ ] else makePropagatedHostHost pname depsHostHostPropagated;
+          if depsHostHostPropagated == [ ] then [ ] else map makePropagatedHostHost depsHostHostPropagated;
         propagatedHostTargetOutputs =
-          if propagatedBuildInputs == [ ] then [ ] else makePropagatedHostTarget pname propagatedBuildInputs;
+          if propagatedBuildInputs == [ ] then [ ] else map makePropagatedHostTarget propagatedBuildInputs;
         propagatedTargetTargetOutputs =
           if depsTargetTargetPropagated == [ ] then
             [ ]
           else
-            makePropagatedTargetTarget pname depsTargetTargetPropagated;
+            map makePropagatedTargetTarget depsTargetTargetPropagated;
         allPropagatedDependencies = concatLists [
           propagatedBuildBuildOutputs
           propagatedBuildHostOutputs
