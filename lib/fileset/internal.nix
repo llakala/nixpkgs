@@ -536,22 +536,29 @@ rec {
         let
           recurse =
             index: localTree:
-            if isAttrs localTree then
-              # We have an attribute set, meaning this is a directory with at least one file
-              if index >= length components then
-                # The path may have no more components though, meaning the filter is running on the directory itself,
-                # so we always include it, again because there's at least one file in it.
-                true
-              else
-                # If we do have more components, the filter runs on some entry inside this directory, so we need to recurse
-                # We do +2 because builtins.split is an interleaved list of the inbetweens and the matches
-                recurse (index + 2) localTree.${elemAt components index}
-            else
-              # If it's not an attribute set it can only be either null (in which case it's not included)
-              # or a string ("directory" or "regular", etc.) in which case it's included
-              localTree != null;
+            builtins.trace
+              ''
+                local tree is ${lib.generators.toPretty { } localTree}
+                index is ${toString index}
+              ''
+              (
+                if isAttrs localTree then
+                  # We have an attribute set, meaning this is a directory with at least one file
+                  if index >= length components then
+                    # The path may have no more components though, meaning the filter is running on the directory itself,
+                    # so we always include it, again because there's at least one file in it.
+                    true
+                  else
+                    # If we do have more components, the filter runs on some entry inside this directory, so we need to recurse
+                    # We do +2 because builtins.split is an interleaved list of the inbetweens and the matches
+                    recurse (index + 2) localTree.${elemAt components index}
+                else
+                  # If it's not an attribute set it can only be either null (in which case it's not included)
+                  # or a string ("directory" or "regular", etc.) in which case it's included
+                  localTree != null
+              );
         in
-        recurse 0 tree;
+        builtins.trace "components are ${lib.generators.toPretty { } components}" recurse 0 tree;
 
       # Filter suited when there's no files
       empty = _: _: false;
