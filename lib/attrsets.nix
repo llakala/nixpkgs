@@ -4,12 +4,13 @@
 { lib }:
 
 let
-  inherit (builtins) head length;
+  inherit (builtins) head length storePath;
   inherit (lib.strings)
-    concatStringsSep
     concatMapStringsSep
+    concatStringsSep
     escapeNixIdentifier
     sanitizeDerivationName
+    substring
     ;
   inherit (lib.lists)
     all
@@ -1444,10 +1445,10 @@ rec {
   toDerivation =
     path:
     let
-      path' = builtins.storePath path;
+      path' = storePath path;
       res = {
         type = "derivation";
-        name = sanitizeDerivationName (builtins.substring 33 (-1) (baseNameOf path'));
+        name = sanitizeDerivationName (substring 33 (-1) (baseNameOf path'));
         outPath = path';
         outputs = [ "out" ];
         out = res;
@@ -2272,9 +2273,9 @@ rec {
   unionOfDisjoint =
     x: y:
     let
-      intersection = builtins.intersectAttrs x y;
-      collisions = lib.concatStringsSep " " (builtins.attrNames intersection);
-      mask = builtins.mapAttrs (
+      intersection = intersectAttrs x y;
+      collisions = concatStringsSep " " (attrNames intersection);
+      mask = mapAttrs (
         name: value: throw "unionOfDisjoint: collision on ${name}; complete list: ${collisions}"
       ) intersection;
     in

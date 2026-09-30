@@ -63,6 +63,8 @@ let
     reverseList
     splitString
     tail
+    warnIf
+    oldestSupportedReleaseIsAtLeast
     ;
 
   inherit (lib.strings)
@@ -555,7 +557,7 @@ rec {
         # as the resulting string may not parse back as a float (e.g. 42, 1e-06), but for
         # pretty-printing purposes this is acceptable.
         else if isFloat v then
-          builtins.toJSON v
+          toJSON v
         else if isString v then
           let
             lines = filter (v: !isList v) (split "\n" v);
@@ -716,7 +718,7 @@ rec {
 
     in
     # TODO: As discussed in #356502, deprecated functionality should be removed sometime after 25.11.
-    lib.warnIf (!escape && lib.oldestSupportedReleaseIsAtLeast 2505)
+    warnIf (!escape && oldestSupportedReleaseIsAtLeast 2505)
       "Using `lib.generators.toPlist` without `escape = true` is deprecated"
       ''
         <?xml version="1.0" encoding="UTF-8"?>
@@ -918,7 +920,7 @@ rec {
 
     : The value to be converted to JSON
   */
-  toJSON = { }: lib.strings.toJSON;
+  toJSON = { }: toJSON;
 
   /**
     YAML has been a strict superset of JSON since 1.2, so we
@@ -936,5 +938,5 @@ rec {
 
     : The value to be converted to YAML
   */
-  toYAML = { }: lib.strings.toJSON;
+  toYAML = { }: toJSON;
 }

@@ -3,15 +3,18 @@
 let
   inherit (lib)
     genAttrs
+    isFunction
     isString
     mapAttrs
     removeAttrs
+    unsafeGetAttrPos
+    warn
     ;
 
   showMaybeAttrPosPre =
     prefix: attrName: v:
     let
-      pos = builtins.unsafeGetAttrPos attrName v;
+      pos = unsafeGetAttrPos attrName v;
     in
     if pos == null then "" else "${prefix}${pos.file}:${toString pos.line}:${toString pos.column}";
 
@@ -19,7 +22,7 @@ let
     prefix: pkg:
     if pkg ? meta.position && isString pkg.meta.position then "${prefix}${pkg.meta.position}" else "";
 in
-{
+rec {
   inherit (builtins)
     addDrvOutputDependencies
     unsafeDiscardOutputDependency
@@ -262,10 +265,10 @@ in
       ];
     in
     drv
-    // mapAttrs (_: lib.warn msg) drvToWrap
+    // mapAttrs (_: warn msg) drvToWrap
     // (
-      if drv ? overrideAttrs && builtins.isFunction drv.overrideAttrs then
-        { overrideAttrs = x: lib.derivations.warnOnInstantiate msg (drv.overrideAttrs x); }
+      if drv ? overrideAttrs && isFunction drv.overrideAttrs then
+        { overrideAttrs = x: warnOnInstantiate msg (drv.overrideAttrs x); }
       else
         { }
     );
