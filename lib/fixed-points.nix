@@ -118,9 +118,10 @@ rec {
   fix' =
     f:
     let
-      x = f x // {
+      undo = {
         __unfix__ = f;
       };
+      x = f x // undo;
     in
     x;
 
