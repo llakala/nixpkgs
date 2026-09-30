@@ -3,6 +3,7 @@
 */
 { lib }:
 let
+  inherit (builtins) split;
   inherit (lib.strings) toInt;
   inherit (lib.trivial)
     compare
@@ -1379,7 +1380,7 @@ rec {
         x
       ]) list;
     in
-    map (x: builtins.elemAt x 1) (
+    map (x: elemAt x 1) (
       sort
         # Compare the first element of the pairs
         # Do not factor out the `<`, to avoid calls in hot code; duplicate instead.
@@ -1486,7 +1487,7 @@ rec {
   naturalSort =
     lst:
     let
-      vectorise = s: map (x: if isList x then toInt (head x) else x) (builtins.split "(0|[1-9][0-9]*)" s);
+      vectorise = s: map (x: if isList x then toInt (head x) else x) (split "(0|[1-9][0-9]*)" s);
       prepared = map (x: [
         (vectorise x)
         x

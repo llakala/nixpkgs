@@ -7,7 +7,14 @@
 # Tested in lib/tests/filesystem.sh
 let
   inherit (builtins)
+    attrNames
+    filter
+    isString
+    length
+    listToAttrs
+    match
     pathExists
+    readDir
     toString
     ;
 
@@ -17,11 +24,10 @@ let
     packagesFromDirectoryRecursive
     ;
 
-  inherit (lib.strings)
-    hasSuffix
-    ;
+  inherit (lib.strings) hasSuffix;
+  inherit (lib.attrsets) mapAttrsToList;
+  inherit (lib.lists) flatten;
 in
-
 {
   inherit (builtins)
     baseNameOf
@@ -157,18 +163,18 @@ in
     root:
     let
       # Files in the root
-      root-files = builtins.attrNames (builtins.readDir root);
+      root-files = attrNames (readDir root);
       # Files with their full paths
       root-files-with-paths = map (file: {
         name = file;
         value = root + "/${file}";
       }) root-files;
       # Subdirectories of the root with a cabal file.
-      cabal-subdirs = builtins.filter (
-        { name, value }: builtins.pathExists (value + "/${name}.cabal")
+      cabal-subdirs = filter (
+        { name, value }: pathExists (value + "/${name}.cabal")
       ) root-files-with-paths;
     in
-    builtins.listToAttrs cabal-subdirs;
+    listToAttrs cabal-subdirs;
   /**
     Find the first directory containing a file matching `pattern`
     upward from a given `file`.
@@ -196,10 +202,10 @@ in
       go =
         path:
         let
-          files = builtins.attrNames (builtins.readDir path);
-          matches = builtins.filter (match: match != null) (map (builtins.match pattern) files);
+          files = attrNames (readDir path);
+          matches = filter (match: match != null) (map (match pattern) files);
         in
-        if builtins.length matches != 0 then
+        if length matches != 0 then
           { inherit path matches; }
         else if toString path == "/" then
           null
@@ -209,7 +215,7 @@ in
       isDir =
         let
           base = baseNameOf file;
-          type = (builtins.readDir parent).${base} or null;
+          type = (readDir parent).${base} or null;
         in
         toString file == "/" || type == "directory";
     in
@@ -235,11 +241,11 @@ in
       # We only flatten at the very end, as flatten is recursive.
       internalFunc =
         dir:
-        (lib.mapAttrsToList (
+        (mapAttrsToList (
           name: type: if type == "directory" then internalFunc (dir + "/${name}") else dir + "/${name}"
         ) (builtins.readDir dir));
     in
-    dir: lib.flatten (internalFunc dir);
+    dir: flatten (internalFunc dir);
 
   /**
     Transform a directory tree containing package files suitable for
@@ -326,7 +332,7 @@ in
 
     # Examples
     :::{.example}
-    ## Basic use of `lib.packagesFromDirectoryRecursive`
+    ## Basic use of `packagesFromDirectoryRecursive`
 
     ```nix
     packagesFromDirectoryRecursive {
@@ -410,13 +416,13 @@ in
             }
           else
             throw ''
-              lib.filesystem.packagesFromDirectoryRecursive: Unsupported file type ${type} at path ${toString path}
+              filesystem.packagesFromDirectoryRecursive: Unsupported file type ${type} at path ${toString path}
             ''
         ) (builtins.readDir directory);
     in
     {
       callPackage,
-      newScope ? throw "lib.packagesFromDirectoryRecursive: newScope wasn't passed in args",
+      newScope ? throw "packagesFromDirectoryRecursive: newScope wasn't passed in args",
       directory,
     }@args:
     let
@@ -429,8 +435,8 @@ in
       # Create a new scope and mark it `recurseForDerivations`.
       # This lets the packages refer to each other.
       # See:
-      #  [lib.makeScope](https://nixos.org/manual/nixpkgs/unstable/#function-library-lib.customisation.makeScope) and
-      #  [lib.recurseIntoAttrs](https://nixos.org/manual/nixpkgs/unstable/#function-library-lib.customisation.makeScope)
+      #  [makeScope](https://nixos.org/manual/nixpkgs/unstable/#function-library-customisation.makeScope) and
+      #  [recurseIntoAttrs](https://nixos.org/manual/nixpkgs/unstable/#function-library-customisation.makeScope)
       recurseIntoAttrs (
         makeScope newScope (
           self:
@@ -467,7 +473,7 @@ in
 
     # Examples
     :::{.example}
-    ## `lib.filesystem.resolveDefaultNix` usage example
+    ## `filesystem.resolveDefaultNix` usage example
 
     This expression checks whether `a` and `b` refer to the same locally available Nix file path.
 
@@ -481,7 +487,7 @@ in
     v:
     if pathIsDirectory v then
       v + "/default.nix"
-    else if lib.isString v && hasSuffix "/" v then
+    else if isString v && hasSuffix "/" v then
       # A path ending in `/` can only refer to a directory, so we take the hint, even if we can't verify the validity of the path's `/` assertion.
       # A `/` is already present, so we don't add another one.
       v + "default.nix"

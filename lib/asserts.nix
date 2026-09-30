@@ -5,6 +5,8 @@ let
     concatStringsSep
     ;
   inherit (lib.lists)
+    all
+    elem
     filter
     ;
   inherit (lib.attrsets)
@@ -93,7 +95,7 @@ rec {
   */
   assertOneOf =
     name: val: xs:
-    assertMsg (lib.elem val xs) "${name} must be one of ${lib.generators.toPretty { } xs}, but is: ${
+    assertMsg (elem val xs) "${name} must be one of ${lib.generators.toPretty { } xs}, but is: ${
       lib.generators.toPretty { } val
     }";
 
@@ -141,7 +143,7 @@ rec {
   */
   assertEachOneOf =
     name: vals: xs:
-    assertMsg (lib.all (val: lib.elem val xs) vals)
+    assertMsg (all (val: elem val xs) vals)
       "each element in ${name} must be one of ${lib.generators.toPretty { } xs}, but is: ${
         lib.generators.toPretty { } vals
       }";

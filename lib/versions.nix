@@ -1,6 +1,17 @@
 # Version string functions.
 { lib }:
 
+let
+  inherit (lib)
+    concatStringsSep
+    elemAt
+    genList
+    head
+    removePrefix
+    splitString
+    take
+    ;
+in
 rec {
 
   inherit (builtins) compareVersions;
@@ -53,7 +64,7 @@ rec {
 
     :::
   */
-  major = v: builtins.elemAt (splitVersion v) 0;
+  major = v: elemAt (splitVersion v) 0;
 
   /**
     Get the minor version string from a string.
@@ -81,7 +92,7 @@ rec {
 
     :::
   */
-  minor = v: builtins.elemAt (splitVersion v) 1;
+  minor = v: elemAt (splitVersion v) 1;
 
   /**
     Get the patch version string from a string.
@@ -109,7 +120,7 @@ rec {
 
     :::
   */
-  patch = v: builtins.elemAt (splitVersion v) 2;
+  patch = v: elemAt (splitVersion v) 2;
 
   /**
     Get string of the first two parts (major and minor)
@@ -138,7 +149,7 @@ rec {
 
     :::
   */
-  majorMinor = v: builtins.concatStringsSep "." (lib.take 2 (splitVersion v));
+  majorMinor = v: concatStringsSep "." (take 2 (splitVersion v));
 
   /**
     Pad a version string with zeros to match the given number of components.
@@ -177,10 +188,9 @@ rec {
   pad =
     n: version:
     let
-      numericVersion = lib.head (lib.splitString "-" version);
-      versionSuffix = lib.removePrefix numericVersion version;
+      numericVersion = head (splitString "-" version);
+      versionSuffix = removePrefix numericVersion version;
     in
-    lib.concatStringsSep "." (lib.take n (lib.splitVersion numericVersion ++ lib.genList (_: "0") n))
-    + versionSuffix;
+    concatStringsSep "." (take n (splitVersion numericVersion ++ genList (_: "0") n)) + versionSuffix;
 
 }

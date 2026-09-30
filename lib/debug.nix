@@ -16,18 +16,19 @@
 { lib }:
 let
   inherit (lib)
-    concatMapStringsSep
-    isList
-    isAttrs
-    substring
     attrValues
     concatLists
+    concatMapStringsSep
     const
+    deepSeq
     elem
     foldl'
     generators
     id
+    isAttrs
+    isList
     mapAttrs
+    substring
     ;
 in
 
@@ -176,7 +177,7 @@ rec {
 
     :::
   */
-  traceSeq = x: y: trace (builtins.deepSeq x x) y;
+  traceSeq = x: y: trace (deepSeq x x) y;
 
   /**
     Like `traceSeq`, but only evaluate down to depth n.

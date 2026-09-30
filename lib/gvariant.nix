@@ -14,12 +14,21 @@
 
 let
   inherit (lib)
+    any
     catAttrs
     concatMapStringsSep
     concatStrings
     escape
+    filter
     head
+    isAttrs
+    isBool
+    isFloat
+    isInt
+    isList
+    isString
     replaceString
+    typeOf
     ;
 
   mkPrimitive = t: v: {
@@ -134,19 +143,19 @@ rec {
   */
   mkValue =
     v:
-    if builtins.isBool v then
+    if isBool v then
       mkBoolean v
-    else if builtins.isFloat v then
+    else if isFloat v then
       mkDouble v
-    else if builtins.isString v then
+    else if isString v then
       mkString v
-    else if builtins.isList v then
+    else if isList v then
       mkArray v
     else if isGVariant v then
       v
-    else if builtins.isInt v then
+    else if isInt v then
       let
-        validConstructors = builtins.filter (
+        validConstructors = filter (
           { min, max, ... }: (min == null || min <= v) && (max == null || v <= max)
         ) intConstructors;
       in
@@ -154,14 +163,14 @@ rec {
         The GVariant type for number “${toString v}” is unclear.
         Please wrap the value with one of the following, depending on the value type in GSettings schema:
 
-        ${lib.concatMapStringsSep "\n" (
+        ${concatMapStringsSep "\n" (
           { name, type, ... }: "- `lib.gvariant.${name}` for `${type}`"
         ) validConstructors}
       ''
-    else if builtins.isAttrs v then
+    else if isAttrs v then
       throw "Cannot construct GVariant value from an attribute set. If you want to construct a dictionary, you will need to create an array containing items constructed with `lib.gvariant.mkDictionaryEntry`."
     else
-      throw "The GVariant type of “${builtins.typeOf v}” can't be inferred.";
+      throw "The GVariant type of “${typeOf v}” can't be inferred.";
 
   /**
     Returns the GVariant array from the given type of the elements and a Nix list.
@@ -197,7 +206,7 @@ rec {
       );
       firstType = (head vs).type;
       elemType =
-        if lib.any (v: v.type != firstType) vs then
+        if any (v: v.type != firstType) vs then
           throw "Elements in a list should have same type."
         else
           firstType;
