@@ -1874,9 +1874,14 @@ rec {
     :::
   */
   removePrefix =
+    let
+      substring0 = substring 0;
+    in
     prefix:
     let
       preLen = stringLength prefix;
+      getPrefix = substring0 preLen;
+      getRest = substring preLen (-1);
     in
     if isPath prefix then
       # Before 23.05, paths would be copied to the store before converting them
@@ -1887,9 +1892,9 @@ rec {
             This function also copies the path to the Nix store, which may not be what you want.''
     else
       str:
-      if substring 0 preLen str == prefix then
+      if getPrefix str == prefix then
         # -1 will take the string until the end
-        substring preLen (-1) str
+        getRest str
       else
         str;
 
