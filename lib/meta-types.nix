@@ -212,10 +212,11 @@ lib.fix (self: {
     let
       # Map attrs directly to the verify function for performance
       fieldVerifiers = mapAttrs (_: t: t.verify) fields;
+      never = _: false;
     in
     {
       name = "record";
-      verify = v: isAttrs v && all (k: fieldVerifiers ? ${k} && fieldVerifiers.${k} v.${k}) (attrNames v);
+      verify = v: isAttrs v && all (k: fieldVerifiers.${k} or never v.${k}) (attrNames v);
       errors =
         ctx: v:
         if !isAttrs v then
