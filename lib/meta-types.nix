@@ -89,20 +89,20 @@ lib.fix (self: {
     t:
     assert isTypeDef t;
     let
-      inherit (t) verify;
+      verifyAll = all t.verify;
     in
     {
       name = "attrsOf<${t.name}>";
       verify =
         # attrsOf<any> can be optimised to just isAttrs
-        if t == self.any then isAttrs else attrs: isAttrs attrs && all verify (attrValues attrs);
+        if t == self.any then isAttrs else attrs: isAttrs attrs && verifyAll (attrValues attrs);
       errors =
         ctx: attrs:
         if !isAttrs attrs then
           self.errors self.attrs ctx attrs
         else
           concatMap (
-            name: lib.optionals (!verify attrs.${name}) (self.errors t "${ctx}.${name}" attrs.${name})
+            name: lib.optionals (!t.verify attrs.${name}) (self.errors t "${ctx}.${name}" attrs.${name})
           ) (attrNames attrs);
     };
 
@@ -115,13 +115,13 @@ lib.fix (self: {
     t:
     assert isTypeDef t;
     let
-      inherit (t) verify;
+      verifyAll = all t.verify;
     in
     {
       name = "listOf<${t.name}>";
       verify =
         # listOf<any> can be optimised to just isList
-        if t == self.any then isList else v: isList v && all verify v;
+        if t == self.any then isList else v: isList v && verifyAll v;
       errors =
         ctx: v:
         if !isList v then
@@ -130,7 +130,7 @@ lib.fix (self: {
           lib.concatMap ({ valid, errors }: errors) (
             lib.filter ({ valid, errors }: !valid) (
               lib.imap0 (i: el: {
-                valid = verify el;
+                valid = t.verify el;
                 errors = self.errors t "${ctx}.${toString i}" el;
               }) v
             )
