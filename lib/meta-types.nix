@@ -207,6 +207,12 @@ lib.fix (self: {
     };
 
   record =
+    let
+      # if the type isn't specified, immediately return false. compared to a ?
+      # check, this only takes one attrset lookup, and only costs us when a
+      # record fails to match.
+      never = _: false;
+    in
     fields:
     assert isAttrs fields && all isTypeDef (attrValues fields);
     let
@@ -215,7 +221,7 @@ lib.fix (self: {
     in
     {
       name = "record";
-      verify = v: isAttrs v && all (k: fieldVerifiers ? ${k} && fieldVerifiers.${k} v.${k}) (attrNames v);
+      verify = v: isAttrs v && all (k: (fieldVerifiers.${k} or never) v.${k}) (attrNames v);
       errors =
         ctx: v:
         if !isAttrs v then
