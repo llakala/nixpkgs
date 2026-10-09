@@ -206,17 +206,29 @@ lib.fix (self: {
       verify = v: elem v values;
     };
 
-  record =
+  record' =
+    {
+      total ? false,
+    }:
     fields:
     assert isAttrs fields && all isTypeDef (attrValues fields);
     let
+      fieldKeys = attrNames fields;
       # Map attrs directly to the verify function for performance
       fieldVerifiers = mapAttrs (_: t: t.verify) fields;
       never = _: false;
     in
     {
       name = "record";
-      verify = v: isAttrs v && all (k: fieldVerifiers.${k} or never v.${k}) (attrNames v);
+      verify =
+        if total then
+          v:
+          let
+            keys = attrNames v;
+          in
+          isAttrs v && fieldKeys == keys && all (k: fieldVerifiers.${k} v.${k}) keys
+        else
+          v: isAttrs v && all (k: fieldVerifiers.${k} or never v.${k}) (attrNames v);
       errors =
         ctx: v:
         if !isAttrs v then
@@ -234,5 +246,7 @@ lib.fix (self: {
               ]
           ) (attrNames v);
     };
+
+  record = self.record' { strict = false; };
 
 })
