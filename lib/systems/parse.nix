@@ -115,7 +115,9 @@ rec {
       && (if 8 < v.bits then verifySignificantByte v.significantByte else !(v ? significantByte));
   };
 
-  types.cpuType = enum (attrValues cpuTypes);
+  types.cpuType = {
+    verify = v: v ? name && cpuTypes.${v.name} == v;
+  };
 
   cpuTypes =
     let
