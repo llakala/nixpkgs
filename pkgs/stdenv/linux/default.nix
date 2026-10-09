@@ -122,7 +122,8 @@ let
 
   isFromNixpkgs = pkg: !(isFromBootstrapFiles pkg);
   isFromBootstrapFiles =
-    pkg: pkg.passthru.isFromBootstrapFiles or pkg.passthru.isFromMinBootstrap or false;
+    pkg:
+    pkg ? passthru && pkg.passthru.isFromBootstrapFiles or pkg.passthru.isFromMinBootstrap or false;
   isBuiltByNixpkgsCompiler = pkg: isFromNixpkgs pkg && isFromNixpkgs pkg.stdenv.cc.cc;
   isBuiltByBootstrapFilesCompiler = pkg: isFromNixpkgs pkg && isFromBootstrapFiles pkg.stdenv.cc.cc;
 
