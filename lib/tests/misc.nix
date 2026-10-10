@@ -1174,6 +1174,28 @@ runTests {
     expected = "helloWorld";
   };
 
+  testToCamelCaseMultipleCapitals = {
+    expr = strings.toCamelCase "helloWORld";
+    expected = "helloWorld";
+  };
+
+  # buggy behavior, but better to preserve compat
+  testToCamelCaseStartCapitals = {
+    expr = strings.toCamelCase "HELLOworld";
+    expected = "helloworld";
+  };
+
+  # also weird behavior
+  testToCamelCaseStartSeparator = {
+    expr = strings.toCamelCase " helloworld";
+    expected = "Helloworld";
+  };
+
+  testToCamelCaseMultipleSeparators = {
+    expr = strings.toCamelCase "hello--_  _world";
+    expected = "helloWorld";
+  };
+
   testToCamelCasePath = testingThrow (strings.toCamelCase ./.);
 
   testToInt = testAllTrue [
