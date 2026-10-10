@@ -4,7 +4,7 @@
 { lib }:
 let
 
-  inherit (builtins) length;
+  inherit (builtins) attrNames foldl' length;
 
   asciiTable = import ./ascii-table.nix;
 
@@ -738,9 +738,7 @@ rec {
         lib.strings.normalizePath: The argument (${toString s}) is a path value, but only strings are supported.
             Path values are always normalised in Nix, so there's no need to call this function on them.''
     else
-      builtins.foldl' (x: y: if y == "/" && startsWithSlash x then x else x + y) "" (
-        stringToCharacters s
-      );
+      foldl' (x: y: if y == "/" && startsWithSlash x then x else x + y) "" (stringToCharacters s);
 
   /**
     Depending on the boolean `cond`, return either the given string
@@ -905,7 +903,7 @@ rec {
   hasInfix =
     infix:
     let
-      matchGivenInfix = builtins.match ".*${escapeRegex infix}.*";
+      matchGivenInfix = match ".*${escapeRegex infix}.*";
     in
     if isPath infix then
       # Before 23.05, paths would be copied to the store before converting them
@@ -1184,7 +1182,7 @@ rec {
       ];
       toEscape = removeAttrs asciiTable unreserved;
     in
-    replaceStrings (builtins.attrNames toEscape) (
+    replaceStrings (attrNames toEscape) (
       lib.mapAttrsToList (_: c: "%${fixedWidthString 2 "0" (lib.toHexString c)}") toEscape
     );
 
@@ -1508,10 +1506,7 @@ rec {
 
     :::
   */
-  escapeXML =
-    builtins.replaceStrings
-      [ "\"" "'" "<" ">" "&" ]
-      [ "&quot;" "&apos;" "&lt;" "&gt;" "&amp;" ];
+  escapeXML = replaceStrings [ "\"" "'" "<" ">" "&" ] [ "&quot;" "&apos;" "&lt;" "&gt;" "&amp;" ];
 
   # Case conversion utilities.
   lowerChars = stringToCharacters "abcdefghijklmnopqrstuvwxyz";
@@ -2707,7 +2702,7 @@ rec {
         # This is a workaround for https://github.com/NixOS/nix/issues/12361
         # which was needed during the experimental phase of ca-derivations and
         # should be removed once the issue has been resolved.
-        || builtins.match "/[0-9a-z]{52}" str != null
+        || match "/[0-9a-z]{52}" str != null
       )
     else
       false;
