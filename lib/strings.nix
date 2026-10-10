@@ -14,7 +14,7 @@ let
     mapAttrs
     ;
   inherit (lib.lists)
-    flatten
+    drop
     imap1
     last
     ;
@@ -1679,30 +1679,45 @@ rec {
     :::
   */
   toCamelCase =
+    let
+      # split on either:
+      # - 1+ separators (capitalize the next char)
+      # - a string of capital letters at the start of string (uncapitalize all
+      # of them)
+      # - 2+ capital letters in a row (only keep the first one capitalized)
+      splitOnSeparators = split "[[:space:]_-]+(.|$)|^([A-Z]+)|([A-Z])([A-Z]+)";
+      combineParts = foldl' (
+        acc: part:
+        if isString part then
+          acc + part
+        else if head part != null then
+          # capitalize the character after the separator
+          # foo-bar -> fooBar
+          acc + toUpper (head part)
+        else
+          # keep the first capital letter, uncapitalize the others
+          # fooBAr -> fooBar
+          acc + elemAt part 2 + toLower (elemAt part 3)
+      ) "";
+    in
     str:
     if !isString str then
       throw "toCamelCase does only accepts string values, but got ${typeOf str}"
     else
       let
-        separators = splitStringBy (
-          prev: curr:
-          elem curr [
-            "-"
-            "_"
-            " "
-          ]
-        ) false str;
-
-        parts = flatten (
-          map (splitStringBy (
-            prev: curr: match "[a-z]" prev != null && match "[A-Z]" curr != null
-          ) true) separators
-        );
-
-        first = if length parts > 0 then toLower (head parts) else "";
-        rest = if length parts > 1 then map toSentenceCase (tail parts) else [ ];
+        parts = splitOnSeparators str;
+        startCapitals = elemAt (elemAt parts 1) 1;
       in
-      concatStrings ([ first ] ++ rest);
+      if length parts == 1 then
+        # string was already camelCase
+        head parts
+      else if head parts == "" && startCapitals != null then
+        # Foobar / FOObar -> foobar
+        toLower startCapitals + combineParts (drop 2 parts)
+      else
+        combineParts parts;
+
+  make = true;
 
   /**
     Appends string context from string like object `src` to `target`.
