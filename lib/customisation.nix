@@ -333,7 +333,7 @@ rec {
     in
     # if nonempty, check if the function has defaults for those other args
     if unpassedArgs == { } || all (value: value) (attrValues unpassedArgs) then
-      makeOverridable f allArgs
+      makeResultOverridable f allArgs
     else
       # Only show the error for the first missing argument
       # This needs to be an abort so it can't be caught with `builtins.tryEval`,
