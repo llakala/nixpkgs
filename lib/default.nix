@@ -415,6 +415,7 @@ let
       inherit (self.customisation)
         overrideDerivation
         makeOverridable
+        makeResultOverridable
         callPackageWith
         callPackagesWith
         extendDerivation
