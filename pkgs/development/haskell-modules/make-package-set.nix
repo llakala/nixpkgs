@@ -155,7 +155,7 @@ let
         __functionArgs = drvFunctionArgs;
       };
     in
-    lib.makeOverridable drvScope (auto // manualArgs);
+    lib.makeResultOverridable drvScope (auto // manualArgs);
 
   mkScope =
     scope:
