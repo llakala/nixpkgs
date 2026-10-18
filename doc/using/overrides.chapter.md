@@ -91,7 +91,7 @@ Note that `separateDebugInfo` is processed only by the `stdenv.mkDerivation` fun
 ## &lt;pkg&gt;.overrideDerivation {#sec-pkg-overrideDerivation}
 
 ::: {.warning}
-You should prefer `overrideAttrs` in almost all cases, see its documentation for the reasons why. `overrideDerivation` is not deprecated and will continue to work, but is less nice to use and does not have as many abilities as `overrideAttrs`.
+You should prefer `overrideAttrs` in almost all cases, see its documentation for the reasons why. `pkg.overrideDerivation` is deprecated, although `lib.overrideDerivation pkg` will continue to work for the time being. However, compared to `pkg.overrideAttrs`, it is less nice to use and does not have as many abilities.
 :::
 
 ::: {.warning}
