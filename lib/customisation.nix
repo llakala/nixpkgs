@@ -32,6 +32,7 @@ let
     deepSeq
     extends
     id
+    warn
     ;
   inherit (lib.strings) levenshtein levenshteinAtMost;
 
@@ -177,7 +178,14 @@ rec {
           // {
             override = overrideArgs;
             overrideDerivation =
-              fdrv: makeOverridable (mirrorArgs (args: overrideDerivation (f args) fdrv)) origArgs;
+              fdrv:
+              warn
+                ''
+                  Usage of '${result.pname or ""}.overrideDerivation fn' is deprecated. Migration to '${result.pname or ""}.overrideAttrs fn' is recommended.
+                  If you need 'overrideDerivation' (unlikely), call 'lib.overrideDerivation drv fn' instead.''
+                makeOverridable
+                (mirrorArgs (args: overrideDerivation (f args) fdrv))
+                origArgs;
             ${if result ? overrideAttrs then "overrideAttrs" else null} =
               /**
                 Override the attributes that were passed to `mkDerivation` in order to generate this derivation.
