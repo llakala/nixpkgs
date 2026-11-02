@@ -1758,11 +1758,25 @@ rec {
     :::
   */
   recursiveUpdate =
+    let
+      recurse = zipAttrsWith (
+        name: values:
+        if length values == 1 then
+          # only one side, stop recursing
+          head values
+        else
+          let
+            rhs = head values;
+            lhs = elemAt values 1;
+          in
+          if !(isAttrs rhs && isAttrs lhs) then rhs else recurse values
+      );
+    in
     lhs: rhs:
-    recursiveUpdateUntil (
-      path: lhs: rhs:
-      !(isAttrs lhs && isAttrs rhs)
-    ) lhs rhs;
+    recurse [
+      rhs
+      lhs
+    ];
 
   /**
     Recurse into every attribute set of the first argument and check that:
