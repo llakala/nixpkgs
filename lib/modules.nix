@@ -414,7 +414,7 @@ let
   # Collects all modules recursively through `import` statements, filtering out
   # all modules in disabledModules.
   collectModules =
-    class:
+    class: modulesPath: initialModules: args:
     let
 
       # Like unifyModuleSyntax, but also imports paths and calls functions if necessary
@@ -600,7 +600,7 @@ let
         in
         map toModuleGraph (filter (x: x.key != "lib/modules.nix") modules);
     in
-    modulesPath: initialModules: args: {
+    {
       modules = filterModules modulesPath (collectStructuredModules unknownModule "" initialModules args);
       # Intentionally not shared with `modules` above: this allows
       # the return value of `collectStructuredModules`
