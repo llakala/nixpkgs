@@ -1292,7 +1292,7 @@ let
           # Sort mkOrder properties.
           defsSorted =
             # Avoid sorting if we don't have to.
-            if any (def: def.value._type or "" == "order") defsFiltered.values then
+            if any (def: def.value._type or null == "order") defsFiltered.values then
               sortProperties defsFiltered.values
             else
               defsFiltered.values;
@@ -1484,9 +1484,9 @@ let
   filterOverrides' =
     let
       getPrio =
-        def: if def.value._type or "" == "override" then def.value.priority else defaultOverridePriority;
+        def: if def.value._type or null == "override" then def.value.priority else defaultOverridePriority;
       strip =
-        def: if def.value._type or "" == "override" then def // { value = def.value.content; } else def;
+        def: if def.value._type or null == "override" then def // { value = def.value.content; } else def;
     in
     defs:
     # Optimize for the singleton case, equivalent to the `else` clause.
@@ -1520,7 +1520,7 @@ let
     let
       strip =
         def:
-        if def.value._type or "" == "order" then
+        if def.value._type or null == "order" then
           def
           // {
             value = def.value.content;
