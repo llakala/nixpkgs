@@ -816,7 +816,6 @@ rec {
     :::
   */
   showOption =
-    parts:
     let
       # If the part is a named placeholder of the form "<...>" don't escape it.
       # It may cause misleading escaping if somebody uses literally "<...>" in their option names.
@@ -828,8 +827,9 @@ rec {
           part
         else
           lib.strings.escapeNixIdentifier part;
+      concatWithColons = (concatStringsSep ".");
     in
-    (concatStringsSep ".") (map escapeOptionPart parts);
+    parts: concatWithColons (map escapeOptionPart parts);
   showFiles = files: concatStringsSep " and " (map (f: "`${f}'") files);
 
   showDefs =
