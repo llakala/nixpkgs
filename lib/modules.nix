@@ -1166,6 +1166,10 @@ let
     : 3\. Function argument
   */
   evalOptionValue =
+    let
+      getDefinitions = catAttrs "value";
+      getFiles = catAttrs "file";
+    in
     loc: opt: defs:
     let
       # Add in the default value for this option, if any.
@@ -1212,8 +1216,8 @@ let
         if opt ? apply then opt.apply res.mergedValue else res.mergedValue
       );
       inherit (res.defsFinal') highestPrio;
-      definitions = catAttrs "value" res.defsFinal;
-      files = catAttrs "file" res.defsFinal;
+      definitions = getDefinitions res.defsFinal;
+      files = getFiles res.defsFinal;
       definitionsWithLocations = res.defsFinal;
       inherit (res) isDefined;
       inherit (res.checkedAndMerged) valueMeta;
