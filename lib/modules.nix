@@ -414,19 +414,19 @@ let
   # Collects all modules recursively through `import` statements, filtering out
   # all modules in disabledModules.
   collectModules =
-    class:
+    class: modulesPath: initialModules: args:
     let
-
+      applyModuleArgs' = applyModuleArgs args;
       # Like unifyModuleSyntax, but also imports paths and calls functions if necessary
       loadModule =
-        args: fallbackFile: fallbackKey: m:
+        fallbackFile: fallbackKey: m:
         if isFunction m then
-          unifyModuleSyntax fallbackFile fallbackKey (applyModuleArgs fallbackKey m args)
+          unifyModuleSyntax fallbackFile fallbackKey (applyModuleArgs' fallbackKey m)
         else if isAttrs m then
           if m._type or "module" == "module" then
             unifyModuleSyntax fallbackFile fallbackKey m
           else if m._type == "if" || m._type == "override" then
-            loadModule args fallbackFile fallbackKey { config = m; }
+            loadModule fallbackFile fallbackKey { config = m; }
           else
             throw (
               messages.not_a_module {
@@ -530,13 +530,13 @@ let
             inherit modules;
           };
         in
-        parentFile: parentKey: initialModules: args:
+        parentFile: parentKey: initialModules:
         collectResults (
           imap1 (
             n: x:
             let
-              module = checkModule (loadModule args parentFile "${parentKey}:anon-${toString n}" x);
-              collectedImports = collectStructuredModules module._file module.key module.imports args;
+              module = checkModule (loadModule parentFile "${parentKey}:anon-${toString n}" x);
+              collectedImports = collectStructuredModules module._file module.key module.imports;
             in
             {
               key = module.key;
@@ -600,12 +600,12 @@ let
         in
         map toModuleGraph (filter (x: x.key != "lib/modules.nix") modules);
     in
-    modulesPath: initialModules: args: {
-      modules = filterModules modulesPath (collectStructuredModules unknownModule "" initialModules args);
+    {
+      modules = filterModules modulesPath (collectStructuredModules unknownModule "" initialModules);
       # Intentionally not shared with `modules` above: this allows
       # the return value of `collectStructuredModules`
       # to be garbage collected after `filterModules` returns.
-      graph = toGraph modulesPath (collectStructuredModules unknownModule "" initialModules args);
+      graph = toGraph modulesPath (collectStructuredModules unknownModule "" initialModules);
     };
 
   /**
@@ -720,11 +720,11 @@ let
       };
 
   applyModuleArgsIfFunction =
-    key: f: args@{ config, ... }: if isFunction f then applyModuleArgs key f args else f;
+    key: f: args@{ config, ... }: if isFunction f then applyModuleArgs args key f else f;
 
   applyModuleArgs =
-    key: f:
     args@{ config, ... }:
+    key: f:
     let
       # Module arguments are resolved in a strict manner when attribute set
       # deconstruction is used.  As the arguments are now defined with the
