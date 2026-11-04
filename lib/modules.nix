@@ -902,11 +902,8 @@ let
             && (m.options._type == "option" || throwDeclarationTypeError loc m.options._type m._file);
         in
         if all isOptionDecl decls then
-          let
-            opt = fixupOptionType loc (mergeOptionDecls loc decls);
-          in
           {
-            matchedOptions = evalOptionValue loc opt defns';
+            matchedOptions = evalOptionValue loc (fixupOptionType loc (mergeOptionDecls loc decls)) defns';
             unmatchedDefns = [ ];
           }
         # this may look like duplicate computations are performed, but testing
@@ -950,11 +947,10 @@ let
           #  d. magically combine (a) and (c).
           # All of the above are merely syntax sugar though.
           then
-            let
-              opt = fixupOptionType loc (mergeOptionDecls loc (map optionTreeToOption decls));
-            in
             {
-              matchedOptions = evalOptionValue loc opt defns';
+              matchedOptions = evalOptionValue loc (fixupOptionType loc (
+                mergeOptionDecls loc (map optionTreeToOption decls)
+              )) defns';
               unmatchedDefns = [ ];
             }
           else
