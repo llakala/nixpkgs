@@ -539,12 +539,16 @@ let
             n: x:
             let
               module = checkModule (loadModule parentFile "${parentKey}:anon-${toString n}" x);
-              collectedImports = collectStructuredModules module._file module.key module.imports;
+              collectedImports =
+                if module.imports != [ ] then
+                  collectStructuredModules module._file module.key module.imports
+                else
+                  { };
             in
             {
               key = module.key;
               module = module;
-              modules = collectedImports.modules;
+              modules = collectedImports.modules or [ ];
               disabled =
                 if module.disabledModules != [ ] then
                   [
@@ -553,9 +557,9 @@ let
                       disabled = module.disabledModules;
                     }
                   ]
-                  ++ collectedImports.disabled
+                  ++ (collectedImports.disabled or [ ])
                 else
-                  collectedImports.disabled;
+                  (collectedImports.disabled or [ ]);
             }
           ) initialModules
         );
