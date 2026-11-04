@@ -270,7 +270,7 @@ let
           // specialArgs
         );
 
-      merged = mergeModules prefix (reverseList (doCollect { }).modules);
+      merged = mergeModules prefix (doCollect { }).modules;
 
       options = merged.matchedOptions;
 
