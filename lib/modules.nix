@@ -1406,15 +1406,24 @@ let
           # (lib.mkIf cond nonAttrs), while an attrset is expected. However,
           # avoiding the mapAttrs call here gives better errors later.
           val;
+      pushDownContent =
+        f: content:
+        if content ? _type then
+          map (mapAttrsIfAttrs (n: f)) (pushDownProperties content)
+        else if isAttrs content then
+          [ (f content) ]
+        else
+          # See above comment about nonAttrs
+          [ content ];
     in
     cfg:
     if cfg ? _type then
       if cfg._type == "if" then
-        map (mapAttrsIfAttrs (n: mkIf cfg.condition)) (pushDownProperties cfg.content)
+        pushDownContent (mkIf cfg.condition) cfg.content
       else if cfg._type == "merge" then
         concatMap pushDownProperties cfg.contents
       else if cfg._type == "override" then
-        map (mapAttrsIfAttrs (n: mkOverride cfg.priority)) (pushDownProperties cfg.content)
+        pushDownContent (mkOverride cfg.priority) (cfg.content)
       # FIXME: handle mkOrder?
       else
         [ cfg ]
