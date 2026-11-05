@@ -2119,6 +2119,15 @@ rec {
         `the-submodule = { ... }: { options = { ... }; }`.
   */
   submoduleWith =
+    let
+      inherit (lib.modules) evalModules;
+      name = "submodule";
+
+      check = {
+        __functor = _self: x: isAttrs x || isFunction x || path.check x;
+        isV2MergeCoherent = true;
+      };
+    in
     {
       modules,
       specialArgs ? { },
@@ -2127,8 +2136,6 @@ rec {
       class ? null,
     }@attrs:
     let
-      inherit (lib.modules) evalModules;
-
       allModules =
         defs:
         map (
@@ -2171,13 +2178,6 @@ rec {
       };
 
       freeformType = base._module.freeformType;
-
-      name = "submodule";
-
-      check = {
-        __functor = _self: x: isAttrs x || isFunction x || path.check x;
-        isV2MergeCoherent = true;
-      };
     in
     mkOptionType {
       inherit name;
