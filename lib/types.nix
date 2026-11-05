@@ -1030,10 +1030,10 @@ rec {
         __functor = _self: isList;
         isV2MergeCoherent = true;
       };
-      merge = {
+      merge = rec {
         __functor =
-          self: loc: defs:
-          (self.v2 { inherit loc defs; }).value;
+          _: loc: defs:
+          (v2 { inherit loc defs; }).value;
         v2 =
           { loc, defs }:
           let
@@ -1146,10 +1146,10 @@ rec {
         __functor = _self: x: isList x || isAttrs x;
         isV2MergeCoherent = true;
       };
-      merge = {
+      merge = rec {
         __functor =
-          self: loc: defs:
-          (self.v2 { inherit loc defs; }).value;
+          _: loc: defs:
+          (v2 { inherit loc defs; }).value;
         v2 =
           { loc, defs }:
           let
@@ -1413,10 +1413,10 @@ rec {
         __functor = _self: isAttrs;
         isV2MergeCoherent = true;
       };
-      merge = {
+      merge = rec {
         __functor =
-          self: loc: defs:
-          (self.v2 { inherit loc defs; }).value;
+          _: loc: defs:
+          (v2 { inherit loc defs; }).value;
         v2 =
           { loc, defs }:
           let
@@ -2197,10 +2197,10 @@ rec {
           else
             name;
       inherit check;
-      merge = {
+      merge = rec {
         __functor =
-          self: loc: defs:
-          (self.v2 { inherit loc defs; }).value;
+          _: loc: defs:
+          (v2 { inherit loc defs; }).value;
         v2 =
           { loc, defs }:
           let
@@ -2435,10 +2435,10 @@ rec {
         __functor = _self: x: t1.check x || t2.check x;
         isV2MergeCoherent = true;
       };
-      merge = {
+      merge = rec {
         __functor =
-          self: loc: defs:
-          (self.v2 { inherit loc defs; }).value;
+          _: loc: defs:
+          (v2 { inherit loc defs; }).value;
         v2 =
           { loc, defs }@args:
           let
@@ -2544,10 +2544,10 @@ rec {
         __functor = _self: x: (coercedType.check x && finalType.check (coerceFunc x)) || finalType.check x;
         isV2MergeCoherent = true;
       };
-      merge = {
+      merge = rec {
         __functor =
-          self: loc: defs:
-          (self.v2 { inherit loc defs; }).value;
+          _: loc: defs:
+          (v2 { inherit loc defs; }).value;
         v2 =
           { loc, defs }:
           let
@@ -2629,10 +2629,10 @@ rec {
           __functor = _self: x: elemType.check x && check x;
           isV2MergeCoherent = true;
         };
-        merge = {
+        merge = rec {
           __functor =
-            self: loc: defs:
-            (self.v2 { inherit loc defs; }).value;
+            _: loc: defs:
+            (v2 { inherit loc defs; }).value;
           v2 =
             { loc, defs }@args:
             let
