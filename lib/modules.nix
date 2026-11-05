@@ -22,7 +22,6 @@ let
     imap1
     init
     isAttrs
-    isBool
     isFunction
     oldestSupportedReleaseIsAtLeast
     isList
@@ -1455,8 +1454,10 @@ let
     def:
     if def ? _type then
       if def._type == "if" then
-        if isBool def.condition then
-          if def.condition then dischargeProperties def.content else [ ]
+        if def.condition == true then
+          dischargeProperties def.content
+        else if def.condition == false then
+          [ ]
         else
           throw "‘mkIf’ called with a non-Boolean condition"
       else if def._type == "merge" then
