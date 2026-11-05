@@ -896,10 +896,15 @@ let
         let
           loc = prefix ++ [ name ];
           defns' = rawDefinitionsByName.${name} or [ ];
+          # cases are:
+          # - m.options._type == "option" -> return true
+          # - m.options doesn't have an _type -> return false
+          # m.options._type is something else -> error
           isOptionDecl =
             m:
-            m.options ? _type
-            && (m.options._type == "option" || throwDeclarationTypeError loc m.options._type m._file);
+            m.options._type
+              or (if m.options ? _type then throwDeclarationTypeError loc m.options._type m._file else null)
+            == "option";
         in
         if all isOptionDecl decls then
           {
