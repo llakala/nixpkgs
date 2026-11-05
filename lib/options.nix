@@ -508,18 +508,18 @@ rec {
     else if defs == [ ] then
       abort "This case should never happen."
     else
-      (foldl' (
-        first: def:
-        if def.value != first.value then
+      foldl' (
+        firstValue: def:
+        if def.value != firstValue then
           throw "The option `${showOption loc}' has conflicting definition values:${
             showDefs [
-              first
+              (head defs)
               def
             ]
           }\n${prioritySuggestion}"
         else
-          first
-      ) (head defs) (tail defs)).value;
+          firstValue
+      ) (head defs).value (tail defs);
 
   /**
     Extracts values of all `value` keys of the given list.
