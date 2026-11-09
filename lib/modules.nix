@@ -546,7 +546,6 @@ let
               {
                 key = module.key;
                 module = module;
-                modules = [ ];
                 disabled =
                   if module.disabledModules != [ ] then
                     [
@@ -562,7 +561,7 @@ let
               {
                 key = module.key;
                 module = module;
-                modules = collectedImports.modules;
+                ${if collectedImports ? modules then "modules" else null} = collectedImports.modules;
                 disabled =
                   if module.disabledModules != [ ] then
                     [
@@ -598,12 +597,22 @@ let
             if disabled == [ ] then
               {
                 startSet = modules;
-                operator = { modules, ... }: modules;
+                operator =
+                  {
+                    modules ? [ ],
+                    ...
+                  }:
+                  modules;
               }
             else
               {
                 startSet = keyFilter modules;
-                operator = { modules, ... }: keyFilter modules;
+                operator =
+                  {
+                    modules ? [ ],
+                    ...
+                  }:
+                  keyFilter modules;
               }
           )
         );
