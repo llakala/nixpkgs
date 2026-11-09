@@ -68,6 +68,11 @@ let
     levenshteinAtMost
     ;
 
+  catDisabled = catAttrs "disabled";
+  catModules = catAttrs "module";
+  catValues = catAttrs "value";
+  catFiles = catAttrs "file";
+
   showDeclPrefix =
     loc: decl: prefix:
     " - option(s) with prefix `${showOption (loc ++ [ prefix ])}' in module `${decl._file}'";
@@ -559,7 +564,7 @@ let
           ) (length initialModules);
         in
         {
-          disabled = concatLists (catAttrs "disabled" modules);
+          disabled = concatLists (catDisabled modules);
           inherit modules;
         };
 
@@ -574,7 +579,7 @@ let
           isDisabledModule = isDisabled modulesPath disabled;
           keyFilter = filter (attrs: !isDisabledModule attrs);
         in
-        catAttrs "module" (
+        catModules (
           genericClosure (
             if disabled == [ ] then
               {
@@ -827,6 +832,9 @@ let
     );
 
   mergeModules' =
+    let
+      catUnmatched = catAttrs "unmatchedDefns";
+    in
     prefix: modules: configs:
     let
       # an attrset 'name' => list of submodules that declare ‘name’.
@@ -991,7 +999,7 @@ let
             rawUnmatched = removeAttrs rawDefinitionsByName (attrNames declsByName);
           in
           if rawUnmatched == { } then
-            concatLists (catAttrs "unmatchedDefns" (attrValues resultsByName))
+            concatLists (catUnmatched (attrValues resultsByName))
           else
             # Interleave by name, to keep the order stable.
             concatLists (
@@ -1185,8 +1193,8 @@ let
           if options ? apply then options.apply res.mergedValue else res.mergedValue
         );
         highestPrio = res.defsFinal'.highestPrio;
-        definitions = catAttrs "value" res.defsFinal;
-        files = catAttrs "file" res.defsFinal;
+        definitions = catValues res.defsFinal;
+        files = catFiles res.defsFinal;
         definitionsWithLocations = res.defsFinal;
         isDefined = res.isDefined;
         valueMeta = res.checkedAndMerged.valueMeta;
@@ -1252,8 +1260,8 @@ let
         if opt ? apply then opt.apply res.mergedValue else res.mergedValue
       );
       highestPrio = res.defsFinal'.highestPrio;
-      definitions = catAttrs "value" res.defsFinal;
-      files = catAttrs "file" res.defsFinal;
+      definitions = catValues res.defsFinal;
+      files = catFiles res.defsFinal;
       definitionsWithLocations = res.defsFinal;
       isDefined = res.isDefined;
       valueMeta = res.checkedAndMerged.valueMeta;
