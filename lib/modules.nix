@@ -573,12 +573,12 @@ let
             if disabled == [ ] then
               {
                 startSet = modules;
-                operator = attrs: attrs.modules;
+                operator = { modules, ... }: modules;
               }
             else
               {
                 startSet = keyFilter modules;
-                operator = attrs: keyFilter attrs.modules;
+                operator = { modules, ... }: keyFilter modules;
               }
           )
         );
