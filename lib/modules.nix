@@ -944,10 +944,7 @@ let
                 let
                   # The definitions of 'name' with properties pushed down one level.
                   nested = mergeModules' loc decls (
-                    if rawDefinitionsByName ? ${name} then
-                      pushDownDefinitions (rawDefinitionsByName.${name} or [ ])
-                    else
-                      [ ]
+                    if rawDefinitionsByName ? ${name} then pushDownDefinitions rawDefinitionsByName.${name} else [ ]
                   );
                 in
                 {
