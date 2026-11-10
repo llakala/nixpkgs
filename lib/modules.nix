@@ -1006,11 +1006,9 @@ let
               };
             };
           };
-
-      matchedOptions = mapAttrs (n: v: v.matchedOptions) resultsByName;
     in
     {
-      inherit matchedOptions;
+      matchedOptions = mapAttrs (n: v: v.matchedOptions or [ ]) resultsByName;
 
       unmatchedDefns =
         if configs == [ ] then
