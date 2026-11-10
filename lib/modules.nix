@@ -1116,11 +1116,6 @@ let
                     "The option `${showOption loc}' in `${opt._file}' is already declared in ${showFiles res.declarations}."
               else
                 { };
-            submodules =
-              if optOptions.type.getSubModules or null != null then
-                map (setDefaultModuleLocation opt._file) optOptions.type.getSubModules or null ++ res.options
-              else
-                res.options;
           in
           if
             (res ? default && optOptions ? default)
@@ -1153,7 +1148,11 @@ let
                       }
                     ]
                 );
-              options = submodules;
+              options =
+                if optOptions.type.getSubModules or null != null then
+                  map (setDefaultModuleLocation opt._file) optOptions.type.getSubModules or null ++ res.options
+                else
+                  res.options;
             }
             // typeSet
         )
